@@ -1,0 +1,2 @@
+# to change language of repo 
+*.py linguist-language=Python

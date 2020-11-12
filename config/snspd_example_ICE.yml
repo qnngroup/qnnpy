@@ -1,0 +1,89 @@
+User:
+  name: OM
+  
+Save File:
+  sample name: TEST
+  device type: snspd
+  device name: A1
+
+iv_sweep:
+  start: 0
+  stop: !!float 60e-6
+  steps: 20
+  sweep: 1
+  full_sweep: True
+  series_resistance: !!float 100e3
+
+pulse_trace:
+  bias_voltage: 1.09
+  trigger_level: .075
+  channel: C2
+  number_of_traces: 200
+  attenuation: 100
+  
+trigger_sweep:
+  start: 0
+  stop: .375
+  step: .005
+  bias_voltage: 4.94
+  attenuation_db: 10
+  counting_time: .1
+
+
+linearity_check:
+  bias: !!float 49e-6
+  start: 0
+  stop: 100
+  step: 5
+  counting_time: .1
+  trigger_v: 0.1
+  iterations: 1
+
+  
+photon_counts:
+  start: !!float 6.5e-6
+  stop: !!float 12e-6
+  step: !!float .05e-6
+  trigger_v: 0.1
+  counting_time: .1
+  iterations: 1
+  attenuation_db: 90
+  
+  
+kinetic_inductance_phase:
+  start: !!float 0e-6
+  stop: !!float 60e-6
+  steps: 20
+  
+Laser:
+  name: S1FC780
+  wavelength_nm: 780
+  
+Source:
+  name: SIM928
+  port: 'GPIB0::1'
+  port_alt: 2
+
+Meter:
+  name: Keithley2700
+  port: 'GPIB0::18'
+
+Counter:
+  name: Agilent53131a
+  port: 'GPIB0::30'
+
+Scope: 
+  name: LeCroy620Zi
+  port: '18.62.7.103'
+  channel: [C2]
+    
+Attenuator:
+  name: JDSHA9
+  port: 'GPIB0::7'
+
+Temperature:
+  name: ICE
+  
+VNA:
+  name: N5224A
+  port: 'GPIB0::16'

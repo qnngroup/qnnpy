@@ -1,0 +1,30 @@
+User:
+  name: OM
+  
+Save File:
+  sample name: SPG100
+  device type: standard_snspd
+  device name: D14
+  measurement: iv_sweep
+  filepath: C:\Users\ICE\Desktop
+
+iv_sweep:
+  start: 0
+  stop: !!float 100e-6
+  steps: 20
+  sweep: 1
+  full_sweep: True
+  series_resistance: !!float 100e3
+  
+  
+Source:
+  name: testDummy
+  port: GPIB0::4
+  port_alt: 3
+
+Meter:
+  name: testDummy
+  port: GPIB0::17
+
+
+  
