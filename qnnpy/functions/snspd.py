@@ -4,7 +4,7 @@ Created on Wed May  6 17:21:25 2020
 
 @author: omedeiro
 """
-import functions as qf
+import qnnpy.functions.functions as qf
 import time
 from time import sleep
 import numpy as np
@@ -919,7 +919,7 @@ class PulseTraceSingle(Snspd):
 
 
 
-        self.trace_x = x
+        self.trace_x = [x]
         self.trace_y = ylist
 
         return self.trace_x, self.trace_y

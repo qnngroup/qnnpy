@@ -47,7 +47,7 @@ def plot(xdata, ydata, x_scale = 'linear', y_scale = 'linear',
                 plt.plot(xdata, ydata[i], linestyle)
                 
                 
-    if type(ydata) == list and type(xdata) == list:
+    elif type(ydata) == list and type(xdata) == list:
         if label:
             for i in np.arange(0,len(ydata),1):
                 plt.plot(xdata[i], ydata[i], linestyle ,label = label[i])
