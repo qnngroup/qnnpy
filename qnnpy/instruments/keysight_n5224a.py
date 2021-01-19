@@ -4,7 +4,7 @@ import numpy as np
 
 class KeysightN5224a(object):
     """Python class for KeysightN5224a network analyzer, written by Di Zhu. 
-    Connet the GPIB cable to GPIB1 (talker and listener)
+    Connect the GPIB cable to GPIB1 (talker and listener)
     
     http://na.support.keysight.com/pna/help/latest/Programming/GP-IB_Command_Finder/SCPI_Command_Tree.htm
             
