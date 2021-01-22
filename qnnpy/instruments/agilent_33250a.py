@@ -86,7 +86,19 @@ class Agilent33250a(object):
         else:
             self.write('BURS:STAT OFF')  # Disables burst state
         
-
+    def set_waveform(self, name = 'SIN', freq=1000, amplitude=0.1, offset=0):
+        '''
+        APPLy
+        :SINusoid [<frequency> [,<amplitude> [,<offset>] ]]
+        :SQUare [<frequency> [,<amplitude> [,<offset>] ]]
+        :RAMP [<frequency> [,<amplitude> [,<offset>] ]]
+        :PULSe [<frequency> [,<amplitude> [,<offset>] ]]♠
+        :NOISe [<frequency|DEF>1 [,<amplitude> [,<offset>] ]]
+        :DC [<frequency|DEF>1 [,<amplitude>|DEF>1 [,<offset>] ]]
+        :USER [<frequency> [,<amplitude> [,<offset>] ]]
+        '''
+        self.write('APPL:%s %0.6e, %0.6e, %0.6e' % (name, freq, amplitude, offset))
+        
     def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY'):
         """ Input voltage values will be scaled to +/-1.0, you can then adjust the overall
         amplitude using the set_vpp function.  The 33250a does not allow the input of time for each
@@ -115,7 +127,7 @@ class Agilent33250a(object):
     def setup_heartbeat_wf(self):
         heartbeat_t = [0.0, 4.0/8, 5.0/8, 6.0/8,  7.0/8, 8.0/8]
         heartbeat_v = [0.0,   0.0,   1.0,   0.0,   -1.0,   0.0]
-        freq_gen.set_arb_wf(t = heartbeat_t, v = heartbeat_v, name = 'HEARTBEA')
+        self.set_arb_wf(t = heartbeat_t, v = heartbeat_v, name = 'HEARTBEA')
 
 
     def select_arb_wf(self, name = 'HEARTBEA'):
