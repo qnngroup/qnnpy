@@ -1,7 +1,10 @@
 import visa
 import numpy as np
 import time
+import scipy.io
+from time import sleep
 import datetime
+import os
 
 class LeCroy620Zi(object):
     """Python class for LeCroy Oscilloscope, written by Adam McCaughan.  Most of these commands
@@ -118,6 +121,16 @@ class LeCroy620Zi(object):
         self.vbs_write('app.Acquisition.TriggerMode = "%s"' % trigger_mode)
 
 
+    def set_sequence_mode(self):
+        return self.vbs_write('app.Acquisition.Horizontal.SampleMode = "Sequence"')
+    def set_segments(self, NumSegments = 500):
+        return self.vbs_write('app.Acquisition.Horizontal.NumSegments = %d' % NumSegments)
+    def get_number_points_hor(self):
+        return np.int(self.vbs_ask('app.Acquisition.Horizontal.NumPoints'))
+    def get_time_point(self):
+        return np.float(self.vbs_ask('app.Acquisition.Horizontal.TimePerPoint'))
+
+
     def set_persistence(self, channel = 'C1', persistence = False, monochrome = False):
         self.vbs_write('app.Display.LockPersistence = "PerTrace"')
         self.vbs_write('app.Acquisition.%s.Persisted = %s' % (channel, persistence))
@@ -161,6 +174,13 @@ class LeCroy620Zi(object):
             self.vbs_write('app.Math.%s.Source1 = "%s"' % (math_channel, source2))
 
 
+    def set_aux_trigger_out(self, status = 'on'):
+        if status == 'on':
+            self.vbs_write('app.Acquisition.AuxOutput.AuxMode = "TriggerOut"')
+        if status == 'off':
+            self.vbs_write('app.Acquisition.AuxOutput.AuxMode = "Off"')
+            
+            
     def get_parameter_value(self, parameter = 'P1'):
         return float(self.vbs_ask('app.Measure.%s.Out.Result.Value' % parameter))
 
@@ -293,6 +313,117 @@ class LeCroy620Zi(object):
             newFile.write(newFileByteArray)
 
         return file_name
+
+    
+    def my_get_single_trace_sequence(self, channel = 'C1',NumSegments= 1000):
+        """ Sets scope to "single" trigger mode to acquire one trace, then waits until the trigger has happened
+        (indicated by the trigger mode changing to "Stopped").  """
+        self.set_sequence_mode()
+        self.set_segments(NumSegments)
+        self.set_trigger_mode(trigger_mode = 'Single')
+        if self.get_trigger_mode() == 'Single\n':
+            while self.get_trigger_mode() == 'Single\n':
+                #SRS.set_output(False)
+                sleep(1e-4)
+                #SRS.set_output(True)
+        x,y = self.get_wf_data(channel=channel)
+        interval=abs(x[0]-x[1])
+        xlist=[];
+        ylist=[];
+        totdp=np.int(np.size(x)/NumSegments)
+        for j in range(NumSegments):
+            
+            xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
+            ylist.append(y[0+j*totdp:totdp+j*totdp])
+        return xlist,ylist
+    	
+    	
+    def save_traces_multiple_sequence(self, channels = ['C1', 'C2'], num_traces = 20, NumSegments = 1000, threshold = [0,0], fpath='', fname='myfile'):
+        """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
+        0 if unused"""
+        num_ch = len(channels)
+        x1list = []; y1list = [];
+        x2list = []; y2list = [];
+        x3list = []; y3list = [];
+        x4list = []; y4list = [];
+        q = 0 #number of not useless points
+        for i in range(num_traces):
+            print('Trace %d of %d' % (i, num_traces))
+            try:
+                if num_ch>0:
+                    x,y = self.my_get_single_trace_sequence(channels[0],NumSegments)
+                    if max(abs(y[0]))>threshold[0]:
+                        x1list.append(x)
+                        y1list.append(y)
+                    else:
+                        q = q+1
+                        print('Not useful')
+                if num_ch>1:
+                    x,y = self.my_get_single_trace_sequence(channels[1],NumSegments)
+                    if max(abs(y[0]))>threshold[1]:
+                        x2list.append(x)
+                        y2list.append(y)
+                    else:
+                        q = q+1
+                        print('Not useful')
+                if num_ch>2:
+                    x,y = self.my_get_single_trace_sequence(channels[2],NumSegments)
+                    if max(abs(y[0]))>threshold[2]:
+                        x3list.append(x)
+                        y3list.append(y)
+                    else:
+                        q = q+1
+                        print('Not useful')
+                if num_ch>3:
+                    x,y = self.my_get_single_trace_sequence(channels[3],NumSegments)
+                    if max(abs(y[0]))>threshold[3]:
+                        x4list.append(x)
+                        y4list.append(y)
+                    else:
+                        q = q+1
+                        print('Not useful')
+                if i%100 == 0:
+                    print(i),
+            except:
+                print('error')
+        
+        data_dict = {}
+        
+        if num_ch>0:
+            x1list=np.reshape(x1list, (len(x1list)*len(x1list[0]),len(x1list[0][0])))
+            y1list=np.reshape(y1list, (len(y1list)*len(y1list[0]),len(y1list[0][0])))
+            data_dict[channels[0]+'x']=x1list
+            data_dict[channels[0]+'y']=y1list
+        if num_ch>1:
+            x2list=np.reshape(x2list, (len(x2list)*len(x2list[0]),len(x2list[0][0])))
+            y2list=np.reshape(y2list, (len(y2list)*len(y2list[0]),len(y2list[0][0])))
+            data_dict[channels[1]+'x']=x2list
+            data_dict[channels[1]+'y']=y2list
+        if num_ch>2:
+            x3list=np.reshape(x3list, (len(x3list)*len(x3list[0]),len(x3list[0][0])))
+            y3list=np.reshape(y3list, (len(y3list)*len(y3list[0]),len(y3list[0][0])))
+            data_dict[channels[2]+'x']=x3list
+            data_dict[channels[2]+'y']=y3list
+        if num_ch>3:
+            x4list=np.reshape(x4list, (len(x4list)*len(x4list[0]),len(x4list[0][0])))
+            y4list=np.reshape(y4list, (len(y4list)*len(y4list[0]),len(y4list[0][0])))
+            data_dict[channels[3]+'x']=x4list
+            data_dict[channels[3]+'y']=y4list
+        
+        if '.' in fname:
+            if fname.split('.')[1] != 'mat':
+                print('file extension error') 
+        else:
+            fname = fname+'.mat'
+        #add time to the file name
+        t = datetime.datetime.now()
+        tstr = t.strftime('%Y%m%d')+'_%02d%02d%02d_'% (t.hour, t.minute, t.second)
+        #save matlab file
+        ffull = os.path.join(fpath, tstr+fname)
+        scipy.io.savemat(ffull, mdict=data_dict)
+        #save screen shot
+        scname = os.path.join(fpath, tstr+fname.split('.')[0]+'.png')
+        self.save_screenshot(scname)
 
 
 # lecroy_ip = '18.62.10.141'
