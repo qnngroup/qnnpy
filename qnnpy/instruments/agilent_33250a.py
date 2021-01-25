@@ -19,7 +19,9 @@ class Agilent33250a(object):
     def query(self, string):
         return self.pyvisa.query(string)
 
-
+    def beep(self):
+        self.pyvisa.write('SYST:BEEP')
+        
     def reset(self):
         self.write('*RST')
 
