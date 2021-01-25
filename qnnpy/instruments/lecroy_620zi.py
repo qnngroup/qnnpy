@@ -277,7 +277,9 @@ class LeCroy620Zi(object):
         width_per_div = self.round_up_lockstep(width_per_div)
         self.vbs_write('app.Math.%s.Operator1Setup.HorScale = %s' % (math_channel, width_per_div))
         self.view_channel(channel = math_channel, view = True)
-
+        
+    def math_histogram_clear_sweeps(self, math_channel='F1'):
+        self.vbs_write('app.Math.%s.ClearSweeps' % math_channel)
 
     def collect_sweeps(self, channel = 'F1', num_sweeps = 1000):
         self.clear_sweeps()
@@ -409,22 +411,26 @@ class LeCroy620Zi(object):
             y4list=np.reshape(y4list, (len(y4list)*len(y4list[0]),len(y4list[0][0])))
             data_dict[channels[3]+'x']=x4list
             data_dict[channels[3]+'y']=y4list
-        
-        if '.' in fname:
-            if fname.split('.')[1] != 'mat':
-                print('file extension error') 
-        else:
-            fname = fname+'.mat'
-        #add time to the file name
-        t = datetime.datetime.now()
-        tstr = t.strftime('%Y%m%d')+'_%02d%02d%02d_'% (t.hour, t.minute, t.second)
-        #save matlab file
-        ffull = os.path.join(fpath, tstr+fname)
-        scipy.io.savemat(ffull, mdict=data_dict)
-        #save screen shot
-        scname = os.path.join(fpath, tstr+fname.split('.')[0]+'.png')
-        self.save_screenshot(scname)
 
+
+        '''below saves the data and a screen shot. it has been removed such that 
+        saving is consistent with qnnpy'''
+        # if '.' in fname:
+        #     if fname.split('.')[1] != 'mat':
+        #         print('file extension error') 
+        # else:
+        #     fname = fname+'.mat'
+        # #add time to the file name
+        # t = datetime.datetime.now()
+        # tstr = t.strftime('%Y%m%d')+'_%02d%02d%02d_'% (t.hour, t.minute, t.second)
+        # #save matlab file
+        # ffull = os.path.join(fpath, tstr+fname)
+        # scipy.io.savemat(ffull, mdict=data_dict)
+        # #save screen shot
+        # scname = os.path.join(fpath, tstr+fname.split('.')[0]+'.png')
+        # self.save_screenshot(scname)
+
+        return data_dict
 
 # lecroy_ip = '18.62.10.141'
 # lecroy = LeCroy620Zi("TCPIP::%s::INSTR" % lecroy_ip)
