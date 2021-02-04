@@ -178,6 +178,230 @@ class nTron:
             # print('TEMPERATURE: Not Specified')
         
 
+class IvSweep(nTron):
+    """ Class object for iv sweeps
+
+    Configuration: iv_sweep:
+    [start: initial bias current],
+    [stop: final bias current],
+    [steps: number of points],
+    [sweep: number of itterations],
+    [full_sweep: Include both positive and negative bias],
+    [series_resistance: resistance at voltage source ie R_srs]
+    
+    """
+    def run_sweep_fixed(self):
+        """ Runs IV sweep with config paramters
+        This constructs #steps between start and 75% of final current.
+        Then, #steps between 75% and 100% of final current.
+        
+        np.linspace()
+        """
+        self.source.reset()
+        self.meter.reset()
+
+        self.source.set_output(False)
+
+        start = self.properties['iv_sweep']['start']
+        stop = self.properties['iv_sweep']['stop']
+        steps = self.properties['iv_sweep']['steps']
+        sweep = self.properties['iv_sweep']['sweep']
+        # To select full (positive and negative) trace or half trace
+        full_sweep = self.properties['iv_sweep']['full_sweep']
+        Isource1 = np.linspace(start, stop*0.75, steps) #Coarse
+        Isource2 = np.linspace(stop*0.75, stop, steps) #Fine
+
+        if full_sweep == True:
+            Isource = np.concatenate([Isource1, Isource2, Isource2[::-1], Isource1[::-1]])
+            Isource = np.concatenate([Isource, -Isource])
+        else:
+            Isource = np.concatenate([Isource1, Isource2])
+        self.v_set = np.tile(Isource, sweep) * self.R_srs
+
+        self.source.set_output(True)
+        sleep(1)
+        voltage = []
+        current = []
+
+
+        for n in self.v_set:
+            self.source.set_voltage(n)
+            sleep(0.1)
+
+            vread = self.meter.read_voltage() # Voltage
+
+            iread = (n-vread)/self.R_srs#(set voltage - read voltage)
+
+            print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+            voltage.append(vread)
+            current.append(iread)
+
+        self.v_read = voltage
+        self.i_read = current
+        
+        
+    def run_sweep_dynamic(self):
+        """ Runs IV sweep with config paramters
+        This constructs [points_coarse] between start and [percent] of final current.
+        Then, [points_fine] between [percent] and 100% of final current.
+
+        uses np.linspace()
+        """
+        self.source.reset()
+        self.meter.reset()
+
+        self.source.set_output(False)
+
+        start = self.properties['iv_sweep']['start']
+        stop = self.properties['iv_sweep']['stop']
+        percent = self.properties['iv_sweep']['percent']
+        num1 = self.properties['iv_sweep']['points_coarse']
+        num2 = self.properties['iv_sweep']['points_fine']
+        
+        sweep = self.properties['iv_sweep']['sweep']
+        # To select full (positive and negative) trace or half trace
+        full_sweep = self.properties['iv_sweep']['full_sweep']
+        Isource1 = np.linspace(start, stop*percent, num1) #Coarse
+        Isource2 = np.linspace(stop*percent, stop, num2) #Fine
+
+        if full_sweep == True:
+            Isource = np.concatenate([Isource1, Isource2, Isource2[::-1], Isource1[::-1]])
+            Isource = np.concatenate([Isource, -Isource])
+        else:
+            Isource = np.concatenate([Isource1, Isource2])
+        self.v_set = np.tile(Isource, sweep) * self.R_srs
+
+        self.source.set_output(True)
+        sleep(1)
+        voltage = []
+        current = []
+
+
+        for n in self.v_set:
+            self.source.set_voltage(n)
+            sleep(0.1)
+
+            vread = self.meter.read_voltage() # Voltage
+
+            iread = (n-vread)/self.R_srs#(set voltage - read voltage)
+
+            print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+            voltage.append(vread)
+            current.append(iread)
+
+        self.v_read = voltage
+        self.i_read = current
+
+    def run_sweep_spacing(self):
+        """ Runs IV sweep with config paramters
+        This constructs [points_coarse] between start and [percent] of final current.
+        Then, [points_fine] between [percent] and 100% of final current.
+        
+        uses np.arange()
+        """
+        self.source.reset()
+        self.meter.reset()
+
+        self.source.set_output(False)
+
+        start = self.properties['iv_sweep']['start']
+        stop = self.properties['iv_sweep']['stop']
+        percent = self.properties['iv_sweep']['percent']
+        spacing1 = self.properties['iv_sweep']['spacing_coarse']
+        spacing2 = self.properties['iv_sweep']['spacing_fine']
+        
+        sweep = self.properties['iv_sweep']['sweep']
+        # To select full (positive and negative) trace or half trace
+        full_sweep = self.properties['iv_sweep']['full_sweep']
+        Isource1 = np.arange(start, stop*percent+spacing1, spacing1) #Coarse
+        Isource2 = np.arange(stop*percent, stop+spacing2, spacing2) #Fine
+
+        if full_sweep == True:
+            Isource = np.concatenate([Isource1, Isource2, Isource2[::-1], Isource1[::-1]])
+            Isource = np.concatenate([Isource, -Isource])
+        else:
+            Isource = np.concatenate([Isource1, Isource2])
+        self.v_set = np.tile(Isource, sweep) * self.R_srs
+
+        self.source.set_output(True)
+        sleep(1)
+        voltage = []
+        current = []
+
+
+        for n in self.v_set:
+            self.source.set_voltage(n)
+            sleep(0.1)
+
+            vread = self.meter.read_voltage() # Voltage
+
+            iread = (n-vread)/self.R_srs#(set voltage - read voltage)
+
+            print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+            voltage.append(vread)
+            current.append(iread)
+
+        self.v_read = voltage
+        self.i_read = current
+
+
+
+    def isw_calc(self):
+        """ Calculates critical current.
+        """
+        '''
+        Critical current is defined as the current one step before a voltage
+        reading greater than 5mV.
+        self.isw = self.i_read[np.argmax(np.array(self.v_read) > 0.005)-1]
+        print('%.4f uA' % (self.isw*1e6))
+        '''
+
+        ''' New method looks at differential and takes average of points that 
+        meet condition. Prints mean() and std().` std should be < 1-2µA
+        '''
+        #isws = abs(self.i_read[np.where(abs(np.diff(self.i_read)/max(np.diff(self.i_read))) > 0.5)])
+        # self.isw = self.i_read[np.argmax(np.array(self.v_read) > 0.005)-1]
+        # print('%.4f uA' % (self.isw*1e6))
+        
+        
+        
+        try:
+            switches = np.asarray(np.where(abs(np.diff(self.i_read)/max(np.diff(self.i_read))) > 0.8),dtype=int).squeeze()
+            isws = abs(np.asarray([self.i_read[i] for i in switches]))
+            print(isws)
+            self.isw = isws.mean()
+            print('Isw_avg = %.4f µA :--: Isw_std = %.4f µA' % (self.isw*1e6, isws.std()*1e6))
+        except:
+            print('Could not calculate Isw. Isw set to 0')
+            self.isw = 0
+    
+    def plot(self):
+        full_path = qf.save(self.properties, 'iv_sweep')
+        qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
+                title=self.sample_name+" "+self.device_type+" "+self.device_name,
+                xlabel='Voltage (mV)',
+                ylabel='Current (uA)',
+                path=full_path,
+                show=True,
+                close=True)
+    
+    def save(self):
+
+        #Set up data dictionary
+
+        data_dict = {'V_source': self.v_set,
+                 'V_device': self.v_read,
+                 'I_device': self.i_read,
+                 'Isw': self.isw,
+                 'R_srs': self.R_srs,
+                 'temp': self.properties['Temperature']['initial temp']}
+
+
+        self.full_path = qf.save(self.properties, 'iv_sweep', data_dict, 
+                                 instrument_list = self.instrument_list)
+
+
+
 class DoubleSweep(nTron):
     """ Class object for iv sweeps
 
@@ -287,6 +511,12 @@ class DoubleSweep(nTron):
         self.full_path = qf.save(self.properties, 'iv_sweep', data_dict, 
                                  instrument_list = self.instrument_list)
 
+
+class DoubleSweepScope(nTron):
+    """ use awg and scope to aquire Ic distributions.  
+    
+    """
+    
 
     
 class PulseTraceCurrentSweep(nTron):

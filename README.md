@@ -121,8 +121,8 @@ PyYAML 5.1 and later
 ## Network
 Each computer in the lab is connected to the qnn-nas by maping a network drive to the desired folder. 
 
-- `\\18.25.29.148\qnn-repo` is mapped to Q: for Qnn (or R: if Q: is taken)
-- `\\18.25.29.148\Data` is mapped to S: for Synology
+- `\\18.25.16.44\qnn-repo` is mapped to Q: for Qnn (or R: if Q: is taken)
+- `\\18.25.16.44\Data` is mapped to S: for Synology
 
 
 ## Short Term TO-DO (write problem + solution)
