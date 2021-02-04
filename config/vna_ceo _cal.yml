@@ -1,0 +1,20 @@
+User:
+  name: EB
+  
+Save File:
+  sample name: CEO30
+  device type: none
+  device name: calibration
+  measurement: S21_measurement
+  filepath: C:\Users\ICE\Desktop
+  
+S21_measurement:
+  start: !!float 200e6
+  stop: !!float 20e9
+  num_points: 5001
+  if_bw: 20
+  power: 0
+
+PNA:
+  name: KeysightN5224a
+  port: GPIB0::16::INSTR
