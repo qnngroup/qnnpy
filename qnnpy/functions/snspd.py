@@ -147,7 +147,8 @@ class Snspd:
                 from qnnpy.instruments.srs_sim928 import SIM928
                 try:
                     self.source = SIM928(self.properties['Source']['port'], self.properties['Source']['port_alt'])
-                    self.source.reset()
+                    # self.source.reset()
+                    self.source.set_output(False)
                     print('SOURCE: connected')
                 except:
                     print('SOURCE: failed to connect')
@@ -815,6 +816,7 @@ class PhotonCounts(Snspd):
         if self.LCR == []:
             self.attenuation = 100
 
+        self.instrument_list.append('Laser')
 
         data_dict = {'LCR': self.LCR,
                      'DCR': self.DCR,
@@ -903,41 +905,58 @@ class PulseTraceSingle(Snspd):
     """
     def trace_data(self, channels=None):
         """ Returns x,y of scope_channel in configuration file"""
+        
+        bias = self.properties['pulse_trace']['bias_voltage']
+        self.source.set_output(True)
+        self.source.set_voltage(voltage=bias*self.R_srs)
 
         if channels:
             channels = channels
         else:
-            channels = self.properties['Scope']['channel']
+            channels = self.properties['pulse_trace']['channel']
 
         xlist = []; ylist = [];
         tlist = []
+        
+        trigger_v = self.properties['pulse_trace']['trigger_level']
+        self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+        
+        attenuation = self.properties['pulse_trace']['attenuation']
+        self.attenuator.set_attenuation_db(attenuation)
+        if attenuation == 100:
+            self.attenuator.set_beam_block(True)
+        else:
+            self.attenuator.set_beam_block(False)
+            
+        sleep(0.1)
+        
         for i in range(len(channels)):
-
             x, y = self.scope.get_single_trace(channel=channels[i])
             # xlist.append(x);  #keep all x data the same.
             ylist.append(y);
 
 
 
-        self.trace_x = [x]
+        self.trace_x = x
         self.trace_y = ylist
-
         return self.trace_x, self.trace_y
 
     def plot(self):
         """ Grabs new trace from scope and plots. Figure is saved to path """
         # x,y = self.scope.get_single_trace(channel= self.scope_channel)
-
+        channels = self.properties['pulse_trace']['channel']
         full_path = qf.save(self.properties, 'pulse_trace')
 #        data_dict = {'x':x,'y':y}
-        qf.plot(self.trace_x, self.trace_y,
+        x = self.trace_x
+        y = self.trace_y
+        qf.plot(x, y,
                 title=self.sample_name+" "+self.device_type+" "+self.device_name,
                 # xlabel = '',
                 # ylabel = '',
                 path=full_path,
                 show=True,
                 linestyle='-',
-                label=self.properties['Scope']['channel'],
+                label=channels,
                 close=True)
 
     def save(self):
