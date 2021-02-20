@@ -37,7 +37,7 @@ def plot(xdata, ydata, x_scale = 'linear', y_scale = 'linear',
     if close:
         plt.close()
 
-    
+
     if type(ydata) == list and type(xdata) != list:
         if label:
             for i in np.arange(0,len(ydata),1):
@@ -151,11 +151,15 @@ def save(parameters, measurement, data_dict={}, instrument_list=None):
     sample_name = parameters['Save File']['sample name'] #this field should describe the material SPX111 or GaN_ID#20
     device_name = parameters['Save File']['device name'] #this field should describe which device is being tested
     device_type = parameters['Save File']['device type'] #this field should describe device type tapered snspd, coupler, memory
+    if parameters['Save File'].get('port'):
+        device_type_ext = device_type + "_" + parameters['Save File']['port']
+    else:
+        device_type_ext = device_type
     time_str = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
-     
+    
     ''' Check for path '''
     if file_path == None:
-            lablog('No filepath indicated')
+            # lablog('No filepath indicated')
             raise ValueError('Please enter a file path')
             
             
@@ -171,7 +175,7 @@ def save(parameters, measurement, data_dict={}, instrument_list=None):
         
     ''' Create folder and save .mat file. '''
     while os.path.exists(file_path):
-        file_name = sample_name +"_"+measurement+"_"+ device_type +"_"+ device_name +"_"+time_str 
+        file_name = sample_name +"_"+measurement+"_"+ device_type_ext +"_"+ device_name +"_"+time_str 
         file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement)
         os.makedirs(file_path, exist_ok=True)
         full_path = os.path.join(file_path, file_name)
