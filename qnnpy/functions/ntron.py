@@ -27,6 +27,7 @@ class nTron:
         self.sample_name = self.properties['Save File']['sample name']
         self.device_name = self.properties['Save File']['device name']
         self.device_type = self.properties['Save File']['device type']
+        
 
         self.isw = 0
         self.instrument_list = []
@@ -124,7 +125,7 @@ class nTron:
                 from qnnpy.instruments.agilent_33250a import Agilent33250a
                 try:
                     self.awg = Agilent33250a(self.properties['AWG']['port'])
-                    self.awg.reset()
+                    self.awg.beep()
                     print('AWG: connected')
                 except:
                     print('AWG: failed to connect')
@@ -377,13 +378,22 @@ class IvSweep(nTron):
     
     def plot(self):
         full_path = qf.save(self.properties, 'iv_sweep')
-        qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
-                title=self.sample_name+" "+self.device_type+" "+self.device_name,
+        if self.properties['Save File'].get('port'):
+            qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
+                title=self.sample_name+" "+self.device_type+" "+self.device_name+" "+self.properties['Save File']['port'],
                 xlabel='Voltage (mV)',
                 ylabel='Current (uA)',
                 path=full_path,
                 show=True,
                 close=True)
+        else:
+            qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
+                    title=self.sample_name+" "+self.device_type+" "+self.device_name,
+                    xlabel='Voltage (mV)',
+                    ylabel='Current (uA)',
+                    path=full_path,
+                    show=True,
+                    close=True)
     
     def save(self):
 
@@ -419,7 +429,7 @@ class DoubleSweep(nTron):
         This constructs #steps between start and 75% of final current.
         Then, #steps between 75% and 100% of final current.
         
-        np.linspace()
+
         """
         self.source.reset()
         self.meter.reset()
@@ -427,17 +437,17 @@ class DoubleSweep(nTron):
         self.source.set_output(False)
         self.source2.set_output(False)
 
-        start = self.properties['iv_sweep']['start']
-        stop = self.properties['iv_sweep']['stop']
-        steps = self.properties['iv_sweep']['steps']
-        sweep = self.properties['iv_sweep']['sweep']
-        Ig_start = self.properties['iv_sweep']['Ig_start']
-        Ig_stop = self.properties['iv_sweep']['Ig_stop']
-        Ig_steps = self.properties['iv_sweep']['Ig_steps']
+        start = self.properties['double_sweep']['start']
+        stop = self.properties['double_sweep']['stop']
+        steps = self.properties['double_sweep']['steps']
+        sweep = self.properties['double_sweep']['sweep']
+        Ig_start = self.properties['double_sweep']['Ig_start']
+        Ig_stop = self.properties['double_sweep']['Ig_stop']
+        Ig_steps = self.properties['double_sweep']['Ig_steps']
         
         
         # To select full (positive and negative) trace or half trace
-        full_sweep = self.properties['iv_sweep']['full_sweep']
+        full_sweep = self.properties['double_sweep']['full_sweep']
         Isource1 = np.linspace(start, stop, steps) #Coarse
         #Isource2 = np.linspace(stop*0.75, stop, steps) #Fine
 
@@ -486,7 +496,7 @@ class DoubleSweep(nTron):
         
         
     def plot(self):
-        full_path = qf.save(self.properties, 'iv_sweep')
+        full_path = qf.save(self.properties, 'double_sweep')
         qf.plot(self.v_list, self.i_list,
                 title=self.sample_name+" "+self.device_type+" "+self.device_name,
                 xlabel='Voltage (V)',
@@ -508,15 +518,63 @@ class DoubleSweep(nTron):
                  'temp': self.properties['Temperature']['initial temp']}
 
 
-        self.full_path = qf.save(self.properties, 'iv_sweep', data_dict, 
+        self.full_path = qf.save(self.properties, 'double_sweep', data_dict, 
                                  instrument_list = self.instrument_list)
 
 
 class DoubleSweepScope(nTron):
     """ use awg and scope to aquire Ic distributions.  
+        Awg settings and scope settings are not currently programmed.
     
     """
-    
+    def run_sweep(self):
+        'runs the sweep'
+        
+        self.source.reset()
+        self.source.set_output(False)
+        self.R_srs = self.properties['double_sweep_scope']['series_resistance_srs']
+        start = self.properties['double_sweep_scope']['start']
+        stop = self.properties['double_sweep_scope']['stop']
+        steps = self.properties['double_sweep_scope']['steps']
+        sweep = self.properties['double_sweep_scope']['sweep']
+        
+        trace_signal = self.properties['double_sweep_scope']['trace_signal']
+        trace_trigger = self.properties['double_sweep_scope']['trace_trigger']
+        trace_hist = self.properties['double_sweep_scope']['trace_hist']
+
+        Isource = np.linspace(start, stop, steps) 
+
+        self.v_set = np.tile(Isource, sweep) * self.R_srs
+        
+        
+        
+        
+        for i in self.v_set:
+            self.source.set_voltage(i)
+            self.source.set_output(True)
+            print('Voltage:%0.2f ' % i)
+            sleep(0.1)
+            
+            self.scope.set_trigger_mode(trigger_mode = 'Stop')
+            self.scope.math_histogram_clear_sweeps()
+            
+            self.data_dict = self.scope.save_traces_multiple_sequence(
+                channels = [trace_signal, trace_trigger], 
+                num_traces = 1, 
+                NumSegments = 1000)
+            hist = self.scope.get_wf_data(trace_hist)
+            self.data_dict['hist'] = hist
+            self.data_dict['i_bias'] = i/self.R_srs
+            
+            self.full_path = qf.save(self.properties, 'double_sweep_scope', self.data_dict, 
+                                     instrument_list = self.instrument_list)
+            self.scope.save_screenshot(file_name=self.full_path+'.png', white_background=False)
+            
+        self.scope.set_segments(2)
+        
+
+        
+
 
     
 class PulseTraceCurrentSweep(nTron):
