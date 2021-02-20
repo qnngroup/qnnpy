@@ -25,6 +25,17 @@ class Agilent33250a(object):
     def reset(self):
         self.write('*RST')
 
+    def clear_volatile(self):
+        self.write(':DATA:VOLatile:CLEar')
+
+    def delete(self, name):
+        self.write('DATA:DEL %s' % name)
+        
+    def get_catalog(self):
+        'List the names of all waveforms currently available for selection.'
+        return self.query('DATA:CATalog?')
+
+        
     def set_sin(self, freq=1000, vpp=0.1, voffset=0):
         # In a string, %0.6e converts a number to scientific notation like
         # print '%.6e' %(1234.56789) outputs '1.234568e+03'
@@ -101,7 +112,7 @@ class Agilent33250a(object):
         '''
         self.write('APPL:%s %0.6e, %0.6e, %0.6e' % (name, freq, amplitude, offset))
         
-    def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY'):
+    def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY', chan=1):
         """ Input voltage values will be scaled to +/-1.0, you can then adjust the overall
         amplitude using the set_vpp function.  The 33250a does not allow the input of time for each
         point, so we instead use interpolation here to create waveform of 2^14 equally-spaced 
@@ -110,20 +121,23 @@ class Agilent33250a(object):
         t = np.array(t);  v = np.array(v)
 
         v = v-min(v);  v = 2*v/max(v);  v = v-1
-        temp = self.timeout; self.timeout = 60
+        # temp = self.timeout; self.timeout = 60
         t_interp = np.linspace(t[0],t[-1],2**14) # Can be up to 2**14 long
         v_interp = np.interp(t_interp, t, v)
-
+        
         data_strings = ['%0.3f' % x for x in v_interp]
         data_msg = ', '.join(data_strings)
-
+        
+        self.set_sin() #cannot delete selected waveform
+        self.delete(name) #for overwriting existing name
+        
         self.write('DATA VOLATILE, ' + data_msg) # Form of "DATA VOLATILE, 1, .67, .33, 0, -.33", p200 user's guide
         name = name[0:8].upper()
         self.write('DATA:COPY %s, VOLATILE' % name)
         self.write('APPL:USER')  # Set output to ARB
         self.write('FUNC:USER %s' % name) # Select the waveform in the volatile memory
         self.write('APPL:USER')
-        self.timeout = temp
+        # self.timeout = temp
         # self.write('FUNC USER') # Output the selected waveform
 
     def setup_heartbeat_wf(self):
@@ -137,3 +151,17 @@ class Agilent33250a(object):
         self.write('APPL:USER')  # Set output to ARB
         self.write('FUNC:USER %s' % name)
         self.write('APPL:USER')  # Set output to ARB
+        
+    def setup_pulse_train(self, number_of_pulses=6,t_delay=4, t_on=1, t_off=.2, t_edge=.01):        
+        t = [0, t_delay]
+        v = [0, 0]
+        for i in range(number_of_pulses):
+            t.append(round(t[-1]+t_edge, 2))
+            t.append(round(t[-1]+t_on, 2))
+            t.append(round(t[-1]+t_edge, 2))
+            t.append(round(t[-1]+t_off, 2))
+
+            v.extend([1, 1, 0, 0])
+        self.get_catalog()
+        self.set_arb_wf(t, v, name='PULSE_TR')
+                    
