@@ -29,6 +29,7 @@ class YokogawaGS200(object):
     
     def reset(self):
         self.write('*RST')
+        self.set_voltage_range(5)
         
     def setup_source_current(self):
         self.write('*RST')
