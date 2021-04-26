@@ -152,6 +152,17 @@ class Snspd:
                     print('SOURCE: connected')
                 except:
                     print('SOURCE: failed to connect')
+                    
+            elif self.properties['Source']['name'] == 'YokogawaGS200':
+                from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
+                try:
+                    self.source = YokogawaGS200(self.properties['Source']['port'])
+                    # self.source.reset()
+                    self.source.set_output(False)
+                    self.source.set_voltage_range(5)
+                    print('SOURCE: connected')
+                except:
+                    print('SOURCE: failed to connect')
             else:
                 qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
                 raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
@@ -863,7 +874,7 @@ class LinearityCheck(Snspd):
         start_time = time.time()
         for i in dbs:
             self.attenuator.set_attenuation_db(i)
-            sleep(1)
+            sleep(.1)
             count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
             counts_per_atten.append(count_rate_avg)
             print('Attenuation: %.1f dB \\\\ Counts: %.0f \\\\ Elapsed Time: %.2f' %(i, count_rate_avg, time.time()-start_time))
@@ -907,9 +918,10 @@ class PulseTraceSingle(Snspd):
         """ Returns x,y of scope_channel in configuration file"""
         
         bias = self.properties['pulse_trace']['bias_voltage']
+        self.scope.set_trigger_mode(trigger_mode='Stop')
         self.source.set_output(True)
-        self.source.set_voltage(voltage=bias*self.R_srs)
-
+        self.source.set_voltage(voltage=bias)
+        
         if channels:
             channels = channels
         else:
@@ -929,13 +941,11 @@ class PulseTraceSingle(Snspd):
             self.attenuator.set_beam_block(False)
             
         sleep(0.1)
-        
+        self.scope.set_trigger_mode(trigger_mode='Single')
         for i in range(len(channels)):
             x, y = self.scope.get_single_trace(channel=channels[i])
             # xlist.append(x);  #keep all x data the same.
             ylist.append(y);
-
-
 
         self.trace_x = x
         self.trace_y = ylist
@@ -1061,9 +1071,9 @@ class PulseTraceCurrentSweep(Snspd):
             snspd_traces_y = []
             self.scope.clear_sweeps()
             for n in range(num_traces):
-                x, y = self.source.get_single_trace(channel='C2')
+                x, y = self.scope.get_single_trace(channel='C2')
                 snspd_traces_x.append(x);  snspd_traces_y.append(y)
-                x, y = self.source.get_single_trace(channel='C3')
+                x, y = self.scope.get_single_trace(channel='C3')
                 pd_traces_x.append(x);  pd_traces_y.append(y)
 
             snspd_traces_x_list.append(snspd_traces_x)
