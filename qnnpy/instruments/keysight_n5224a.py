@@ -17,6 +17,7 @@ class KeysightN5224a(object):
         # self.pyvisa.query_delay = 1 # Set extra delay time between write and read commands
         #set the data format; this seems to be the only format recognizable
         self.pyvisa.write('FORM ASCii,0') 
+
     
     def read(self):
         return self.pyvisa.read()
@@ -29,9 +30,13 @@ class KeysightN5224a(object):
     
     def reset(self, measurement = 'S21', if_bandwidth = 1e3, start_freq=100e6,
               stop_freq = 15e9, power = -30):
-        self.write('SYST:PRES')
-        self.write("CALC:PAR:DEL:ALL")
-        self.set_measurement(measurement)
+        
+        # these two lines delete the calibration. 
+        # self.write('SYST:PRES')
+        # self.write("CALC:PAR:DEL:ALL")
+        
+        # self.write("CALC:PAR:DEL") #this command deletes the measurement before setting the measurement below
+        # self.set_measurement(measurement)
         self.set_start(start_freq)
         self.set_stop(stop_freq)
         self.set_if_bw(if_bandwidth)
@@ -49,19 +54,58 @@ class KeysightN5224a(object):
         trace_name = trace_name.split(',')[0]
         self.write("DISPlay:WINDow1:TRACe1:FEED \'{}\'".format(trace_name))
         
-    def single_sweep(self):
-        '''run a single sweep and get f in Hz, S in real + i*imag form'''
-        #self.write("INITiate:CONTinuous OFF") 
+    def set_basic(self, cnum, start_freq=100e6,
+                     stop_freq = 15e9, power = -30, if_bandwidth = 1e3, points=1001):
+        self.write('SENS{}:FREQ:STAR {}'.format(cnum, start_freq))
+        self.write('SENS{}:FREQ:STOP {}'.format(cnum, stop_freq))
+        self.write('SOUR{}:POW {:.2f}'.format(cnum, power))
+        self.write('SENS{}:BAND {:.2f}'.format(cnum, if_bandwidth))
+        self.write('SENS{}:SWE:POIN {}'.format(cnum, points))
+                   
+        
+    def set_Sparam(self, start_freq=100e6, stop_freq = 15e9, power = -30, 
+                   if_bandwidth = 1e3, points=1001):
+        self.write("CALC:PAR:DEL:ALL")
+        self.write("CALCulate1:PARameter:DEFine:EXT 'Meas1','S11'")
+        self.write("CALCulate1:PARameter:DEFine:EXT 'Meas2','S21'")
+        self.write("CALCulate1:PARameter:DEFine:EXT 'Meas3','S12'")
+        self.write("CALCulate1:PARameter:DEFine:EXT 'Meas4','S22'")
+        
+        self.write("DISPlay:WINDow1:STATE ON")
+        self.write("DISPlay:WINDow2:STATE ON")
+        self.write("DISPlay:WINDow3:STATE ON")
+        self.write("DISPlay:WINDow4:STATE ON")
+        
+        self.write("DISPlay:WINDow1:TRACe1:FEED 'Meas1'")
+        self.write("DISPlay:WINDow2:TRACe1:FEED 'Meas2'")
+        self.write("DISPlay:WINDow3:TRACe1:FEED 'Meas3'")
+        self.write("DISPlay:WINDow4:TRACe1:FEED 'Meas4'")
+        
+        self.set_basic(1, start_freq, stop_freq, power, if_bandwidth, points)
+        # self.set_basic(2, start_freq, stop_freq, power, if_bandwidth, points)
+        # self.set_basic(3, start_freq, stop_freq, power, if_bandwidth, points)
+        # self.set_basic(4, start_freq, stop_freq, power, if_bandwidth, points)
+        
         self.set_sweep_mode('SING')
         #self.write("INITiate:IMMediate")
         while self.get_sweep_mode() !='HOLD':
             sleep(.1)
-        f = self.get_frequency()
-        S = self.read_channel()
+        self.set_sweep_mode('CONT')
+        self.set_scale_auto_all()
+        
+    def single_sweep(self, channel=1):
+        '''run a single sweep and get f in Hz, S in real + i*imag form'''
+        #self.write("INITiate:CONTinuous OFF") 
+        self.set_sweep_mode('SING', channel)
+        #self.write("INITiate:IMMediate")
+        while self.get_sweep_mode() !='HOLD':
+            sleep(.1)
+        f = self.get_frequency(channel)
+        S = self.read_channel(channel)
         return f, S
     
-    def read_channel(self):
-        val = self.query("CALC:DATA? SDATA")
+    def read_channel(self, channel=1):
+        val = self.query("CALC{}:DATA? SDATA".format(channel))
         val = [x.strip() for x in val.split(',')]
         val = [float(x) for x in val]
         real_part = np.array(val[0::2])
@@ -69,8 +113,9 @@ class KeysightN5224a(object):
         S = real_part+1j*imag_part
         return S
         
-    def get_frequency(self):
-        freq = self.query("CALC:X?")
+    
+    def get_frequency(self, channel=1):
+        freq = self.query("CALC{}:X?".format(channel))
         freq = [x.strip() for x in freq.split(',')]
         freq = [float(x) for x in freq]
         return np.array(freq)
@@ -113,8 +158,33 @@ class KeysightN5224a(object):
     def set_span(self, frequency = 5e9):
         cmd ='SENS:FREQ:SPAN {}'.format(frequency)
         self.write(cmd)
+        
+    def set_points(self, points = 201):
+        cmd ='SENS:SWE:POIN {}'.format(points)
+        self.write(cmd)
+        
+    def set_calibration(self, state=1):
+        '''Set measurement must be run first.
+        Note: Before using this command you must select a measurement using 
+        CALC:PAR:SEL. You can select one measurement for each channel.
+        '''
+        cmd = 'SENS:CORR {}'.format(state)
+        self.write(cmd)
+        
+    def set_scale_auto(self, window=1):
+        cmd ='DISP:WIND{}:Y:AUTO'.format(window) 
+        self.write(cmd)
+        
+    def set_scale_auto_all(self):
+        ''' Scales all windows 
+        '''
+        win = self.query("DISPlay:CATalog?")
+        win = win[1:-2] 
+        for w in win.split(','):
+            self.write('DISP:WIND{}:Y:AUTO'.format(w))
 
 
+    
     def get_start(self):
         cmd ='SENS:FREQ:STAR?;'
         return self._pna_getter(self.query(cmd))
@@ -136,9 +206,7 @@ class KeysightN5224a(object):
     def get_points(self):
         cmd = 'SENS:SWE:POIN?'
         return self._pna_getter(self.query(cmd))
-    def set_points(self, points = 201):
-        cmd ='SENS:SWE:POIN {}'.format(points)
-        self.write(cmd)
+
     
              
     def get_trace_catalog(self):
@@ -149,6 +217,10 @@ class KeysightN5224a(object):
             trace_name,trace_type,trace_name,trace_type...
         """
         return self.query("CALC:PAR:CAT:EXT?").strip().strip('"')
+    
+    
+    def get_window_catalog(self):
+        return self.query("DISPlay:CATalog?").strip().strip('"')
     
     #electrical delay
     #def get_electrical_delay():
@@ -161,14 +233,14 @@ class KeysightN5224a(object):
     #    self.write(set_cmd)
     
     #sweep mode
-    def set_sweep_mode(self, mode = 'CONT'):
+    def set_sweep_mode(self, mode = 'CONT',  cnum=1):
         '''vals=Enum("HOLD", "CONT", "GRO", "SING"))'''
-        set_cmd='SENS:SWE:MODE {}'.format(mode)
+        set_cmd='SENS{}:SWE:MODE {}'.format(cnum, mode)
         self.write(set_cmd)
         
-    def get_sweep_mode(self):
+    def get_sweep_mode(self, cnum=1):
         '''vals=Enum("HOLD", "CONT", "GRO", "SING"))'''
-        get_cmd='SENS:SWE:MODE?'
+        get_cmd='SENS{}:SWE:MODE?'.format(cnum)
         return self.query(get_cmd).strip()
     
     
