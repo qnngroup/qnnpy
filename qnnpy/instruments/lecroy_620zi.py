@@ -120,7 +120,10 @@ class LeCroy620Zi(object):
         """ trigger_mode should be set to Auto/Normal/Single/Stop """
         self.vbs_write('app.Acquisition.TriggerMode = "%s"' % trigger_mode)
 
-
+    def set_sample_mode(self, sample_mode = "RealTime"):
+        """ Set Sample mode to either RealTime, Sequence, WStream"""
+        return self.vbs_write('app.Acquisition.Horizontal.SampleMode = "%s"' % sample_mode)
+    
     def set_sequence_mode(self):
         return self.vbs_write('app.Acquisition.Horizontal.SampleMode = "Sequence"')
     def set_segments(self, NumSegments = 500):
@@ -316,6 +319,54 @@ class LeCroy620Zi(object):
 
         return file_name
 
+    def get_single_trace_sequence(self, channel = 'C1',NumSegments= 1000):
+        """ Sets scope to "single" trigger mode to acquire one trace, then waits until the trigger has happened
+        (indicated by the trigger mode changing to "Stopped").  """
+
+        self.set_sequence_mode()
+        self.set_segments(NumSegments)
+        self.clear_sweeps()
+        self.set_trigger_mode(trigger_mode = 'Single')
+        if self.get_trigger_mode() == 'Single\n':
+            while self.get_trigger_mode() == 'Single\n':
+                sleep(1e-4)
+        x,y = self.get_wf_data(channel=channel)
+        interval=abs(x[0]-x[1])
+        xlist=[];
+        ylist=[];
+        totdp=np.int(np.size(x)/NumSegments)
+        for j in range(NumSegments):
+            xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
+            ylist.append(y[0+j*totdp:totdp+j*totdp])
+            
+        data_dict = {channel+'x': xlist, channel+'y': ylist}
+        return data_dict
+
+    
+    def get_multiple_trace_sequence(self, channels = ['C1', 'C2'], NumSegments=1000):
+        full_dict = {}    
+        self.set_sequence_mode()
+        self.set_segments(NumSegments)
+        self.clear_sweeps()
+        self.set_trigger_mode(trigger_mode = 'Single')
+        if self.get_trigger_mode() == 'Single\n':
+            while self.get_trigger_mode() == 'Single\n':
+                sleep(1e-4)
+        for c in channels:
+            x,y = self.get_wf_data(channel=c)
+            interval=abs(x[0]-x[1])
+            xlist=[];
+            ylist=[];
+            totdp=np.int(np.size(x)/NumSegments)
+            
+            for j in range(NumSegments):
+                xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
+                ylist.append(y[0+j*totdp:totdp+j*totdp])
+                
+            data_dict = {c+'x': xlist, c+'y': ylist}
+            full_dict.update(data_dict)
+
+        return full_dict
     
     def my_get_single_trace_sequence(self, channel = 'C1',NumSegments= 1000):
         """ Sets scope to "single" trigger mode to acquire one trace, then waits until the trigger has happened
@@ -334,9 +385,9 @@ class LeCroy620Zi(object):
         ylist=[];
         totdp=np.int(np.size(x)/NumSegments)
         for j in range(NumSegments):
-            
             xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
             ylist.append(y[0+j*totdp:totdp+j*totdp])
+            
         return xlist,ylist
     	
     	
