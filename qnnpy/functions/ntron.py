@@ -43,7 +43,7 @@ class nTron:
                 from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
                 try:
                     self.scope = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope']['port'])
-                    self.scope_channel = self.properties['Scope']['channel']
+                    # self.scope_channel = self.properties['Scope']['channel']
                     print('SCOPE: connected')
                 except:
                     print('SCOPE: failed to connect')
@@ -177,6 +177,18 @@ class nTron:
         else:
             self.properties['Temperature'] = {'initial temp': 'None'}
             # print('TEMPERATURE: Not Specified')
+            
+            
+    def voltage2current(self, V, attenuation, R=50):
+        V = V*10**(attenuation/20)
+        I = V/R
+        return I
+    
+    def current2voltage(self, I, attenuation, R=50):
+        V = I*R
+        V = V/10**(attenuation/20)
+        return V
+
         
 
 class IvSweep(nTron):
