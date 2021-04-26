@@ -60,7 +60,7 @@ def date_plot(path, date_start, date_end=datetime.date.today().isoformat(), plot
                     float(cells[6]), 
                     float(cells[7])]
             
-            if data[0] < 280:
+            if data[0] < 290:
                 x.append(date)
                 y.append(data)
     if plot:   
@@ -121,7 +121,7 @@ def save_cycle(x, y):
 # get_start_end(x,   y)
 
 #%% 
-x,y = date_plot(path, '2020-08-01', plot=True)
+x,y = date_plot(path, '2021-03-30', '2021-04-03',  plot=True)
 save_cycle(x,y)        
       
 #%%
