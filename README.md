@@ -126,6 +126,7 @@ Each computer in the lab is connected to the qnn-nas by maping a network drive t
 
 
 ## Short Term TO-DO (write problem + solution)
+- Switched (Source) Attenuator compensation in VNA needs to be added to the script. 
 - Remove reset on PulseTrace module. Still need to capture settings. 
 - ~~Output log is too long and hard to find information. Change output to just the section specific to the measurement and the instruments.~~
 - Logging was broken, consider just using open(), open().write, close() for everything. 
