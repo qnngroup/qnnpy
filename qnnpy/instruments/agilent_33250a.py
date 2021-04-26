@@ -35,28 +35,34 @@ class Agilent33250a(object):
         'List the names of all waveforms currently available for selection.'
         return self.query('DATA:CATalog?')
 
-        
+
+    def get_phase(self, chan=1):
+        return self.query('SOURCE%s:PHAS?' % chan)
+    
+    def get_amplitude(self, chan=1):
+        return self.query('SOURCE%s:VOLT?' % (chan))  
+    
     def set_sin(self, freq=1000, vpp=0.1, voffset=0):
         # In a string, %0.6e converts a number to scientific notation like
         # print '%.6e' %(1234.56789) outputs '1.234568e+03'
         self.write('APPL:SIN %0.6e HZ, %0.6e VPP, %0.6e V' % (freq,vpp,voffset))
 
-    def set_pulse(self, freq=1000, vlow=0.0, vhigh=1.0, width = 100e-6, edge_time = 1e-6):
-        vpp = vhigh-vlow
-        voffset = vpp/2
-        self.write('APPL:PULS %0.6e HZ, %0.6e VPP, %0.6e V' % (freq,vpp,voffset))
-        self.write('PULS:WIDT %0.6e' % (width))
-        self.write('PULS:TRAN %0.6e' % (edge_time))
 
+    def set_freq(self, freq=1000, chan=1):
+        self.write('SOURCE%s:FREQ %0.6e' % (chan, freq))
 
-    def set_freq(self, freq=1000):
-        self.write('FREQ %0.6e' % (freq))
-
-    def set_vpp(self, vpp=0.1):
-        self.write('VOLT %0.6e' % (vpp))
+    def set_high(self, v=0.1, chan=1):
+        self.write('SOURCE%s:VOLT:HIGH %0.6e' % (chan, v))
+    
+    def set_low(self, v=0, chan=1):
+        self.write('SOURCE%s:VOLT:LOW %0.6e' % (chan, v))
 
     def set_voffset(self, voffset = 0.0):
         self.write('VOLT:OFFS %0.6e' % (voffset))
+        
+    def set_vpp(self, vpp=0.1):
+        self.write('VOLT %0.6e' % (vpp))
+
 
     def set_vhighlow(self, vlow=0.0, vhigh=1.0):
         if vhigh > vlow:
@@ -68,9 +74,9 @@ class Agilent33250a(object):
             self.set_voffset((vhigh+vlow)/2.0)
             self.set_polarity(inverted = True)
 
-    def set_output(self,output=False):
-        if output is True:  self.write('OUTPUT ON')
-        else:               self.write('OUTPUT OFF')
+    def set_output(self,output=False, chan=1):
+        if output is True:  self.write('OUTPUT%s ON' % chan)
+        else:               self.write('OUTPUT%s OFF' % chan)
 
     def set_load(self, high_z=False):
         if high_z is True:  self.write('OUTP:LOAD INF')
@@ -85,7 +91,9 @@ class Agilent33250a(object):
         else:                   self.write('TRIG:SOUR IMM' )
         self.write('TRIG:DEL %s' % (delay)) # Delay in seconds
 
-
+    def set_phase(self, degrees, chan=1):
+        self.write('SOURCE%s:PHAS %s' %(chan, degrees))
+        
     def trigger_now(self):
         self.write('*TRG')
 
@@ -99,7 +107,7 @@ class Agilent33250a(object):
         else:
             self.write('BURS:STAT OFF')  # Disables burst state
         
-    def set_waveform(self, name = 'SIN', freq=1000, amplitude=0.1, offset=0):
+    def set_waveform(self, name = 'SIN', freq=1000, amplitude=0.1, offset=0, chan=1):
         '''
         APPLy
         :SINusoid [<frequency> [,<amplitude> [,<offset>] ]]
@@ -110,9 +118,17 @@ class Agilent33250a(object):
         :DC [<frequency|DEF>1 [,<amplitude>|DEF>1 [,<offset>] ]]
         :USER [<frequency> [,<amplitude> [,<offset>] ]]
         '''
-        self.write('APPL:%s %0.6e, %0.6e, %0.6e' % (name, freq, amplitude, offset))
-        
-    def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY', chan=1):
+        self.write('SOURCE%s:APPL:%s %0.6e, %0.6e, %0.6e' % (chan, name, freq, amplitude, offset))
+
+    def set_pulse(self, freq=1000, vlow=0.0, vhigh=1.0, width = 100e-6, edge_time = 2.9e-9, chan=1):
+        vpp = vhigh-vlow
+        voffset = vpp/2
+        self.write('SOURCE%s:APPL:PULS %0.6e HZ, %0.6e VPP, %0.6e V' % (chan, freq,vpp,voffset))
+        self.write('SOURCE%s:PULS:WIDT %0.6e' % (chan, width))
+
+
+
+    def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY'):
         """ Input voltage values will be scaled to +/-1.0, you can then adjust the overall
         amplitude using the set_vpp function.  The 33250a does not allow the input of time for each
         point, so we instead use interpolation here to create waveform of 2^14 equally-spaced 
@@ -165,3 +181,7 @@ class Agilent33250a(object):
         self.get_catalog()
         self.set_arb_wf(t, v, name='PULSE_TR')
                     
+    def sync_output(self, chan):
+        self.write('SOURCE%s:FUNC:ARBitrary:SYNChronize' % chan)
+        
+        
