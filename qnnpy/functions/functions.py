@@ -13,7 +13,8 @@ from datetime import datetime
 import scipy.io
 import re
 import numpy as np
-
+import mariadb
+import sys
 
 ###############################################################################
 # Plotting
@@ -135,7 +136,7 @@ def check_file_path(file_path):
 ###############################################################################   
             
                             
-def save(parameters, measurement, data_dict={}, instrument_list=None):
+def save(parameters, measurement, data_dict={}, instrument_list=None, db=False):
     """ Save follows the typical format of defining a data dictionary (data_dict) and saving as a .mat . 
         This function requires prameters from a loaded config file. The file is saved on the S:\ drive according to the configuration settings. 
         If the data_dict is not included this function returns the path created from the configuration file. 
@@ -144,24 +145,22 @@ def save(parameters, measurement, data_dict={}, instrument_list=None):
     if type(parameters) != dict:
         raise ValueError('save accepts dict from configured .yml file')
         
-#    No longer accepting path location. FIXED PATH TO NETWORK
-#    file_path = parameters['Save File']['filepath']
+
     file_path = 'S:\SC\Measurements'
     #Setup variables from parameters for file path
+    user = parameters['User']['name']
     sample_name = parameters['Save File']['sample name'] #this field should describe the material SPX111 or GaN_ID#20
     device_name = parameters['Save File']['device name'] #this field should describe which device is being tested
-    device_type = parameters['Save File']['device type'] #this field should describe device type tapered snspd, coupler, memory
+    device_type = parameters['Save File']['device type'] #this field should describe device type ntron, snspd, coupler, memory
+    
     if parameters['Save File'].get('port'):
         device_type_ext = device_type + "_" + parameters['Save File']['port']
+        port = parameters['Save File']['port']
     else:
         device_type_ext = device_type
+        port = 1
+        
     time_str = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
-    
-    ''' Check for path '''
-    if file_path == None:
-            # lablog('No filepath indicated')
-            raise ValueError('Please enter a file path')
-            
             
     ''' Shorten parameter list to only include current measurement and the instruments used'''
     if instrument_list:
@@ -183,11 +182,14 @@ def save(parameters, measurement, data_dict={}, instrument_list=None):
             scipy.io.savemat(full_path + '.mat', mdict=data_dict)
             output_log(parameters, full_path)
             print('File Saved:\n %s' % full_path)
+            try:
+                insert_measurement_event(user, measurement, sample_name, device_type, device_name, port)
+            except:
+                print('Logging to qnndb failed.')
+                
+            
         break
 
-
-    ''' lablog_measurement is not that useful at the momemt'''
-    # lablog_measurement(parameters, measurement)
     
     return full_path
 
@@ -198,7 +200,29 @@ def save(parameters, measurement, data_dict={}, instrument_list=None):
 #Loggging
 ###########################################################################
 
-
+def insert_measurement_event(user, meas_type, sample_name, device_type, device_id, port=1):
+    '''
+    
+    '''
+    try:
+        conn = mariadb.connect(host= "18.25.16.44", 
+                                    user= "omedeiro", 
+                                    port= 3307, 
+                                    password= 'vQ7-om(PKh', 
+                                    database= 'qnndb' )
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB Platform: {e}")
+        sys.exit(1)
+    
+    
+    # Get Cursor
+    cur = conn.cursor()
+    
+    sql = "INSERT INTO `measurement_events` (`user`, `meas_type`, `sample_name`, `device_type`, `device_id`, `port`) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')" % (user, meas_type, sample_name, device_type, device_id, port)
+    cur.execute(sql)
+    conn.commit()
+    return cur
+    
 def lablog_error(message):
     """
     The lablog method logs errors to 'S:\SC\ErrorLogging'

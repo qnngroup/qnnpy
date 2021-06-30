@@ -942,6 +942,9 @@ class PulseTraceSingle(Snspd):
             
         sleep(0.1)
         self.scope.set_trigger_mode(trigger_mode='Single')
+        while (self.scope.get_trigger_mode() == 'Single\n'):
+            sleep(0.1)
+            
         for i in range(len(channels)):
             x, y = self.scope.get_single_trace(channel=channels[i])
             # xlist.append(x);  #keep all x data the same.
