@@ -60,8 +60,8 @@ class Agilent33250a(object):
     def set_voffset(self, voffset = 0.0):
         self.write('VOLT:OFFS %0.6e' % (voffset))
         
-    def set_vpp(self, vpp=0.1):
-        self.write('VOLT %0.6e' % (vpp))
+    def set_vpp(self, vpp=0.1, chan=1):
+        self.write('SOURCE%s:VOLT %0.6e' % (chan, vpp))
 
 
     def set_vhighlow(self, vlow=0.0, vhigh=1.0):
@@ -91,8 +91,8 @@ class Agilent33250a(object):
         else:                   self.write('TRIG:SOUR IMM' )
         self.write('TRIG:DEL %s' % (delay)) # Delay in seconds
 
-    def set_phase(self, degrees, chan=1):
-        self.write('SOURCE%s:PHAS %s' %(chan, degrees))
+    def set_phase(self, value, chan=1, unit='DEG'):
+        self.write('SOURCE%s:PHAS %s %s' %(chan, value, unit))
         
     def trigger_now(self):
         self.write('*TRG')
@@ -126,6 +126,14 @@ class Agilent33250a(object):
         self.write('SOURCE%s:APPL:PULS %0.6e HZ, %0.6e VPP, %0.6e V' % (chan, freq,vpp,voffset))
         self.write('SOURCE%s:PULS:WIDT %0.6e' % (chan, width))
 
+    def set_pulse_width(self, width=1e-6, chan=1):
+        self.write('SOURCE%s:PULS:WIDT %0.6e' % (chan, width))
+
+    def set_pulse_lead(self, leading_edge_time=5e-9, chan=1):
+        self.write('SOUR%1.0d:FUNC:PULS:TRAN:LEAD %0.6e' % (chan,leading_edge_time))
+
+    def set_pulse_trail(self, trailing_edge_time=5e-9, chan=1):
+        self.write('SOUR%1.0d:FUNC:PULS:TRAN:LEAD %0.6e' % (chan,trailing_edge_time))
 
 
     def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY'):
