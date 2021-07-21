@@ -111,6 +111,16 @@ class nTron:
                     print('SOURCE: connected')
                 except:
                     print('SOURCE: failed to connect')
+            elif self.properties['Source']['name'] == 'YokogawaGS200':
+               from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
+               try:
+                   self.source = YokogawaGS200(self.properties['Source']['port'])
+                   # self.source.reset()
+                   self.source.set_output(False)
+                   self.source.set_voltage_range(5)
+                   print('SOURCE: connected')
+               except:
+                   print('SOURCE: failed to connect')
             else:
                 qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
                 raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
@@ -160,7 +170,7 @@ class nTron:
             elif self.properties['Temperature']['name'] == 'ICE':
                 try:
                     self.properties['Temperature']['initial temp'] = qf.ice_get_temp(select=1)
-                    print('TEMPERATURE: connected')
+                    print('TEMPERATURE: connected' + qf.ice_get_temp(select=1))
                 except:
                     print('TEMPERATURE: failed to connect')
                     
@@ -251,6 +261,7 @@ class IvSweep(nTron):
 
         self.v_read = voltage
         self.i_read = current
+        
         
         
     def run_sweep_dynamic(self):
@@ -534,56 +545,102 @@ class DoubleSweep(nTron):
                                  instrument_list = self.instrument_list)
 
 
-class DoubleSweepScope(nTron):
-    """ use awg and scope to aquire Ic distributions.  
-        Awg settings and scope settings are not currently programmed.
+# class DoubleSweepScope(nTron):
+#     """ use awg and scope to aquire Ic distributions.  
+#         Awg settings and scope settings are not currently programmed.
     
-    """
+#     """
+#     def run_sweep(self):
+#         'runs the sweep'
+        
+#         self.source.reset()
+#         self.source.set_output(False)
+#         self.R_srs = self.properties['double_sweep_scope']['series_resistance_srs']
+#         start = self.properties['double_sweep_scope']['start']
+#         stop = self.properties['double_sweep_scope']['stop']
+#         steps = self.properties['double_sweep_scope']['steps']
+#         sweep = self.properties['double_sweep_scope']['sweep']
+        
+#         trace_signal = self.properties['double_sweep_scope']['trace_signal']
+#         trace_trigger = self.properties['double_sweep_scope']['trace_trigger']
+#         trace_hist = self.properties['double_sweep_scope']['trace_hist']
+
+#         Isource = np.linspace(start, stop, steps) 
+
+#         self.v_set = np.tile(Isource, sweep) * self.R_srs
+        
+        
+        
+        
+#         for i in self.v_set:
+#             self.source.set_voltage(i)
+#             self.source.set_output(True)
+#             print('Voltage:%0.2f ' % i)
+#             sleep(0.1)
+            
+#             self.scope.set_trigger_mode(trigger_mode = 'Stop')
+#             self.scope.math_histogram_clear_sweeps()
+            
+#             self.data_dict = self.scope.save_traces_multiple_sequence(
+#                 channels = [trace_signal, trace_trigger], 
+#                 num_traces = 1, 
+#                 NumSegments = 1000)
+#             hist = self.scope.get_wf_data(trace_hist)
+#             self.data_dict['hist'] = hist
+#             self.data_dict['i_bias'] = i/self.R_srs
+            
+#             self.full_path = qf.save(self.properties, 'double_sweep_scope', self.data_dict, 
+#                                      instrument_list = self.instrument_list)
+#             self.scope.save_screenshot(file_name=self.full_path+'.png', white_background=False)
+            
+#         self.scope.set_segments(2)
+        
+
+        
+
+class IvSweepScope(nTron):
+    '''
+    iv_sweep_scope:
+      awg_amp: 0.06
+      atten: 0
+      freq: 100
+      trigger_v: 0.1
+      trigger_channel: 'C4'
+      channels: [C2,F1, F2]
+      hist_channel: 'F3'
+      num_segments: 500
+    '''
     def run_sweep(self):
-        'runs the sweep'
+        awg_amp = self.properties['iv_sweep_scope']['awg_amp']
+        atten = self.properties['iv_sweep_scope']['atten']
+        freq = self.properties['iv_sweep_scope']['freq']
         
-        self.source.reset()
-        self.source.set_output(False)
-        self.R_srs = self.properties['double_sweep_scope']['series_resistance_srs']
-        start = self.properties['double_sweep_scope']['start']
-        stop = self.properties['double_sweep_scope']['stop']
-        steps = self.properties['double_sweep_scope']['steps']
-        sweep = self.properties['double_sweep_scope']['sweep']
-        
-        trace_signal = self.properties['double_sweep_scope']['trace_signal']
-        trace_trigger = self.properties['double_sweep_scope']['trace_trigger']
-        trace_hist = self.properties['double_sweep_scope']['trace_hist']
+        trigger_v = self.properties['iv_sweep_scope']['trigger_v']
+        trigger_channel = self.properties['iv_sweep_scope']['trigger_channel']
+        channels = self.properties['iv_sweep_scope']['channels']
+        hist_channel = self.properties['iv_sweep_scope']['hist_channel']
+        num_segments = self.properties['iv_sweep_scope']['num_segments']
+        self.awg.set_waveform('RAMP', freq=freq, amplitude=awg_amp)
+        self.awg.write('FUNCtion:RAMP:SYMM 50')
 
-        Isource = np.linspace(start, stop, steps) 
+        temperature = self.temp.read_temp()
+        self.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
+        self.scope.pyvisa.timeout = 10000
+        self.scope.clear_sweeps()
+        data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=num_segments)
+        hist = self.scope.get_wf_data(hist_channel)
+        hist_dict = {hist_channel+'x': hist[0], hist_channel+'y':hist[1]}
+        self.scope.set_sample_mode()
 
-        self.v_set = np.tile(Isource, sweep) * self.R_srs
+        data.update(hist_dict)    
+        data.update({'freq': freq, 'awg_amp':awg_amp, 'atten':atten, 'temp':temperature})
+        
+        self.data_dict_iv_sweep_scope = data
         
         
-        
-        
-        for i in self.v_set:
-            self.source.set_voltage(i)
-            self.source.set_output(True)
-            print('Voltage:%0.2f ' % i)
-            sleep(0.1)
-            
-            self.scope.set_trigger_mode(trigger_mode = 'Stop')
-            self.scope.math_histogram_clear_sweeps()
-            
-            self.data_dict = self.scope.save_traces_multiple_sequence(
-                channels = [trace_signal, trace_trigger], 
-                num_traces = 1, 
-                NumSegments = 1000)
-            hist = self.scope.get_wf_data(trace_hist)
-            self.data_dict['hist'] = hist
-            self.data_dict['i_bias'] = i/self.R_srs
-            
-            self.full_path = qf.save(self.properties, 'double_sweep_scope', self.data_dict, 
-                                     instrument_list = self.instrument_list)
-            self.scope.save_screenshot(file_name=self.full_path+'.png', white_background=False)
-            
-        self.scope.set_segments(2)
-        
+    def save(self):
+        self.full_path = qf.save(self.properties, 'iv_sweep_scope', self.data_dict_iv_sweep_scope, instrument_list = self.instrument_list)    
+        self.scope.save_screenshot(self.full_path+'screen_shot'+'.png', white_background=False)
 
         
 
