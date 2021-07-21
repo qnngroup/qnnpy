@@ -177,7 +177,7 @@ class Snspd:
                 from qnnpy.instruments.agilent_33250a import Agilent33250a
                 try:
                     self.awg = Agilent33250a(self.properties['AWG']['port'])
-                    self.awg.reset()
+                    self.awg.beep()
                     print('AWG: connected')
                 except:
                     print('AWG: failed to connect')
@@ -711,6 +711,44 @@ class IvSweep(Snspd):
         self.full_path = qf.save(self.properties, 'iv_sweep', data_dict, 
                                  instrument_list = self.instrument_list)
 
+
+class IvSweepScope(Snspd):
+    
+    def run_sweep(self):
+        awg_amp = self.properties['iv_sweep_scope']['awg_amp']
+        atten = self.properties['iv_sweep_scope']['atten']
+        freq = self.properties['iv_sweep_scope']['freq']
+        
+        trigger_v = self.properties['iv_sweep_scope']['trigger_v']
+        trigger_channel = self.properties['iv_sweep_scope']['trigger_channel']
+        channels = self.properties['iv_sweep_scope']['channels']
+        hist_channel = self.properties['iv_sweep_scope']['hist_channel']
+        num_segments = self.properties['iv_sweep_scope']['num_segments']
+        self.awg.set_vpp(awg_amp)
+        self.awg.set_freq(freq)
+        # temperature = self.temp.read_temp()
+        temperature=0
+        self.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
+        self.scope.pyvisa.timeout = 10000
+        self.scope.clear_sweeps()
+        data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=num_segments)
+        hist = self.scope.get_wf_data(hist_channel)
+        hist_dict = {hist_channel+'x': hist[0], hist_channel+'y':hist[1]}
+        self.scope.set_sample_mode()
+
+        data.update(hist_dict)    
+        data.update({'freq': freq, 'awg_amp':awg_amp, 'atten':atten, 'temp':temperature})
+        
+        self.data_dict_iv_sweep_scope = data
+        
+        
+    def save(self):
+        
+        
+        self.full_path = qf.save(self.properties, 'iv_sweep_scope', self.data_dict_iv_sweep_scope, instrument_list = self.instrument_list)    
+        self.scope.save_screenshot(self.full_path+'screen_shot'+'.png', white_background=False)
+
+        
 
 class PhotonCounts(Snspd):
     """ Class object for PCR and DCR measurments. Configuration data will be
