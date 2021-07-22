@@ -1,37 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 29 10:29:32 2020
+Created on Sun May  2 16:40:13 2021
 
 @author: omedeiro
 
-
+wide wire SPG513
 """
 
 
-''' Import functions '''
 import sys
 sys.path.append(r'Q:\qnnpy')
-import qnnpy.functions.functions as qf
 import qnnpy.functions.snspd as snspd
-import qnnpy.functions.iv_sweep as iv
 
-
-''' Specify path to configuration file.'''
-config = r'S:\SC\Measurements\SPG264\SPG264_config.yml'
+config = r'S:\SC\Measurements\SPG527\SPG527_config.yml'
 
 
 # %% Iv Sweep
 a = snspd.IvSweep(config)
-a.run_sweep()
+a.run_sweep_fixed()
 a.plot()
 a.isw_calc()
 a.save()
 
 
 # %% Pulse Trace Single
-
 b = snspd.PulseTraceSingle(config)
-b.trace_data();
+x, y = b.trace_data()
 b.plot()
 b.save()
 
@@ -54,8 +48,3 @@ e.light_counts()
 e.dark_counts()
 e.plot()
 e.save()
-
-# %% 
-
-f = snspd.KineticInductancePhase(config)
-f.run_sweep_current(plot=True, save=True)
