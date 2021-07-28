@@ -294,6 +294,7 @@ class Snspd:
         while True:
             file = open(path, 'a')
             temp = qf.ice_get_temp(select=1)
+            # temp = self.temp.read_temp(self.temp.channel)
             self.source.set_output(True)
             sleep(1)
             voltage = self.meter.read_voltage()
