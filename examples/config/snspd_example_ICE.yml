@@ -1,59 +1,57 @@
 User:
-  name: OM
+  name: USER
   
 Save File:
-  sample name: TEST
+  sample name: SPX###
   device type: snspd
   device name: A1
+ 
 
 iv_sweep:
   start: 0
-  stop: !!float 60e-6
+  stop: !!float 150e-6
   steps: 20
   sweep: 1
   full_sweep: True
-  series_resistance: !!float 100e3
+  series_resistance: !!float 20e3
 
 pulse_trace:
-  bias_voltage: 1.09
-  trigger_level: .075
-  channel: C2
-  number_of_traces: 200
-  attenuation: 100
+  bias_voltage: 1.6
+  trigger_level: .05
+  channel: [C2, C3]
+  attenuation: 10
+
   
 trigger_sweep:
-  start: 0
-  stop: .375
+  start: 0.
+  stop: 0.1
   step: .005
-  bias_voltage: 4.94
+  bias_voltage: 1.6
   attenuation_db: 10
   counting_time: .1
 
 
+
 linearity_check:
-  bias: !!float 49e-6
+  bias: !!float 75e-6
   start: 0
   stop: 100
   step: 5
   counting_time: .1
-  trigger_v: 0.1
+  trigger_v: .04
   iterations: 1
+
 
   
 photon_counts:
-  start: !!float 6.5e-6
-  stop: !!float 12e-6
-  step: !!float .05e-6
-  trigger_v: 0.1
-  counting_time: .1
-  iterations: 1
-  attenuation_db: 90
+  start: !!float 60e-6
+  stop: !!float 89e-6
+  step: !!float 1e-6
+  trigger_v: .04
+  counting_time: .2
+  iterations: 5
+  attenuation_db: 0
   
-  
-kinetic_inductance_phase:
-  start: !!float 0e-6
-  stop: !!float 60e-6
-  steps: 20
   
 Laser:
   name: S1FC780
@@ -62,7 +60,7 @@ Laser:
 Source:
   name: SIM928
   port: 'GPIB0::1'
-  port_alt: 2
+  port_alt: 3
 
 Meter:
   name: Keithley2700
@@ -74,7 +72,7 @@ Counter:
 
 Scope: 
   name: LeCroy620Zi
-  port: '18.62.7.103'
+  port: '18.25.24.38'
   channel: [C2]
     
 Attenuator:
@@ -84,6 +82,6 @@ Attenuator:
 Temperature:
   name: ICE
   
-VNA:
-  name: N5224A
-  port: 'GPIB0::16'
+# VNA:
+#   name: N5224A
+#   port: 'GPIB0::16'
