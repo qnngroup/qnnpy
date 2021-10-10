@@ -153,7 +153,7 @@ class nTron:
                     self.temp = Cryocon350(self.properties['Temperature']['port'])
                     self.temp.channel = self.properties['Temperature']['channel']
                     self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
-                    print('TEMPERATURE: connected')
+                    print('TEMPERATURE: connected | '+str(self.properties['Temperature']['initial temp']))
                 except:
                     print('TEMPERATURE: failed to connect')
 
@@ -163,7 +163,7 @@ class nTron:
                     self.temp = Cryocon34(self.properties['Temperature']['port'])
                     self.temp.channel = self.properties['Temperature']['channel']
                     self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
-                    print('TEMPERATURE: connected')
+                    print('TEMPERATURE: connected | '+str(self.properties['Temperature']['initial temp']))
                 except:
                     print('TEMPERATURE: failed to connect')
 
@@ -262,7 +262,52 @@ class IvSweep(nTron):
         self.v_read = voltage
         self.i_read = current
         
-        
+    def run_sweep_basic(self):
+            """ Runs IV sweep with config paramters
+ 
+            
+            np.linspace()
+            """
+            self.source.reset()
+            self.meter.reset()
+    
+            self.source.set_output(False)
+    
+            start = self.properties['iv_sweep']['start']
+            stop = self.properties['iv_sweep']['stop']
+            steps = self.properties['iv_sweep']['steps']
+            sweep = self.properties['iv_sweep']['sweep']
+            # To select full (positive and negative) trace or half trace
+            full_sweep = self.properties['iv_sweep']['full_sweep']
+            Isource1 = np.linspace(start, stop, steps) 
+    
+            if full_sweep == True:
+                Isource = np.concatenate([Isource1, Isource1[::-1]])
+                Isource = np.concatenate([Isource, -Isource])
+            else:
+                Isource = np.concatenate([Isource, -Isource])
+            self.v_set = np.tile(Isource, sweep) * self.R_srs
+    
+            self.source.set_output(True)
+            sleep(1)
+            voltage = []
+            current = []
+    
+    
+            for n in self.v_set:
+                self.source.set_voltage(n)
+                sleep(0.1)
+    
+                vread = self.meter.read_voltage() # Voltage
+    
+                iread = (n-vread)/self.R_srs#(set voltage - read voltage)
+    
+                print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+                voltage.append(vread)
+                current.append(iread)
+    
+            self.v_read = voltage
+            self.i_read = current
         
     def run_sweep_dynamic(self):
         """ Runs IV sweep with config paramters
@@ -610,7 +655,7 @@ class IvSweepScope(nTron):
       hist_channel: 'F3'
       num_segments: 500
     '''
-    def run_sweep(self):
+    def run_sweep(self, wf = 'RAMP'):
         awg_amp = self.properties['iv_sweep_scope']['awg_amp']
         atten = self.properties['iv_sweep_scope']['atten']
         freq = self.properties['iv_sweep_scope']['freq']
@@ -620,9 +665,14 @@ class IvSweepScope(nTron):
         channels = self.properties['iv_sweep_scope']['channels']
         hist_channel = self.properties['iv_sweep_scope']['hist_channel']
         num_segments = self.properties['iv_sweep_scope']['num_segments']
-        self.awg.set_waveform('RAMP', freq=freq, amplitude=awg_amp)
-        self.awg.write('FUNCtion:RAMP:SYMM 50')
+        
+        if wf == 'RAMP':
+            self.awg.set_waveform('RAMP', freq=freq, amplitude=awg_amp)
+            self.awg.write('FUNCtion:RAMP:SYMM 50')
+        if wf == 'PULSE':
+            self.awg.set_pulse(freq=freq, vlow=0.0, vhigh=awg_amp, width = 6.6e-6, chan=1)
 
+        
         temperature = self.temp.read_temp()
         self.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
         self.scope.pyvisa.timeout = 10000
