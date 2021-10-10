@@ -19,7 +19,12 @@ class Cryocon34(object):
         
     def read_temp(self, channel='A'):
         self.write(':INPUT? ' + channel + ':TEMP') # In form of ":INPUT? A:TEMP", A-D
-        temperature = float(self.read())
+        try:
+            temperature = float(self.read())
+        except:
+            temperature = 'no reading'
+            
+        
         return temperature
         
         
