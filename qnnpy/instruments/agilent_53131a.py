@@ -43,6 +43,17 @@ class Agilent53131a(object):
         self.write(':TOT:ARM:STOP:TIM 0.1') # Set stop time to 100 ms
         self.write(':INP:ATT 1') # Or 10. Set attenuation factor
         
+    def set_impedance(self, value=0):
+        '''
+        VALUE=0 : IMPEDANCE IS 50OHMS
+        VALUE=1 : IMPEDANCE IS 1MOHM
+
+        '''
+        if value==0:
+            self.write(':INP:IMP 50')
+        else:
+            self.write(':INP:IMP 1E6')
+            
     def set_trigger(self, trigger_voltage = -0.075, trigger_slope = None):
         if trigger_slope == 'POS' or trigger_slope == 'NEG':
             self.write(':EVEN:SLOP %s' % trigger_slope) # Or POS. Trigger on negative slope
