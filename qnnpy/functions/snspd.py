@@ -293,8 +293,10 @@ class Snspd:
         self.source.set_output(True)
         while True:
             file = open(path, 'a')
-            temp = qf.ice_get_temp(select=1)
-            # temp = self.temp.read_temp(self.temp.channel)
+            if self.properties['Temperature']['name'] == 'ICE':
+                temp = qf.ice_get_temp(select=1)
+            else:
+                temp = self.temp.read_temp(self.temp.channel)
             self.source.set_output(True)
             sleep(1)
             voltage = self.meter.read_voltage()
@@ -344,7 +346,7 @@ class TriggerSweep(Snspd):
         sleep(.2)
         self.source.set_voltage(self.v_bias)
         sleep(1)
-
+        # self.counter.set_impedance(0) #50Ohm
 
         counting_time = self.properties['trigger_sweep']['counting_time']
         start = self.properties['trigger_sweep']['start']
@@ -972,13 +974,14 @@ class PulseTraceSingle(Snspd):
         trigger_v = self.properties['pulse_trace']['trigger_level']
         self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
-        attenuation = self.properties['pulse_trace']['attenuation']
-        self.attenuator.set_attenuation_db(attenuation)
-        if attenuation == 100:
-            self.attenuator.set_beam_block(True)
-        else:
-            self.attenuator.set_beam_block(False)
-            
+        if self.properties.get('Attenuator'):
+            attenuation = self.properties['pulse_trace']['attenuation']
+            self.attenuator.set_attenuation_db(attenuation)
+            if attenuation == 100:
+                self.attenuator.set_beam_block(True)
+            else:
+                self.attenuator.set_beam_block(False)
+                
         sleep(0.1)
         self.scope.set_trigger_mode(trigger_mode='Single')
         while (self.scope.get_trigger_mode() == 'Single\n'):
