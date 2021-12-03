@@ -7,7 +7,7 @@ class LabJackU12(object):
     https://labjack.com/support/software/examples/u12/python
     """
     def __init__(self, debug=False):
-        self.device = u12.U12(debug)
+        self.device = u12.U12(debug=debug)
         self.read_digital(0)
         # note: may need to collect calibration data?
 
@@ -15,6 +15,9 @@ class LabJackU12(object):
         self.device.eDigitalOut(channel, state)
 
     def read_digital(self, channel):
+        '''
+        note: this operation resets the channel to 0 after readout
+        '''
         read_info = self.device.eDigitalIn(channel)
         return read_info['state']
 
@@ -31,7 +34,9 @@ class LabJackU12(object):
         IO0
         '''
         mux_bin = bin(mux_channel)[2:]
+        print(mux_bin)
         # reverse endianness (direction)
         mux_bin_little = mux_bin[::-1]
+        print(mux_bin_little)
         for i in range(len(mux_bin_little)):
             self.write_digital(i, mux_bin_little[i])
