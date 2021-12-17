@@ -53,9 +53,6 @@ class Microwave:
                     except:
                         print('COUNTER: failed to connect')
                 else:
-                    qf.lablog('Invalid counter. Counter name: "%s" is not ' \
-                              'configured' 
-                              % self.properties['Counter']['name'])
                     raise NameError('Invalid counter. Counter name is not '\
                                     'configured')
 
@@ -73,8 +70,6 @@ class Microwave:
                 except:
                     print('ATTENUATOR: failed to connect')
             else:
-                qf.lablog('Invalid Attenuator. Attenuator name: "%s" is not '\
-                          'configured' % self.properties['Attenuator']['name'])
                 raise NameError('Invalid Attenuator. Attenuator name is not configured')
 
 
@@ -91,7 +86,6 @@ class Microwave:
                 except:
                     print('SCOPE: failed to connect')
             else:
-                qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope']['name'])
                 raise NameError('Invalid Scope. Scope name is not configured')
 
 
@@ -129,7 +123,6 @@ class Microwave:
                 except:
                     print('METER: failed to connect')
             else:
-                qf.lablog('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
                 raise NameError('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
 
 
@@ -147,8 +140,19 @@ class Microwave:
                     print('SOURCE: connected')
                 except:
                     print('SOURCE: failed to connect')
+                    
+            elif self.properties['Source']['name'] == 'YokogawaGS200':
+                from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
+                try:
+                    self.source = YokogawaGS200(self.properties['Source']['port'])
+                    # self.source.reset()
+                    self.source.set_output(False)
+                    self.source.set_voltage_range(5)
+                    print('SOURCE: connected')
+                except:
+                    print('SOURCE: failed to connect')
+                    
             else:
-                qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
                 raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
 
 
@@ -166,7 +170,6 @@ class Microwave:
                 except:
                     print('AWG: failed to connect')
             else:
-                qf.lablog('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
                 raise NameError('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
 
         # VNA
@@ -184,7 +187,6 @@ class Microwave:
                 except:
                     print('VNA: failed to connect')
             else:
-                qf.lablog('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
                 raise NameError('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
 
 
@@ -228,13 +230,100 @@ class Microwave:
                     print('TEMPERATURE: failed to connect')
 
             else:
-                qf.lablog('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
                 raise NameError('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
         else:
             self.properties['Temperature'] = {'initial temp': 'None'}
             # print('TEMPERATURE: Not Specified')
 
  
+
+          
+class FrequencyResponse(Microwave):
+    """ Setup measurement on VNA. This function will simply export the data 
+        using the current setup.
+    
+    """
+    def run_sweep(self, save=None, plot=None):
+        
+        self.VNA.set_sweep_mode('SING')            
+        while self.VNA.get_sweep_mode() !='HOLD':
+            sleep(.1)
+    
+        measure = self.properties['frequency_response']['measure']
+        measure_alt = self.properties['frequency_response']['meas_alt']
+        for meas, meas_alt in zip(measure, measure_alt):
+            print(meas)
+            self.VNA.select_measurement(meas)
+            
+            self.VNA.write('CALC:FORM SMITh')
+                
+            self.if_bandwidth = self.VNA.get_if_bw()
+            self.fspan = self.VNA.get_span()
+            
+            self.rf_power = self.VNA.get_power()
+            
+            
+            
+            if self.properties['Temperature']['name'] == 'ICE':
+                self.currentTemp = qf.ice_get_temp(select=1)
+            else:
+                self.currentTemp = self.temp.read_temp(self.temp.channel)
+    
+    
+
+        
+            self.f,self.re,self.im = self.VNA.get_freq_real_imag()
+            self.log_mag = 20*np.log10(np.sqrt(np.square(self.re)+
+                                                np.square(self.im)))
+            self.phase = np.angle(self.re+self.im*1j,deg=True)
+            
+            if plot:
+                self.plot(meas_alt)
+            if save:
+                self.save(meas_alt)
+            self.VNA.write('CALC:FORM MLOG')
+            
+        self.VNA.set_sweep_mode('CONT')
+        
+
+
+             
+    def plot(self, meas):
+        full_path = qf.save(self.properties, 'frequency_response')
+        qf.plot(self.f, self.phase,
+                title=self.sample_name+" "+self.device_type+" "+
+                      self.device_name+meas+": "+str(self.rf_power)+" dB",
+                xlabel = 'Frequency (Hz)',
+                ylabel = 'Phase (°)',
+                path=full_path,
+                show=True,
+                linestyle='-',
+                close=True)           
+ 
+        qf.plot(self.f, self.log_mag,
+                title=self.sample_name+" "+self.device_type+" "+
+                      self.device_name+meas+": "+str(self.rf_power)+" dB",
+                xlabel = 'Frequency (Hz)',
+                ylabel = 'Magnitude (dB)',
+                x_scale='linear',
+                y_scale='linear',
+                path=full_path,
+                show=True,
+                linestyle='-',
+                close=True)    
+        
+    def save(self, meas):
+        data_dict = {'freq': self.f,
+                     're': self.re,
+                     'im': self.im,
+                     'log_mag': self.log_mag,
+                     'phase': self.phase,
+                     'if_bandwidth': self.if_bandwidth,
+                     'temp': self.currentTemp}
+        qf.save(self.properties, 'frequency_response', data_dict, 
+                instrument_list = self.instrument_list, meas_txt=meas)
+   
+    
             
 class FrequencyResponseCurrentSweep(Microwave):
     
@@ -248,17 +337,23 @@ class FrequencyResponseCurrentSweep(Microwave):
             
         self.if_bandwidth = self.VNA.get_if_bw()
         self.fspan = self.VNA.get_span()
-        sweep_time = self.fspan/(self.if_bandwidth**2)
-        
         self.rf_power = self.VNA.get_power()
         
-        self.VNA.select_measurement()
         
         for current in currents:
             print('Bias set to %0.3f uA' % (current*1e6))
-            self.source.set_voltage(current*self.R_srs)
+            
+            if self.properties['Source']['name'] == 'YokogawaGS200':
+                self.source.setup_source_current()
+                self.source.set_current_autorange(current)
+                self.source.set_compliance_v(10)
+                self.current = current*1e6
+            else:
+                self.source.set_voltage(current*self.R_srs)
+                self.current = current*1e6
+                
             self.source.set_output(True)
-            self.current = current*1e6
+
             
             if self.properties['Temperature']['name'] == 'ICE':
                 self.currentTemp = qf.ice_get_temp(select=1)
@@ -266,35 +361,49 @@ class FrequencyResponseCurrentSweep(Microwave):
                 self.currentTemp = self.temp.read_temp(self.temp.channel)
 
             self.voltage = self.meter.read_voltage()
-            if Ic_break:
-                if(voltage>0.01):
-                    print('Wire Switched')
-                    self.meter.reset()
-                    break
-            t = sweep_time+10
-            # print('Waiting %0.1f seconds for vna averging' % t)
-            print('Waiting 10 seconds for vna averging')
-
-            sleep(10) #vna averging
-        
-            self.f,self.re,self.im = self.VNA.get_freq_real_imag()
-            self.log_mag = 20*np.log10(np.sqrt(np.square(self.re)+
-                                               np.square(self.im)))
-            self.phase = np.angle(self.re+self.im*1j,deg=True)
             
-            if plot:
-                self.plot()
-            if save:
-                self.save()
+            
+            self.VNA.set_sweep_mode('SING')            
+            while self.VNA.get_sweep_mode() !='HOLD':
+                sleep(.1)
+            
+            measure = self.properties['frequency_response']['measure']
+            measure_alt = self.properties['frequency_response']['meas_alt']
+            for meas, meas_alt in zip(measure, measure_alt):
+                print(meas_alt)
+                self.VNA.select_measurement(meas)
+                
+                self.VNA.write('CALC:FORM SMITh')
+                    
+                
+                
+                if self.properties['Temperature']['name'] == 'ICE':
+                    self.currentTemp = qf.ice_get_temp(select=1)
+                else:
+                    self.currentTemp = self.temp.read_temp(self.temp.channel)
+        
+            
+                self.f,self.re,self.im = self.VNA.get_freq_real_imag()
+                self.log_mag = 20*np.log10(np.sqrt(np.square(self.re)+
+                                                    np.square(self.im)))
+                self.phase = np.angle(self.re+self.im*1j,deg=True)
+                
+                if plot:
+                    self.plot(meas_alt)
+                if save:
+                    self.save(meas_alt)
+                self.VNA.write('CALC:FORM MLOG')
+
+            self.VNA.set_sweep_mode('CONT')
+            
         self.source.set_output(False)
-        self.VNA.write('CALC:FORM MLOG')
 
              
-    def plot(self):
+    def plot(self, meas):
         full_path = qf.save(self.properties, 'frequency_response_current_sweep')
         qf.plot(self.f, self.phase,
                 title=self.sample_name+" "+self.device_type+" "+
-                      self.device_name+": "+str(round(self.current,2))+" uA, "
+                      self.device_name+meas+": "+str(round(self.current,2))+" uA, "
                       +str(self.rf_power)+" dB",
                 xlabel = 'Frequency (Hz)',
                 ylabel = 'Phase (°)',
@@ -303,8 +412,19 @@ class FrequencyResponseCurrentSweep(Microwave):
                 linestyle='-',
                 close=True)           
  
-
-    def save(self):
+        qf.plot(self.f, self.log_mag,
+                title=self.sample_name+" "+self.device_type+" "+
+                      self.device_name+meas+": "+str(self.rf_power)+" dB",
+                xlabel = 'Frequency (Hz)',
+                ylabel = 'Magnitude (dB)',
+                x_scale='linear',
+                y_scale='linear',
+                path=full_path,
+                show=True,
+                linestyle='-',
+                close=True)    
+        
+    def save(self, meas):
         data_dict = {'freq': self.f,
                      're': self.re,
                      'im': self.im,
@@ -316,6 +436,6 @@ class FrequencyResponseCurrentSweep(Microwave):
                      'R_srs': self.R_srs,
                      'temp': self.currentTemp}
         qf.save(self.properties, 'frequency_response_current_sweep', data_dict, 
-                instrument_list = self.instrument_list)
+                instrument_list = self.instrument_list, meas_txt=meas)
    
     
