@@ -15,6 +15,7 @@ import re
 import numpy as np
 import mariadb
 import sys
+from time import sleep
 
 ###############################################################################
 # Plotting
@@ -136,7 +137,7 @@ def check_file_path(file_path):
 ###############################################################################   
             
                             
-def save(parameters, measurement, data_dict={}, instrument_list=None, db=False):
+def save(parameters, measurement, data_dict={}, instrument_list=None, db=False, meas_txt=None):
     """ Save follows the typical format of defining a data dictionary (data_dict) and saving as a .mat . 
         This function requires prameters from a loaded config file. The file is saved on the S:\ drive according to the configuration settings. 
         If the data_dict is not included this function returns the path created from the configuration file. 
@@ -174,7 +175,12 @@ def save(parameters, measurement, data_dict={}, instrument_list=None, db=False):
         
     ''' Create folder and save .mat file. '''
     while os.path.exists(file_path):
-        file_name = sample_name +"_"+measurement+"_"+ device_type_ext +"_"+ device_name +"_"+time_str 
+        if meas_txt:
+            measurement_alt = measurement+meas_txt
+        else:
+            measurement_alt = measurement
+                
+        file_name = sample_name +"_"+measurement_alt+"_"+ device_type_ext +"_"+ device_name +"_"+time_str 
         file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement)
         os.makedirs(file_path, exist_ok=True)
         full_path = os.path.join(file_path, file_name)
@@ -312,10 +318,10 @@ def ice_get_temp(select=None):
     
     """
     now = datetime.now()
-    while not os.path.exists(r'C:\Users\ICE\Desktop\ICE Log\Results\%s' % str(now)[:10]):
+    while not os.path.exists(r'S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Results\%s' % str(now)[:10]):
         sleep(1)
         
-    f=r'C:\Users\ICE\Desktop\ICE Log\Results\%s\%s' % (str(now)[:10], str(now)[:10])+".log"
+    f=r'S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Results\%s\%s' % (str(now)[:10], str(now)[:10])+".log"
     
     with open(f) as f: # Get txt from log file and split the last (most recent) entry        
         last = f.readlines()[-1].split(',')
