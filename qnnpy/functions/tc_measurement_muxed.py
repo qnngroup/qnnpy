@@ -23,6 +23,8 @@ class TcMeasurement:
         # LabJack U12
         from qnnpy.instruments.labjack_u12 import LabJackU12
         self.mux = LabJackU12()
+        self.mux_names = ['S0', 'S1', 'S2']
+        self.mapping = {'EN': 3, 'S0': 2, 'S1': 1, 'S2': 0}
         
         # Temperature Controller
         if self.properties.get('Temperature'):
@@ -84,8 +86,9 @@ class TcMeasurement:
             # read voltage from each analog channel
             for channel in range(num_channels):
                 # LabJack functions execute in 20 ms or less
-                self.mux.set_mux_channel(channel)
-                sleep(0.05)
+                # and set_mux_channel calls 4 LabJack functions
+                self.mux.set_mux_channel(channel, self.mapping, self.mux_names)
+                sleep(0.1)
                 voltage = self.mux.read_analog(channel)
                 sleep(0.05)
                 self.all_voltages[channel-1].append(voltage)

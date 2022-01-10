@@ -16,7 +16,7 @@ class LabJackU12(object):
 
     def read_digital(self, channel):
         '''
-        note: this operation resets the channel to 0 after readout
+        note: this operation may reset the channel to 0 after readout
         '''
         read_info = self.device.eDigitalIn(channel)
         return read_info['state']
@@ -25,18 +25,37 @@ class LabJackU12(object):
         read_info = self.device.eAnalogIn(channel)
         return read_info['voltage']
 
-    def set_mux_channel(self, mux_channel):
+    def set_mux_channel(self, mux_channel, mapping, mux_names):
         '''
         mux_channel: channel to switch mux to (base ten)
+        mapping: mapping of LabJack digital outputs to 
+        control device input labels
+        mux_names: list of mux channel names used in mapping, in order
 
         writes the number corresponding to the mux channel
-        to LabJack digital outputs in binary, starting from 
-        IO0
+        to LabJack digital outputs 
         '''
         mux_bin = bin(mux_channel)[2:]
+        # prepend 0s for any unused control bits
+        while len(mux_bin) < len(mux_names):
+            mux_bin.insert(0, 0)
+        # reverse endianness so it makes sense
+        mux_bin_little = mux_bin[::-1]
+        
+        # enable mux
+        enable_channel = mapping['EN']
+        self.write_digital(enable_channel, 0)
+        
+        # apply digital output according to mapping
+        for mux_in, bit in zip(mux_names, mux_bin_little):
+            digital_channel = mapping[mux_in]
+            self.write_digital(digital_channel, int(bit))
+        
+        
+        '''mux_bin = bin(mux_channel)[2:]
         print(mux_bin)
         # reverse endianness (direction)
         mux_bin_little = mux_bin[::-1]
         print(mux_bin_little)
         for i in range(len(mux_bin_little)):
-            self.write_digital(i, mux_bin_little[i])
+            self.write_digital(i, mux_bin_little[i])'''
