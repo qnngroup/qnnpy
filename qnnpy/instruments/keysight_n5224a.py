@@ -3,7 +3,7 @@ from time import sleep
 import numpy as np
 
 class KeysightN5224a(object):
-    """Python class for KeysightN5224a network analyzer, written by Di Zhu. 
+    """Python class for KeysightN5224a network analyzer, written by Di Zhu/Owen Medeiros. 
     Connect the GPIB cable to GPIB1 (talker and listener)
     
     http://na.support.keysight.com/pna/help/latest/Programming/GP-IB_Command_Finder/SCPI_Command_Tree.htm
@@ -134,10 +134,12 @@ class KeysightN5224a(object):
     def set_if_bw(self, bandwidth = 1000):
         self.write('SENS:BAND {:.2f}'.format(bandwidth))
         
+    
     #power
     def get_power(self):
         cmd = 'SOUR:POW?'
         return self._pna_getter(self.query(cmd))
+    
     def set_power(self, power = -10):
         '''set power in dbm'''
         self.write('SOUR:POW {:.2f}'.format(power))
@@ -201,6 +203,9 @@ class KeysightN5224a(object):
         cmd ='SENS:FREQ:SPAN?;'
         return self._pna_getter(self.query(cmd))
         
+    def get_sweep_time(self):
+        cmd = 'SENS:SWE:TIME?;'
+        return self._pna_getter(self.query(cmd))
     
     #number of points in a sweep
     def get_points(self):
