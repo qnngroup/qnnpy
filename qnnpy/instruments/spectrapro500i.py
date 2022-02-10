@@ -17,7 +17,7 @@ class SpectraPro500i(Instrument):
         super().__init__(termination_character=termination_character, port=port)
         
     def init(self):
-        
+        ...
 
 # Local debugging scripts, will only run when directly running this script.
 if __name__ == '__main__':
