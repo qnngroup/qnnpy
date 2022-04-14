@@ -27,7 +27,9 @@ class Snspd:
         self.device_name = self.properties['Save File']['device name']
         self.device_type = self.properties['Save File']['device type']
 
-        self.R_srs = self.properties['iv_sweep']['series_resistance']
+        if self.properties.get('iv_sweep'):
+            self.R_srs = self.properties['iv_sweep']['series_resistance']
+            
         self.isw = 0
         self.instrument_list = []
 
@@ -215,6 +217,7 @@ class Snspd:
                     self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
                     print('TEMPERATURE: connected')
                 except:
+                    self.properties['Temperature']['initial temp'] = 0
                     print('TEMPERATURE: failed to connect')
 
             elif self.properties['Temperature']['name'] == 'Cryocon34':
@@ -225,6 +228,7 @@ class Snspd:
                     self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
                     print('TEMPERATURE: connected')
                 except:
+                    self.properties['Temperature']['initial temp'] = 0
                     print('TEMPERATURE: failed to connect')
 
             elif self.properties['Temperature']['name'] == 'ICE':
@@ -232,6 +236,7 @@ class Snspd:
                     self.properties['Temperature']['initial temp'] = qf.ice_get_temp(select=1)
                     print('TEMPERATURE: connected')
                 except:
+                    self.properties['Temperature']['initial temp'] = 0
                     print('TEMPERATURE: failed to connect')
                     
             elif self.properties['Temperature']['name'] == 'DEWAR':
@@ -239,6 +244,7 @@ class Snspd:
                     self.properties['Temperature']['initial temp'] = 4.2
                     print('TEMPERATURE: ~connected~ 4.2K')
                 except:
+                    self.properties['Temperature']['initial temp'] = 0
                     print('TEMPERATURE: failed to connect')
 
             else:
@@ -955,7 +961,7 @@ class PulseTraceSingle(Snspd):
     Sadly, this will reset instruments when initializing the Snspd class. 
     So be sure to 'stop' the scope before running. 
     """
-    def trace_data(self, channels=None):
+    def trace_data(self, channels=None, trigger_source=None):
         """ Returns x,y of scope_channel in configuration file"""
         
         bias = self.properties['pulse_trace']['bias_voltage']
@@ -972,7 +978,10 @@ class PulseTraceSingle(Snspd):
         tlist = []
         
         trigger_v = self.properties['pulse_trace']['trigger_level']
-        self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+        if trigger_source:
+            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+        else:
+            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
         if self.properties.get('Attenuator'):
             attenuation = self.properties['pulse_trace']['attenuation']
@@ -1016,12 +1025,13 @@ class PulseTraceSingle(Snspd):
 
     def save(self):
         data_dict = {'x':self.trace_x, 'y':self.trace_y}
-        qf.save(self.properties, 'pulse_trace', data_dict, 
+        file_path = qf.save(self.properties, 'pulse_trace', data_dict, 
                 instrument_list = self.instrument_list)
+        self.scope.save_screenshot(file_path+".png")
 
 class PulseTraceMultiple(Snspd):
 
-    def trace_data(self, channels=None):
+    def trace_data(self, channels=None,  trigger_source=None):
         """ Returns x,y of scope_channel in configuration file"""
 
         if channels:
@@ -1038,11 +1048,14 @@ class PulseTraceMultiple(Snspd):
         
         
         total_ylist = []
-        trigger = self.properties['pulse_trace']['trigger_level']
+        trigger_v = self.properties['pulse_trace']['trigger_level']
         number_of_traces = self.properties['pulse_trace']['number_of_traces']
         
-        self.scope.set_trigger(source=channels[0], volt_level=trigger)
-
+        if trigger_source:
+            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+        else:
+            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+        
             
         self.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
         self.source.set_output(True)    
@@ -1088,6 +1101,90 @@ class PulseTraceMultiple(Snspd):
         qf.save(self.properties, 'pulse_trace', data_dict, 
                 instrument_list = self.instrument_list)
         
+    
+class PulseTraceSegments(Snspd):
+
+    def trace_data(self, channels=None,  trigger_source=None, bias_voltage=None):
+        """ Returns x,y of scope_channel in configuration file"""
+
+        if channels:
+            channels = channels
+        else:
+            channels = self.properties['pulse_trace']['channel']
+         
+        ''' Option for attenuator control. Set to 100dB for beam block. '''    
+        if self.properties.get('Attenuator'):
+            attenuation = self.properties['pulse_trace']['attenuation']
+            self.attenuator.set_attenuation_db(attenuation)
+            if attenuation == 100:
+                self.attenuator.set_beam_block(True)
+            else:
+                self.attenuator.set_beam_block(False)
+                
+        
+        total_ylist = []
+        trigger_v = self.properties['pulse_trace']['trigger_level']
+        number_of_traces = self.properties['pulse_trace']['number_of_traces']
+        
+        if trigger_source:
+            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+        else:
+            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+        
+        if bias_voltage:
+            self.source.set_voltage(bias_voltage)
+        else:
+            self.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
+        self.source.set_output(True)    
+
+        if trigger_source:
+            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+        else:
+            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+        
+        self.scope.pyvisa.timeout = 10000
+        self.scope.clear_sweeps()
+        data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=number_of_traces)
+        
+        self.scope_data = data
+        self.scope.set_sample_mode()
+        self.scope.set_trigger_mode()
+        self.source.set_output(False)    
+
+        return self.scope_data
+
+    def plot(self):
+        """ Grabs new trace from scope and plots. Figure is saved to path """
+        # x,y = self.scope.get_single_trace(channel= self.scope_channel)
+        full_path = qf.save(self.properties, 'pulse_trace')
+        self.scope.set_trigger_mode('Single')
+        self.scope.save_screenshot(full_path+'.png')
+        self.scope.set_trigger_mode()
+
+# #        data_dict = {'x':x,'y':y}
+#         qf.plot(self.trace_x, self.trace_y,
+#                 title=self.sample_name+" "+self.device_type+" "+
+#                       self.device_name,
+#                 # xlabel = '',
+#                 # ylabel = '',
+#                 path=full_path,
+#                 show=True,
+#                 linestyle='-',
+#                 close=True)
+
+    def save(self, data=None):
+        data_dict = {'data':self.scope_data, 
+                     'atten':self.properties['pulse_trace']['attenuation'], 
+                     'vbias':self.properties['pulse_trace']['bias_voltage']}
+        
+        if data:
+            data_dict.update(data)
+        qf.save(self.properties, 'pulse_trace', data_dict, 
+                instrument_list = self.instrument_list)
+        
+
+
+
         
 class PulseTraceCurrentSweep(Snspd):
     """ UNFINISHED Sweep current and acquire trace. Configuration requires
