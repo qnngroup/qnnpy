@@ -13,7 +13,7 @@ from datetime import datetime
 import scipy.io
 import re
 import numpy as np
-import mariadb
+# import mariadb
 import sys
 from time import sleep
 
