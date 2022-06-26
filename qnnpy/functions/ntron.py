@@ -52,7 +52,17 @@ class nTron:
                 raise NameError('Invalid Scope. Scope name is not configured')
 
 
-
+            if self.properties['Scope1']['name'] == 'LeCroy620Zi':
+                from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
+                try:
+                    self.scope1 = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope1']['port'])
+                    # self.scope_channel = self.properties['Scope']['channel']
+                    print('SCOPE: connected')
+                except:
+                    print('SCOPE: failed to connect')
+            else:
+                qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope1']['name'])
+                raise NameError('Invalid Scope. Scope name is not configured')
 
         # Meter
         if self.properties.get('Meter'):
@@ -121,6 +131,14 @@ class nTron:
                    print('SOURCE: connected')
                except:
                    print('SOURCE: failed to connect')
+            elif self.properties['Source']['name'] == 'Keithley2400':
+                from qnnpy.instruments.keithley_2400 import Keithley2400
+                try:
+                    self.source = Keithley2400(self.properties['Source']['port'])
+                    self.source.reset()
+                    print('SOURCE: connected')
+                except:
+                    print('SOURCE: failed to connect')
             else:
                 qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
                 raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
@@ -245,8 +263,8 @@ class IvSweep(nTron):
         sleep(1)
         voltage = []
         current = []
-
-
+        self.i_set=0
+        self.temp1 = self.temp.read_temp(self.temp.channel)
         for n in self.v_set:
             self.source.set_voltage(n)
             sleep(0.1)
@@ -261,6 +279,7 @@ class IvSweep(nTron):
 
         self.v_read = voltage
         self.i_read = current
+        
         
     def run_sweep_basic(self):
             """ Runs IV sweep with config paramters
@@ -293,7 +312,7 @@ class IvSweep(nTron):
             voltage = []
             current = []
     
-    
+            self.i_set=0
             for n in self.v_set:
                 self.source.set_voltage(n)
                 sleep(0.1)
@@ -345,7 +364,7 @@ class IvSweep(nTron):
         voltage = []
         current = []
 
-
+        self.i_set=0
         for n in self.v_set:
             self.source.set_voltage(n)
             sleep(0.1)
@@ -397,7 +416,7 @@ class IvSweep(nTron):
         voltage = []
         current = []
 
-
+        self.i_set=0
         for n in self.v_set:
             self.source.set_voltage(n)
             sleep(0.1)
@@ -413,7 +432,80 @@ class IvSweep(nTron):
         self.v_read = voltage
         self.i_read = current
 
+    def run_sweep_2400(self):
+            self.source.setup_2W_source_I_read_V()     
+            self.source.set_output(False)
 
+            start = self.properties['iv_sweep']['start']
+            stop = self.properties['iv_sweep']['stop']
+            steps = self.properties['iv_sweep']['steps']
+            sweep = self.properties['iv_sweep']['sweep']
+            # To select full (positive and negative) trace or half trace
+            full_sweep = self.properties['iv_sweep']['full_sweep']
+            Isource1 = np.linspace(start, stop, steps) 
+    
+            if full_sweep == True:
+                Isource = np.concatenate([Isource1, Isource1[::-1]])
+                Isource = np.concatenate([Isource, -Isource])
+            else:
+                Isource = np.concatenate([Isource, -Isource])
+            self.i_set = np.tile(Isource, sweep)
+    
+            self.source.set_output(True)
+            sleep(1)
+            voltage = []
+            current = []
+    
+            self.v_set=0
+            for n in self.i_set:
+                self.source.set_current(n)
+                sleep(0.1)
+                vread, iread = self.source.read_voltage_and_current()
+                
+                print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+                voltage.append(vread)
+                current.append(iread)
+    
+            self.v_read = voltage
+            self.i_read = current
+        
+    
+    # def run_sweep_yoko(self):
+    #         self.source.setup_source_current()     
+    #         self.source.set_output(False)
+
+    #         start = self.properties['iv_sweep']['start']
+    #         stop = self.properties['iv_sweep']['stop']
+    #         steps = self.properties['iv_sweep']['steps']
+    #         sweep = self.properties['iv_sweep']['sweep']
+    #         # To select full (positive and negative) trace or half trace
+    #         full_sweep = self.properties['iv_sweep']['full_sweep']
+    #         Isource1 = np.linspace(start, stop, steps) 
+    
+    #         if full_sweep == True:
+    #             Isource = np.concatenate([Isource1, Isource1[::-1]])
+    #             Isource = np.concatenate([Isource, -Isource])
+    #         else:
+    #             Isource = np.concatenate([Isource, -Isource])
+    #         self.i_set = np.tile(Isource, sweep)
+    
+    #         self.source.set_output(True)
+    #         sleep(1)
+    #         voltage = []
+    #         current = []
+    
+    #         self.v_set=0
+    #         for n in self.i_set:
+    #             self.source.set_current(n)
+    #             sleep(0.1)
+    #             vread, iread = self.source.read_voltage_and_current()
+                
+    #             print('V=%.4f V, I=%.2f uA, R =%.2f' %(vread, iread*1e6, vread/iread))
+    #             voltage.append(vread)
+    #             current.append(iread)
+    
+    #         self.v_read = voltage
+    #         self.i_read = current
 
     def isw_calc(self):
         """ Calculates critical current.
@@ -449,7 +541,7 @@ class IvSweep(nTron):
         if self.properties['Save File'].get('port'):
             qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
                 title=self.sample_name+" "+self.device_type+" "+self.device_name+" "+self.properties['Save File']['port'],
-                xlabel='Voltage (mV)',
+                xlabel='Voltage (V)',
                 ylabel='Current (uA)',
                 path=full_path,
                 show=True,
@@ -457,7 +549,7 @@ class IvSweep(nTron):
         else:
             qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
                     title=self.sample_name+" "+self.device_type+" "+self.device_name,
-                    xlabel='Voltage (mV)',
+                    xlabel='Voltage (V)',
                     ylabel='Current (uA)',
                     path=full_path,
                     show=True,
@@ -468,6 +560,7 @@ class IvSweep(nTron):
         #Set up data dictionary
 
         data_dict = {'V_source': self.v_set,
+                     'I_source': self.i_set,
                  'V_device': self.v_read,
                  'I_device': self.i_read,
                  'Isw': self.isw,
@@ -552,11 +645,17 @@ class DoubleSweep(nTron):
                 print('Vd=%.4f V, Id=%.2f uA, Ig=%.2f uA, R =%.2f' %(vread, iread*1e6, m*1e6/self.R_srs_g, vread/iread))
                 voltage.append(vread)
                 current.append(iread)
-    
+                
+            #ADDED by Andrew...
+            #Turn off both voltage sources to provide reset time
+            self.source.set_voltage(0.0)
+            self.source2.set_voltage(0.0)
+            sleep(2)
+            #######
             
             self.v_list.append(np.asarray(voltage, dtype=np.float32))
             self.i_list.append(np.asarray(current, dtype=np.float32))
-            self.ig_list.append(m/self.R_srs)
+            self.ig_list.append(m/self.R_srs_g)
             
             
             
@@ -663,7 +762,6 @@ class IvSweepScope(nTron):
         trigger_v = self.properties['iv_sweep_scope']['trigger_v']
         trigger_channel = self.properties['iv_sweep_scope']['trigger_channel']
         channels = self.properties['iv_sweep_scope']['channels']
-        hist_channel = self.properties['iv_sweep_scope']['hist_channel']
         num_segments = self.properties['iv_sweep_scope']['num_segments']
         
         if wf == 'RAMP':
@@ -673,20 +771,29 @@ class IvSweepScope(nTron):
             self.awg.set_pulse(freq=freq, vlow=0.0, vhigh=awg_amp, width = 6.6e-6, chan=1)
 
         
-        temperature = self.temp.read_temp()
+        temperature1 = self.temp.read_temp()
         self.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
         self.scope.pyvisa.timeout = 10000
         self.scope.clear_sweeps()
         data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=num_segments)
-        hist = self.scope.get_wf_data(hist_channel)
-        hist_dict = {hist_channel+'x': hist[0], hist_channel+'y':hist[1]}
-        self.scope.set_sample_mode()
+        
+        key = self.properties.get('iv_sweep_scope')
+        if key.get('hist_channel'):
+            hist_channel = self.properties['iv_sweep_scope']['hist_channel']
+            hist = self.scope.get_wf_data(hist_channel)
+            hist_dict = {hist_channel+'x': hist[0], hist_channel+'y':hist[1]}
+            data.update(hist_dict)    
+        
+        temperature2 = self.temp.read_temp()
 
-        data.update(hist_dict)    
-        data.update({'freq': freq, 'awg_amp':awg_amp, 'atten':atten, 'temp':temperature})
+        self.scope.set_sample_mode()
+        self.scope.set_trigger_mode()
+        
+        data.update({'freq': freq, 'awg_amp':awg_amp, 'atten':atten, 'temp1':temperature1, 'temp2':temperature2})
         
         self.data_dict_iv_sweep_scope = data
         
+        self.scope.set_trigger_mode()
         
     def save(self):
         self.full_path = qf.save(self.properties, 'iv_sweep_scope', self.data_dict_iv_sweep_scope, instrument_list = self.instrument_list)    
