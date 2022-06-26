@@ -29,10 +29,12 @@ class Keithley2400(object):
         self.write('SENS:FUNC \"VOLT\"')
 
 
-    def setup_4W_source_I_read_V(self):
+    def setup_4W_source_I_read_V(self, current='1000'):
+        '''current level in microamps '''
         self.write('*RST')
         self.write(':SOUR:FUNC CURR') # Set operation mode to: source current
-        self.write(':SOUR:CURR:LEVEL 0E-6') # Set current level to 0 uA
+        print(':SOUR:CURR:LEVEL '+ current +'E-6')
+        self.write(':SOUR:CURR:LEVEL '+ current +'E-6')
         self.write(':SYST:RSEN 1') # Turn off "Remote Sensing" aka 4-wire measurement mode
         self.write('SENS:FUNC \"VOLT\", \"CURR\"') # Have it output
 
