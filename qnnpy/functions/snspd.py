@@ -92,7 +92,7 @@ class Snspd:
                 from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
                 try:
                     self.scope = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope']['port'])
-                    self.scope_channel = self.properties['Scope']['channel']
+                    # self.scope_channel = self.properties['Scope']['channel']
                     print('SCOPE: connected')
                 except:
                     print('SCOPE: failed to connect')
@@ -546,7 +546,7 @@ class IvSweep(Snspd):
 
         for n in self.v_set:
             self.source.set_voltage(n)
-            sleep(0.1)
+            sleep(.1)  #CHANGE BACK TO 0.1
 
             vread = self.meter.read_voltage() # Voltage
 
