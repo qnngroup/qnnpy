@@ -3,7 +3,7 @@ import numpy as np
 
 class Agilent33250a(object):
     """Python class for Agilent 33250a 80MHz Frequency Generator, written by Adam McCaughan"""
-
+#http://rfmw.em.keysight.com/bihelpfiles/Trueform/webhelp/US/Default.htm?lc=eng&cc=US&id=2197433
     def __init__(self, visa_name):
         rm = pyvisa.ResourceManager()
         self.pyvisa = rm.open_resource(visa_name)
@@ -98,11 +98,12 @@ class Agilent33250a(object):
         self.write('*TRG')
 
 
-    def set_burst_mode(self, burst_enable = True, num_cycles = 1, phase = 0):
+    def set_burst_mode(self, burst_enable = True, num_cycles = 1, phase = 0, period=10e-6):
         if burst_enable:
             self.write('BURS:STAT ON') # Enables burst state
             self.write('BURS:NCYC %s' % (num_cycles))
             self.write('BURS:PHAS %s' % (phase)) # Phase in degrees
+            self.write('BURS:INT:PER %s' % (period))
 
         else:
             self.write('BURS:STAT OFF')  # Disables burst state
@@ -126,14 +127,17 @@ class Agilent33250a(object):
         self.write('SOURCE%s:APPL:PULS %0.6e HZ, %0.6e VPP, %0.6e V' % (chan, freq,vpp,voffset))
         self.write('SOURCE%s:PULS:WIDT %0.6e' % (chan, width))
 
+    def set_pulse_tran(self, edge_time=5e-9, chan=1):
+        self.write('SOUR%1.0d:FUNC:PULS:TRAN %0.6e' % (chan,edge_time))
+        
     def set_pulse_width(self, width=1e-6, chan=1):
         self.write('SOURCE%s:PULS:WIDT %0.6e' % (chan, width))
 
     def set_pulse_lead(self, leading_edge_time=5e-9, chan=1):
         self.write('SOUR%1.0d:FUNC:PULS:TRAN:LEAD %0.6e' % (chan,leading_edge_time))
 
-    def set_pulse_trail(self, trailing_edge_time=5e-9, chan=1):
-        self.write('SOUR%1.0d:FUNC:PULS:TRAN:LEAD %0.6e' % (chan,trailing_edge_time))
+    # def set_pulse_trail(self, trailing_edge_time=5e-9, chan=1):
+    #     self.write('SOUR%1.0d:FUNC:PULS:TRAN:TRAIL %0.6e' % (chan,trailing_edge_time))
 
 
     def set_arb_wf(self, t = [0.0, 1e-3], v = [0.0,1.0], name = 'ARB_PY'):
