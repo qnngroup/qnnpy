@@ -350,5 +350,229 @@ def ice_get_temp(select=None):
     else:
         return data_dict
 
+#######################################################################
+        #       General function for setting up instruments
+#######################################################################
 
+def setup_instruments(self):
+    # Attenuator
+    if self.properties.get('Attenuator'):
+        self.instrument_list.append('Attenuator')
+
+        if self.properties['Attenuator']['name'] == 'JDSHA9':
+            from qnnpy.instruments.jds_ha9 import JDSHA9
+            try:
+                self.attenuator = JDSHA9(self.properties['Attenuator']['port'])
+                self.attenuator.set_beam_block(True)
+                print('ATTENUATOR: connected')
+            except:
+                print('ATTENUATOR: failed to connect')
+        else:
+            qf.lablog('Invalid Attenuator. Attenuator name: "%s" is not '\
+                      'configured' % self.properties['Attenuator']['name'])
+            raise NameError('Invalid Attenuator. Attenuator name is not configured')
     
+    # Counter
+    if self.properties.get('Counter'):
+        self.instrument_list.append('Counter')
+        if self.properties['Counter']['name']:
+            if self.properties['Counter']['name'] == 'Agilent53131a':
+                from qnnpy.instruments.agilent_53131a import Agilent53131a
+                try:
+                    self.counter = Agilent53131a(self.properties['Counter']['port'])
+                    #without the reset command this section will evaluate connected
+                    #even though the GPIB could be wrong
+                    #similary story for the other insturments
+                    self.counter.reset()
+                    self.counter.basic_setup()
+                    # self.counter.write(':EVEN:HYST:REL 100')
+                    print('COUNTER: connected')
+                except:
+                    print('COUNTER: failed to connect')
+            else:
+                qf.lablog('Invalid counter. Counter name: "%s" is not ' \
+                          'configured' 
+                          % self.properties['Counter']['name'])
+                raise NameError('Invalid counter. Counter name is not '\
+                                'configured')
+    
+    # Scope
+    if self.properties.get('Scope'):
+        self.instrument_list.append('Scope')
+
+        if self.properties['Scope']['name'] == 'LeCroy620Zi':
+            from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
+            try:
+                self.scope = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope']['port'])
+                # self.scope_channel = self.properties['Scope']['channel']
+                print('SCOPE: connected')
+            except:
+                print('SCOPE: failed to connect')
+        else:
+            qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope']['name'])
+            raise NameError('Invalid Scope. Scope name is not configured')
+
+
+        if self.properties['Scope1']['name'] == 'LeCroy620Zi':
+            from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
+            try:
+                self.scope1 = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope1']['port'])
+                # self.scope_channel = self.properties['Scope']['channel']
+                print('SCOPE: connected')
+            except:
+                print('SCOPE: failed to connect')
+        else:
+            qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope1']['name'])
+            raise NameError('Invalid Scope. Scope name is not configured')
+            
+    # Meter
+    if self.properties.get('Meter'):
+        self.instrument_list.append('Meter')
+
+        if self.properties['Meter']['name'] == 'Keithley2700':
+            from qnnpy.instruments.keithley_2700 import Keithley2700
+            try:
+                self.meter = Keithley2700(self.properties['Meter']['port'])
+                self.meter.reset()
+                print('METER: connected')
+            except:
+                print('METER: failed to connect')
+
+        elif self.properties['Meter']['name'] == 'Keithley2400':
+            # this is a source meter
+            from qnnpy.instruments.keithley_2400 import Keithley2400
+            try:
+                self.meter = Keithley2400(self.properties['Meter']['port'])
+                self.meter.reset()
+                print('METER: connected')
+            except:
+                print('METER: failed to connect')
+
+        elif self.properties['Meter']['name'] == 'Keithley2001':
+            from qnnpy.instruments.keithley_2001 import Keithley2001
+            try:
+                self.meter = Keithley2001(self.properties['Meter']['port'])
+                self.meter.reset()
+                print('METER: connected')
+            except:
+                print('METER: failed to connect')
+        else:
+            qf.lablog('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
+            raise NameError('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
+
+    # Source
+    if self.properties.get('Source'):
+        self.instrument_list.append('Source')
+
+        if self.properties['Source']['name'] == 'SIM928':
+            from qnnpy.instruments.srs_sim928 import SIM928
+            try:
+                self.source = SIM928(self.properties['Source']['port'], self.properties['Source']['port_alt'])
+                self.source.reset()
+                
+                try:
+                    self.properties.get('Source')['port_alt2']
+                    self.source2 = SIM928(self.properties['Source']['port'], self.properties['Source']['port_alt2'])
+                except:
+                    print('No second SRS specified')
+                
+                print('SOURCE: connected')
+            except:
+                print('SOURCE: failed to connect')
+        elif self.properties['Source']['name'] == 'YokogawaGS200':
+           from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
+           try:
+               self.source = YokogawaGS200(self.properties['Source']['port'])
+               # self.source.reset()
+               self.source.set_output(False)
+               self.source.set_voltage_range(5)
+               print('SOURCE: connected')
+           except:
+               print('SOURCE: failed to connect')
+        elif self.properties['Source']['name'] == 'Keithley2400':
+            from qnnpy.instruments.keithley_2400 import Keithley2400
+            try:
+                self.source = Keithley2400(self.properties['Source']['port'])
+                self.source.reset()
+                print('SOURCE: connected')
+            except:
+                print('SOURCE: failed to connect')
+        else:
+            qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
+            raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
+
+    # AWG
+    if self.properties.get('AWG'):
+        self.instrument_list.append('AWG')
+
+        if self.properties['AWG']['name'] == 'Agilent33250a':
+            from qnnpy.instruments.agilent_33250a import Agilent33250a
+            try:
+                self.awg = Agilent33250a(self.properties['AWG']['port'])
+                self.awg.beep()
+                print('AWG: connected')
+            except:
+                print('AWG: failed to connect')
+        else:
+            qf.lablog('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
+            raise NameError('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
+    
+    # VNA
+    if self.properties.get('VNA'):
+        self.instrument_list.append('VNA')
+
+        if self.properties['VNA']['name'] == 'KeysightN5224a':
+            from qnnpy.instruments.keysight_n5224a import KeysightN5224a
+            try:
+                self.VNA = KeysightN5224a(self.properties['VNA']['port'])
+                # self.VNA.reset()
+                print('VNA: connected')
+            except:
+                print('VNA: failed to connect')
+        else:
+            qf.lablog('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
+            raise NameError('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
+    
+    # Temperature Controller
+    if self.properties.get('Temperature'):
+        self.instrument_list.append('Temperature')
+
+        if self.properties['Temperature']['name'] == 'Cryocon350':
+            from qnnpy.instruments.cryocon350 import Cryocon350
+            try:
+                self.temp = Cryocon350(self.properties['Temperature']['port'])
+                self.temp.channel = self.properties['Temperature']['channel']
+                self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
+                print('TEMPERATURE: connected | '+str(self.properties['Temperature']['initial temp']))
+            except:
+                print('TEMPERATURE: failed to connect')
+
+        elif self.properties['Temperature']['name'] == 'Cryocon34':
+            from qnnpy.instruments.cryocon34 import Cryocon34
+            try:
+                self.temp = Cryocon34(self.properties['Temperature']['port'])
+                self.temp.channel = self.properties['Temperature']['channel']
+                self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
+                print('TEMPERATURE: connected | '+str(self.properties['Temperature']['initial temp']))
+            except:
+                print('TEMPERATURE: failed to connect')
+
+        elif self.properties['Temperature']['name'] == 'ICE':
+            try:
+                self.properties['Temperature']['initial temp'] = qf.ice_get_temp(select=1)
+                print('TEMPERATURE: connected' + qf.ice_get_temp(select=1))
+            except:
+                print('TEMPERATURE: failed to connect')
+                
+        elif self.properties['Temperature']['name'] == 'DEWAR':
+            try:
+                self.properties['Temperature']['initial temp'] = 4.2
+                print('TEMPERATURE: ~connected~ 4.2K')
+            except:
+                print('TEMPERATURE: failed to connect')
+
+        else:
+            qf.lablog('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
+            raise NameError('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
+    else:
+        self.properties['Temperature'] = {'initial temp': 'None'}
