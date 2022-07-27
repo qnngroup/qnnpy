@@ -37,222 +37,228 @@ class Snspd:
         # Setup instruments
         #######################################################################
 
-        # Counter
-        if self.properties.get('Counter'):
-            self.instrument_list.append('Counter')
-            if self.properties['Counter']['name']:
-                if self.properties['Counter']['name'] == 'Agilent53131a':
-                    from qnnpy.instruments.agilent_53131a import Agilent53131a
-                    try:
-                        self.counter = Agilent53131a(self.properties['Counter']['port'])
-                        #without the reset command this section will evaluate connected
-                        #even though the GPIB could be wrong
-                        #similary story for the other insturments
-                        self.counter.reset()
-                        self.counter.basic_setup()
-                        # self.counter.write(':EVEN:HYST:REL 100')
-                        print('COUNTER: connected')
-                    except:
-                        print('COUNTER: failed to connect')
-                else:
-                    qf.lablog('Invalid counter. Counter name: "%s" is not ' \
-                              'configured' 
-                              % self.properties['Counter']['name'])
-                    raise NameError('Invalid counter. Counter name is not '\
-                                    'configured')
+        
+        #NOTE: BEWARE DIFFERENCES SUCH AS IN TEMPERATURE SETUP
+        
+        self.inst = qf.Instruments(self.properties)
+        
+        
+        # # Counter
+        # if self.properties.get('Counter'):
+        #     self.instrument_list.append('Counter')
+        #     if self.properties['Counter']['name']:
+        #         if self.properties['Counter']['name'] == 'Agilent53131a':
+        #             from qnnpy.instruments.agilent_53131a import Agilent53131a
+        #             try:
+        #                 self.inst.counter = Agilent53131a(self.properties['Counter']['port'])
+        #                 #without the reset command this section will evaluate connected
+        #                 #even though the GPIB could be wrong
+        #                 #similary story for the other insturments
+        #                 self.inst.counter.reset()
+        #                 self.inst.counter.basic_setup()
+        #                 # self.inst.counter.write(':EVEN:HYST:REL 100')
+        #                 print('COUNTER: connected')
+        #             except:
+        #                 print('COUNTER: failed to connect')
+        #         else:
+        #             qf.lablog('Invalid counter. Counter name: "%s" is not ' \
+        #                       'configured' 
+        #                       % self.properties['Counter']['name'])
+        #             raise NameError('Invalid counter. Counter name is not '\
+        #                             'configured')
 
 
 
 
-        # Attenuator
-        if self.properties.get('Attenuator'):
-            self.instrument_list.append('Attenuator')
+        # # Attenuator
+        # if self.properties.get('Attenuator'):
+        #     self.instrument_list.append('Attenuator')
 
-            if self.properties['Attenuator']['name'] == 'JDSHA9':
-                from qnnpy.instruments.jds_ha9 import JDSHA9
-                try:
-                    self.attenuator = JDSHA9(self.properties['Attenuator']['port'])
-                    self.attenuator.set_beam_block(True)
-                    print('ATTENUATOR: connected')
-                except:
-                    print('ATTENUATOR: failed to connect')
-            else:
-                qf.lablog('Invalid Attenuator. Attenuator name: "%s" is not '\
-                          'configured' % self.properties['Attenuator']['name'])
-                raise NameError('Invalid Attenuator. Attenuator name is not configured')
-
-
-
-
-        # Scope
-        if self.properties.get('Scope'):
-            self.instrument_list.append('Scope')
-
-            if self.properties['Scope']['name'] == 'LeCroy620Zi':
-                from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
-                try:
-                    self.scope = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope']['port'])
-                    # self.scope_channel = self.properties['Scope']['channel']
-                    print('SCOPE: connected')
-                except:
-                    print('SCOPE: failed to connect')
-            else:
-                qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope']['name'])
-                raise NameError('Invalid Scope. Scope name is not configured')
+        #     if self.properties['Attenuator']['name'] == 'JDSHA9':
+        #         from qnnpy.instruments.jds_ha9 import JDSHA9
+        #         try:
+        #             self.inst.attenuator = JDSHA9(self.properties['Attenuator']['port'])
+        #             self.inst.attenuator.set_beam_block(True)
+        #             print('ATTENUATOR: connected')
+        #         except:
+        #             print('ATTENUATOR: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid Attenuator. Attenuator name: "%s" is not '\
+        #                   'configured' % self.properties['Attenuator']['name'])
+        #         raise NameError('Invalid Attenuator. Attenuator name is not configured')
 
 
 
 
-        # Meter
-        if self.properties.get('Meter'):
-            self.instrument_list.append('Meter')
+        # # Scope
+        # if self.properties.get('Scope'):
+        #     self.instrument_list.append('Scope')
 
-            if self.properties['Meter']['name'] == 'Keithley2700':
-                from qnnpy.instruments.keithley_2700 import Keithley2700
-                try:
-                    self.meter = Keithley2700(self.properties['Meter']['port'])
-                    self.meter.reset()
-                    print('METER: connected')
-                except:
-                    print('METER: failed to connect')
-
-            elif self.properties['Meter']['name'] == 'Keithley2400':
-                # this is a source meter
-                from qnnpy.instruments.keithley_2400 import Keithley2400
-                try:
-                    self.meter = Keithley2400(self.properties['Meter']['port'])
-                    self.meter.reset()
-                    print('METER: connected')
-                except:
-                    print('METER: failed to connect')
-
-            elif self.properties['Meter']['name'] == 'Keithley2001':
-                from qnnpy.instruments.keithley_2001 import Keithley2001
-                try:
-                    self.meter = Keithley2001(self.properties['Meter']['port'])
-                    self.meter.reset()
-                    print('METER: connected')
-                except:
-                    print('METER: failed to connect')
-            else:
-                qf.lablog('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
-                raise NameError('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
+        #     if self.properties['Scope']['name'] == 'LeCroy620Zi':
+        #         from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
+        #         try:
+        #             self.inst.scope = LeCroy620Zi("TCPIP::%s::INSTR" % self.properties['Scope']['port'])
+        #             # self.inst.scope_channel = self.properties['Scope']['channel']
+        #             print('SCOPE: connected')
+        #         except:
+        #             print('SCOPE: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid Scope. Scope name: "%s" is not configured' % self.properties['Scope']['name'])
+        #         raise NameError('Invalid Scope. Scope name is not configured')
 
 
 
 
-        # Source
-        if self.properties.get('Source'):
-            self.instrument_list.append('Source')
+        # # Meter
+        # if self.properties.get('Meter'):
+        #     self.instrument_list.append('Meter')
 
-            if self.properties['Source']['name'] == 'SIM928':
-                from qnnpy.instruments.srs_sim928 import SIM928
-                try:
-                    self.source = SIM928(self.properties['Source']['port'], self.properties['Source']['port_alt'])
-                    # self.source.reset()
-                    self.source.set_output(False)
-                    print('SOURCE: connected')
-                except:
-                    print('SOURCE: failed to connect')
+        #     if self.properties['Meter']['name'] == 'Keithley2700':
+        #         from qnnpy.instruments.keithley_2700 import Keithley2700
+        #         try:
+        #             self.inst.meter = Keithley2700(self.properties['Meter']['port'])
+        #             self.inst.meter.reset()
+        #             print('METER: connected')
+        #         except:
+        #             print('METER: failed to connect')
+
+        #     elif self.properties['Meter']['name'] == 'Keithley2400':
+        #         # this is a source meter
+        #         from qnnpy.instruments.keithley_2400 import Keithley2400
+        #         try:
+        #             self.inst.meter = Keithley2400(self.properties['Meter']['port'])
+        #             self.inst.meter.reset()
+        #             print('METER: connected')
+        #         except:
+        #             print('METER: failed to connect')
+
+        #     elif self.properties['Meter']['name'] == 'Keithley2001':
+        #         from qnnpy.instruments.keithley_2001 import Keithley2001
+        #         try:
+        #             self.inst.meter = Keithley2001(self.properties['Meter']['port'])
+        #             self.inst.meter.reset()
+        #             print('METER: connected')
+        #         except:
+        #             print('METER: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
+        #         raise NameError('Invalid Meter. Meter name: "%s" is not configured' % self.properties['Meter']['name'])
+
+
+
+
+        # # Source
+        # if self.properties.get('Source'):
+        #     self.instrument_list.append('Source')
+
+        #     if self.properties['Source']['name'] == 'SIM928':
+        #         from qnnpy.instruments.srs_sim928 import SIM928
+        #         try:
+        #             self.inst.source = SIM928(self.properties['Source']['port'], self.properties['Source']['port_alt'])
+        #             # self.inst.source.reset()
+        #             self.inst.source.set_output(False)
+        #             print('SOURCE: connected')
+        #         except:
+        #             print('SOURCE: failed to connect')
                     
-            elif self.properties['Source']['name'] == 'YokogawaGS200':
-                from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
-                try:
-                    self.source = YokogawaGS200(self.properties['Source']['port'])
-                    # self.source.reset()
-                    self.source.set_output(False)
-                    self.source.set_voltage_range(5)
-                    print('SOURCE: connected')
-                except:
-                    print('SOURCE: failed to connect')
-            else:
-                qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
-                raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
+        #     elif self.properties['Source']['name'] == 'YokogawaGS200':
+        #         from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
+        #         try:
+        #             self.inst.source = YokogawaGS200(self.properties['Source']['port'])
+        #             # self.inst.source.reset()
+        #             self.inst.source.set_output(False)
+        #             self.inst.source.set_voltage_range(5)
+        #             print('SOURCE: connected')
+        #         except:
+        #             print('SOURCE: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
+        #         raise NameError('Invalid Source. Source name: "%s" is not configured' % self.properties['Source']['name'])
 
 
 
-        # AWG
-        if self.properties.get('AWG'):
-            self.instrument_list.append('AWG')
+        # # AWG
+        # if self.properties.get('AWG'):
+        #     self.instrument_list.append('AWG')
 
-            if self.properties['AWG']['name'] == 'Agilent33250a':
-                from qnnpy.instruments.agilent_33250a import Agilent33250a
-                try:
-                    self.awg = Agilent33250a(self.properties['AWG']['port'])
-                    self.awg.beep()
-                    print('AWG: connected')
-                except:
-                    print('AWG: failed to connect')
-            else:
-                qf.lablog('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
-                raise NameError('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
+        #     if self.properties['AWG']['name'] == 'Agilent33250a':
+        #         from qnnpy.instruments.agilent_33250a import Agilent33250a
+        #         try:
+        #             self.inst.awg = Agilent33250a(self.properties['AWG']['port'])
+        #             self.inst.awg.beep()
+        #             print('AWG: connected')
+        #         except:
+        #             print('AWG: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
+        #         raise NameError('Invalid AWG. AWG name: "%s" is not configured' % self.properties['AWG']['name'])
 
-        # VNA
-        if self.properties.get('VNA'):
-            self.instrument_list.append('VNA')
+        # # VNA
+        # if self.properties.get('VNA'):
+        #     self.instrument_list.append('VNA')
 
-            if self.properties['VNA']['name'] == 'KeysightN5224a':
-                from qnnpy.instruments.keysight_n5224a import KeysightN5224a
-                try:
-                    self.VNA = KeysightN5224a(self.properties['VNA']['port'])
-                    # self.VNA.reset()
-                    print('VNA: connected')
-                except:
-                    print('VNA: failed to connect')
-            else:
-                qf.lablog('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
-                raise NameError('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
+        #     if self.properties['VNA']['name'] == 'KeysightN5224a':
+        #         from qnnpy.instruments.keysight_n5224a import KeysightN5224a
+        #         try:
+        #             self.inst.VNA = KeysightN5224a(self.properties['VNA']['port'])
+        #             # self.inst.VNA.reset()
+        #             print('VNA: connected')
+        #         except:
+        #             print('VNA: failed to connect')
+        #     else:
+        #         qf.lablog('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
+        #         raise NameError('Invalid VNA. VNA name: "%s" is not configured' % self.properties['VNA']['name'])
 
 
 
-        # Temperature Controller
-        if self.properties.get('Temperature'):
-            self.instrument_list.append('Temperature')
+        # # Temperature Controller
+        # if self.properties.get('Temperature'):
+        #     self.instrument_list.append('Temperature')
 
-            if self.properties['Temperature']['name'] == 'Cryocon350':
-                from qnnpy.instruments.cryocon350 import Cryocon350
-                try:
-                    self.temp = Cryocon350(self.properties['Temperature']['port'])
-                    self.temp.channel = self.properties['Temperature']['channel']
-                    self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
-                    print('TEMPERATURE: connected')
-                except:
-                    self.properties['Temperature']['initial temp'] = 0
-                    print('TEMPERATURE: failed to connect')
+        #     if self.properties['Temperature']['name'] == 'Cryocon350':
+        #         from qnnpy.instruments.cryocon350 import Cryocon350
+        #         try:
+        #             self.inst.temp = Cryocon350(self.properties['Temperature']['port'])
+        #             self.inst.temp.channel = self.properties['Temperature']['channel']
+        #             self.properties['Temperature']['initial temp'] = self.inst.temp.read_temp(self.inst.temp.channel)
+        #             print('TEMPERATURE: connected')
+        #         except:
+        #             self.properties['Temperature']['initial temp'] = 0
+        #             print('TEMPERATURE: failed to connect')
 
-            elif self.properties['Temperature']['name'] == 'Cryocon34':
-                from qnnpy.instruments.cryocon34 import Cryocon34
-                try:
-                    self.temp = Cryocon34(self.properties['Temperature']['port'])
-                    self.temp.channel = self.properties['Temperature']['channel']
-                    self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.temp.channel)
-                    print('TEMPERATURE: connected')
-                except:
-                    self.properties['Temperature']['initial temp'] = 0
-                    print('TEMPERATURE: failed to connect')
+        #     elif self.properties['Temperature']['name'] == 'Cryocon34':
+        #         from qnnpy.instruments.cryocon34 import Cryocon34
+        #         try:
+        #             self.inst.temp = Cryocon34(self.properties['Temperature']['port'])
+        #             self.inst.temp.channel = self.properties['Temperature']['channel']
+        #             self.properties['Temperature']['initial temp'] = self.inst.temp.read_temp(self.inst.temp.channel)
+        #             print('TEMPERATURE: connected')
+        #         except:
+        #             self.properties['Temperature']['initial temp'] = 0
+        #             print('TEMPERATURE: failed to connect')
 
-            elif self.properties['Temperature']['name'] == 'ICE':
-                try:
-                    self.properties['Temperature']['initial temp'] = qf.ice_get_temp(select=1)
-                    print('TEMPERATURE: connected')
-                except:
-                    self.properties['Temperature']['initial temp'] = 0
-                    print('TEMPERATURE: failed to connect')
+        #     elif self.properties['Temperature']['name'] == 'ICE':
+        #         try:
+        #             self.properties['Temperature']['initial temp'] = qf.ice_get_temp(select=1)
+        #             print('TEMPERATURE: connected')
+        #         except:
+        #             self.properties['Temperature']['initial temp'] = 0
+        #             print('TEMPERATURE: failed to connect')
                     
-            elif self.properties['Temperature']['name'] == 'DEWAR':
-                try:
-                    self.properties['Temperature']['initial temp'] = 4.2
-                    print('TEMPERATURE: ~connected~ 4.2K')
-                except:
-                    self.properties['Temperature']['initial temp'] = 0
-                    print('TEMPERATURE: failed to connect')
+        #     elif self.properties['Temperature']['name'] == 'DEWAR':
+        #         try:
+        #             self.properties['Temperature']['initial temp'] = 4.2
+        #             print('TEMPERATURE: ~connected~ 4.2K')
+        #         except:
+        #             self.properties['Temperature']['initial temp'] = 0
+        #             print('TEMPERATURE: failed to connect')
 
-            else:
-                qf.lablog('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
-                raise NameError('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
-        else:
-            self.properties['Temperature'] = {'initial temp': 'None'}
-            # print('TEMPERATURE: Not Specified')
+        #     else:
+        #         qf.lablog('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
+        #         raise NameError('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
+        # else:
+        #     self.properties['Temperature'] = {'initial temp': 'None'}
+        #     # print('TEMPERATURE: Not Specified')
 
 
     def average_counts(self, counting_time, iterations, trigger_v):
@@ -269,12 +275,12 @@ class Snspd:
         count_rate_temp = []
 
         for i in range(iterations):
-            self.source.set_output(True); sleep(0.05) # bias device
-            voltage = self.meter.read_voltage(); sleep(0.05)
-            # self.source.set_voltage(np.sign(i)*1e-3); time.sleep(0.05); #reverse bias to unlatch?
-            # self.source.set_voltage(i*self.R_srs); time.sleep(0.05)
-            self.counter.set_trigger(trigger_v)
-            count_rate = self.counter.count_rate(counting_time=counting_time) #obtain counts
+            self.inst.source.set_output(True); sleep(0.05) # bias device
+            voltage = self.inst.meter.read_voltage(); sleep(0.05)
+            # self.inst.source.set_voltage(np.sign(i)*1e-3); time.sleep(0.05); #reverse bias to unlatch?
+            # self.inst.source.set_voltage(i*self.R_srs); time.sleep(0.05)
+            self.inst.counter.set_trigger(trigger_v)
+            count_rate = self.inst.counter.count_rate(counting_time=counting_time) #obtain counts
             count_rate_temp.append(count_rate) #append counts for each itteration
 
             if voltage > 0.005:
@@ -282,7 +288,7 @@ class Snspd:
             else:
                 print(count_rate)
                 
-            self.source.set_output(False); sleep(0.05)
+            self.inst.source.set_output(False); sleep(0.05)
         count_rate_avg = np.mean(count_rate_temp) #average of each itteraton
         return count_rate_avg
 
@@ -295,22 +301,22 @@ class Snspd:
         two seconds. ICE will measure temp every 10 seconds. Slower sweep is 
         better. Keyboard Interrupt to end. File will be saved at path. 
         """
-        self.source.set_voltage(voltage)
-        self.source.set_output(True)
+        self.inst.source.set_voltage(voltage)
+        self.inst.source.set_output(True)
         while True:
             file = open(path, 'a')
             if self.properties['Temperature']['name'] == 'ICE':
                 temp = qf.ice_get_temp(select=1)
             else:
-                temp = self.temp.read_temp(self.temp.channel)
-            self.source.set_output(True)
+                temp = self.inst.temp.read_temp(self.inst.temp.channel)
+            self.inst.source.set_output(True)
             sleep(1)
-            voltage = self.meter.read_voltage()
+            voltage = self.inst.meter.read_voltage()
             line =str(temp)+', '+str(voltage)
             print(line)
             file.write('\n'+line)
             file.close()
-            self.source.set_output(False)
+            self.inst.source.set_output(False)
 
             sleep(1)
             
@@ -346,13 +352,13 @@ class TriggerSweep(Snspd):
         self.v_bias = self.properties['trigger_sweep']['bias_voltage']
         atten_level = self.properties['trigger_sweep']['attenuation_db']
 
-        self.source.set_output(False); sleep(.2)
-        self.source.set_output(True)
-        self.source.set_voltage(0)
+        self.inst.source.set_output(False); sleep(.2)
+        self.inst.source.set_output(True)
+        self.inst.source.set_voltage(0)
         sleep(.2)
-        self.source.set_voltage(self.v_bias)
+        self.inst.source.set_voltage(self.v_bias)
         sleep(1)
-        # self.counter.set_impedance(0) #50Ohm
+        # self.inst.counter.set_impedance(0) #50Ohm
 
         counting_time = self.properties['trigger_sweep']['counting_time']
         start = self.properties['trigger_sweep']['start']
@@ -363,9 +369,9 @@ class TriggerSweep(Snspd):
         atten_list_bool = [True, False]
         for i in range(2):
             print('\\\\\\\\ BEAM BLOCK: %s \\\\\\\\ ' % atten_list_bool[i])
-            self.attenuator.set_attenuation_db(atten_list[i])
-            self.attenuator.set_beam_block(atten_list_bool[i])
-            trigger_v, count_rate = self.counter.scan_trigger_voltage(voltage_range=[start, stop],
+            self.inst.attenuator.set_attenuation_db(atten_list[i])
+            self.inst.attenuator.set_beam_block(atten_list_bool[i])
+            trigger_v, count_rate = self.inst.counter.scan_trigger_voltage(voltage_range=[start, stop],
                                                                       counting_time=counting_time,
                                                                       num_pts=int(np.floor((stop-start)/step)))
             self.trigger_v = trigger_v
@@ -374,7 +380,7 @@ class TriggerSweep(Snspd):
             else:
                 self.counts_trigger_light = count_rate
             sleep(1)
-        self.attenuator.set_beam_block(True)
+        self.inst.attenuator.set_beam_block(True)
 
 
     def plot(self, close=True):
@@ -433,15 +439,15 @@ class TriggerSweepScope(Snspd):
         self.v_bias = self.properties['trigger_sweep']['bias_voltage']
         atten_level = self.properties['trigger_sweep']['attenuation_db']
 
-        self.source.set_output(False); sleep(.2)
-        self.source.set_output(True)
-        self.source.set_voltage(0)
+        self.inst.source.set_output(False); sleep(.2)
+        self.inst.source.set_output(True)
+        self.inst.source.set_voltage(0)
         sleep(.2)
-        self.source.set_voltage(self.v_bias)
+        self.inst.source.set_voltage(self.v_bias)
         sleep(1)
-        self.counter.write(':INP:IMP 1E6') #1 MOhm input impedance
+        self.inst.counter.write(':INP:IMP 1E6') #1 MOhm input impedance
         ct_volt = self.properties['trigger_sweep']['counter_trigger_voltage']
-        self.counter.set_trigger(trigger_voltage=ct_volt)
+        self.inst.counter.set_trigger(trigger_voltage=ct_volt)
 
         counting_time = self.properties['trigger_sweep']['counting_time']
         start = self.properties['trigger_sweep']['start']
@@ -453,12 +459,12 @@ class TriggerSweepScope(Snspd):
         atten_list_bool = [True, False]
         for a in range(2):
             print('\\\\\\\\ BEAM BLOCK: %s \\\\\\\\ ' % atten_list_bool[a])
-            self.attenuator.set_attenuation_db(atten_list[a])
-            self.attenuator.set_beam_block(atten_list_bool[a])
+            self.inst.attenuator.set_attenuation_db(atten_list[a])
+            self.inst.attenuator.set_beam_block(atten_list_bool[a])
             counts = []
             for i in trigger_v:
-                self.scope.set_trigger(source=self.scope_channel, volt_level=i, slope='positive')
-                tv, count_rate = self.counter.scan_trigger_voltage(voltage_range=[ct_volt, ct_volt],
+                self.inst.scope.set_trigger(source=self.inst.scope_channel, volt_level=i, slope='positive')
+                tv, count_rate = self.inst.counter.scan_trigger_voltage(voltage_range=[ct_volt, ct_volt],
                                                                    counting_time=counting_time,
                                                                    num_pts=1)
                 counts.append(count_rate)
@@ -469,7 +475,7 @@ class TriggerSweepScope(Snspd):
                 self.counts_trigger_dark = np.asarray(counts, dtype=np.float32)
             else:
                 self.counts_trigger_light = np.asarray(counts, dtype=np.float32)
-        self.attenuator.set_beam_block(True)
+        self.inst.attenuator.set_beam_block(True)
         self.trigger_v = trigger_v
 
 
@@ -517,10 +523,10 @@ class IvSweep(Snspd):
         
         np.linspace()
         """
-        self.source.reset()
-        self.meter.reset()
+        self.inst.source.reset()
+        self.inst.meter.reset()
 
-        self.source.set_output(False)
+        self.inst.source.set_output(False)
 
         start = self.properties['iv_sweep']['start']
         stop = self.properties['iv_sweep']['stop']
@@ -538,17 +544,17 @@ class IvSweep(Snspd):
             Isource = np.concatenate([Isource1, Isource2])
         self.v_set = np.tile(Isource, sweep) * self.R_srs
 
-        self.source.set_output(True)
+        self.inst.source.set_output(True)
         sleep(1)
         voltage = []
         current = []
 
 
         for n in self.v_set:
-            self.source.set_voltage(n)
+            self.inst.source.set_voltage(n)
             sleep(.1)  #CHANGE BACK TO 0.1
 
-            vread = self.meter.read_voltage() # Voltage
+            vread = self.inst.meter.read_voltage() # Voltage
 
             iread = (n-vread)/self.R_srs#(set voltage - read voltage)
 
@@ -567,10 +573,10 @@ class IvSweep(Snspd):
 
         uses np.linspace()
         """
-        self.source.reset()
-        self.meter.reset()
+        self.inst.source.reset()
+        self.inst.meter.reset()
 
-        self.source.set_output(False)
+        self.inst.source.set_output(False)
 
         start = self.properties['iv_sweep']['start']
         stop = self.properties['iv_sweep']['stop']
@@ -591,17 +597,17 @@ class IvSweep(Snspd):
             Isource = np.concatenate([Isource1, Isource2])
         self.v_set = np.tile(Isource, sweep) * self.R_srs
 
-        self.source.set_output(True)
+        self.inst.source.set_output(True)
         sleep(1)
         voltage = []
         current = []
 
 
         for n in self.v_set:
-            self.source.set_voltage(n)
+            self.inst.source.set_voltage(n)
             sleep(0.1)
 
-            vread = self.meter.read_voltage() # Voltage
+            vread = self.inst.meter.read_voltage() # Voltage
 
             iread = (n-vread)/self.R_srs#(set voltage - read voltage)
 
@@ -619,10 +625,10 @@ class IvSweep(Snspd):
         
         uses np.arange()
         """
-        self.source.reset()
-        self.meter.reset()
+        self.inst.source.reset()
+        self.inst.meter.reset()
 
-        self.source.set_output(False)
+        self.inst.source.set_output(False)
 
         start = self.properties['iv_sweep']['start']
         stop = self.properties['iv_sweep']['stop']
@@ -643,17 +649,17 @@ class IvSweep(Snspd):
             Isource = np.concatenate([Isource1, Isource2])
         self.v_set = np.tile(Isource, sweep) * self.R_srs
 
-        self.source.set_output(True)
+        self.inst.source.set_output(True)
         sleep(1)
         voltage = []
         current = []
 
 
         for n in self.v_set:
-            self.source.set_voltage(n)
+            self.inst.source.set_voltage(n)
             sleep(0.1)
 
-            vread = self.meter.read_voltage() # Voltage
+            vread = self.inst.meter.read_voltage() # Voltage
 
             iread = (n-vread)/self.R_srs#(set voltage - read voltage)
 
@@ -733,17 +739,17 @@ class IvSweepScope(Snspd):
         channels = self.properties['iv_sweep_scope']['channels']
         hist_channel = self.properties['iv_sweep_scope']['hist_channel']
         num_segments = self.properties['iv_sweep_scope']['num_segments']
-        self.awg.set_vpp(awg_amp)
-        self.awg.set_freq(freq)
-        # temperature = self.temp.read_temp()
+        self.inst.awg.set_vpp(awg_amp)
+        self.inst.awg.set_freq(freq)
+        # temperature = self.inst.temp.read_temp()
         temperature=0
-        self.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
-        self.scope.pyvisa.timeout = 10000
-        self.scope.clear_sweeps()
-        data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=num_segments)
-        hist = self.scope.get_wf_data(hist_channel)
+        self.inst.scope.set_trigger(source=trigger_channel, volt_level=trigger_v)
+        self.inst.scope.pyvisa.timeout = 10000
+        self.inst.scope.clear_sweeps()
+        data = self.inst.scope.get_multiple_trace_sequence(channels=channels, NumSegments=num_segments)
+        hist = self.inst.scope.get_wf_data(hist_channel)
         hist_dict = {hist_channel+'x': hist[0], hist_channel+'y':hist[1]}
-        self.scope.set_sample_mode()
+        self.inst.scope.set_sample_mode()
 
         data.update(hist_dict)    
         data.update({'freq': freq, 'awg_amp':awg_amp, 'atten':atten, 'temp':temperature})
@@ -755,7 +761,7 @@ class IvSweepScope(Snspd):
         
         
         self.full_path = qf.save(self.properties, 'iv_sweep_scope', self.data_dict_iv_sweep_scope, instrument_list = self.instrument_list)    
-        self.scope.save_screenshot(self.full_path+'screen_shot'+'.png', white_background=False)
+        self.inst.scope.save_screenshot(self.full_path+'screen_shot'+'.png', white_background=False)
 
         
 
@@ -789,15 +795,15 @@ class PhotonCounts(Snspd):
         self.currents = currents
 
         #Block light
-        self.attenuator.set_attenuation_db(100)
-        self.attenuator.set_beam_block(True)
+        self.inst.attenuator.set_attenuation_db(100)
+        self.inst.attenuator.set_beam_block(True)
 
         count_rate_list = []
 
         print('\\\\\\\\ DARK COUNT RATE \\\\\\\\')
         for n, j in enumerate(currents): #sweep current
             start_time = time.time()
-            self.source.set_voltage(voltage=j*self.R_srs)
+            self.inst.source.set_voltage(voltage=j*self.R_srs)
             count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
 
             count_rate_list.append(count_rate_avg) #final countrate at this current is the average of each itteration
@@ -823,20 +829,20 @@ class PhotonCounts(Snspd):
         self.currents = currents
 
         #Shine light
-        self.attenuator.set_attenuation_db(self.attenuation)
-        self.attenuator.set_beam_block(False)
+        self.inst.attenuator.set_attenuation_db(self.attenuation)
+        self.inst.attenuator.set_beam_block(False)
 
         count_rate_list = []
         
         print('\\\\\\\\ LIGHT COUNT RATE \\\\\\\\')
         for n, j in enumerate(currents): #sweep current
             start_time = time.time()
-            self.source.set_voltage(voltage=j*self.R_srs)
+            self.inst.source.set_voltage(voltage=j*self.R_srs)
             sleep(0.1)
             count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
             count_rate_list.append(count_rate_avg) #final countrate at this current is the average of each itteration
             print('Current value %0.2f uA - Count rate = %0.2e   (%s of %s: %0.2f min)' % (j*1e6, count_rate_avg, n+1, len(currents), (time.time()-start_time)/60.0))
-        self.attenuator.set_beam_block(True)
+        self.inst.attenuator.set_beam_block(True)
         self.LCR = np.asarray(count_rate_list, dtype=np.float32)
 
 #        self.LCR = currents*3 # here for testing
@@ -911,21 +917,21 @@ class LinearityCheck(Snspd):
         iterations = self.properties['linearity_check']['iterations']
 
         dbs = np.arange(start, stop, step)
-        self.source.set_output(True)
-        self.source.set_voltage(voltage=bias*self.R_srs)
+        self.inst.source.set_output(True)
+        self.inst.source.set_voltage(voltage=bias*self.R_srs)
 
         #add current loop if desired
-        self.attenuator.set_beam_block(False)
+        self.inst.attenuator.set_beam_block(False)
 
         counts_per_atten = []
         start_time = time.time()
         for i in dbs:
-            self.attenuator.set_attenuation_db(i)
+            self.inst.attenuator.set_attenuation_db(i)
             sleep(.1)
             count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
             counts_per_atten.append(count_rate_avg)
             print('Attenuation: %.1f dB \\\\ Counts: %.0f \\\\ Elapsed Time: %.2f' %(i, count_rate_avg, time.time()-start_time))
-        self.attenuator.set_beam_block(True)
+        self.inst.attenuator.set_beam_block(True)
 
         self.counts_per_atten = np.asarray(counts_per_atten, dtype=np.float32)
         self.attenuation_levels = np.asarray(dbs, dtype=np.float32)
@@ -965,9 +971,9 @@ class PulseTraceSingle(Snspd):
         """ Returns x,y of scope_channel in configuration file"""
         
         bias = self.properties['pulse_trace']['bias_voltage']
-        self.scope.set_trigger_mode(trigger_mode='Stop')
-        self.source.set_output(True)
-        self.source.set_voltage(voltage=bias)
+        self.inst.scope.set_trigger_mode(trigger_mode='Stop')
+        self.inst.source.set_output(True)
+        self.inst.source.set_voltage(voltage=bias)
         
         if channels:
             channels = channels
@@ -979,25 +985,25 @@ class PulseTraceSingle(Snspd):
         
         trigger_v = self.properties['pulse_trace']['trigger_level']
         if trigger_source:
-            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+            self.inst.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
         else:
-            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+            self.inst.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
         if self.properties.get('Attenuator'):
             attenuation = self.properties['pulse_trace']['attenuation']
-            self.attenuator.set_attenuation_db(attenuation)
+            self.inst.attenuator.set_attenuation_db(attenuation)
             if attenuation == 100:
-                self.attenuator.set_beam_block(True)
+                self.inst.attenuator.set_beam_block(True)
             else:
-                self.attenuator.set_beam_block(False)
+                self.inst.attenuator.set_beam_block(False)
                 
         sleep(0.1)
-        self.scope.set_trigger_mode(trigger_mode='Single')
-        while (self.scope.get_trigger_mode() == 'Single\n'):
+        self.inst.scope.set_trigger_mode(trigger_mode='Single')
+        while (self.inst.scope.get_trigger_mode() == 'Single\n'):
             sleep(0.1)
             
         for i in range(len(channels)):
-            x, y = self.scope.get_single_trace(channel=channels[i])
+            x, y = self.inst.scope.get_single_trace(channel=channels[i])
             # xlist.append(x);  #keep all x data the same.
             ylist.append(y);
 
@@ -1007,7 +1013,7 @@ class PulseTraceSingle(Snspd):
 
     def plot(self):
         """ Grabs new trace from scope and plots. Figure is saved to path """
-        # x,y = self.scope.get_single_trace(channel= self.scope_channel)
+        # x,y = self.inst.scope.get_single_trace(channel= self.inst.scope_channel)
         channels = self.properties['pulse_trace']['channel']
         full_path = qf.save(self.properties, 'pulse_trace')
 #        data_dict = {'x':x,'y':y}
@@ -1027,7 +1033,7 @@ class PulseTraceSingle(Snspd):
         data_dict = {'x':self.trace_x, 'y':self.trace_y}
         file_path = qf.save(self.properties, 'pulse_trace', data_dict, 
                 instrument_list = self.instrument_list)
-        self.scope.save_screenshot(file_path+".png")
+        self.inst.scope.save_screenshot(file_path+".png")
 
 class PulseTraceMultiple(Snspd):
 
@@ -1041,10 +1047,10 @@ class PulseTraceMultiple(Snspd):
          
         ''' Option for attenuator control. Set to 100dB for beam block. '''    
         if self.properties.get('pulse_trace').get('attenuation'):
-            self.attenuator.set_attenuation_db(self.properties['pulse_trace']['attenuation'])
-            self.attenuator.set_beam_block(False)
+            self.inst.attenuator.set_attenuation_db(self.properties['pulse_trace']['attenuation'])
+            self.inst.attenuator.set_beam_block(False)
             if self.properties['pulse_trace']['attenuation'] == 100:
-                self.attenuator.set_beam_block(True)
+                self.inst.attenuator.set_beam_block(True)
         
         
         total_ylist = []
@@ -1052,22 +1058,22 @@ class PulseTraceMultiple(Snspd):
         number_of_traces = self.properties['pulse_trace']['number_of_traces']
         
         if trigger_source:
-            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+            self.inst.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
         else:
-            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+            self.inst.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
             
-        self.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
-        self.source.set_output(True)    
+        self.inst.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
+        self.inst.source.set_output(True)    
         for n in range(number_of_traces):
-            self.meter.read_voltage()
-            self.scope.set_trigger_mode(trigger_mode='Single')
-            while self.scope.get_trigger_mode() != 'Stopped\n':
+            self.inst.meter.read_voltage()
+            self.inst.scope.set_trigger_mode(trigger_mode='Single')
+            while self.inst.scope.get_trigger_mode() != 'Stopped\n':
                 sleep(0.001)
             
             ylist = [];
             for i in range(len(channels)):
-                x, y = self.scope.get_single_trace(channel=channels[i])
+                x, y = self.inst.scope.get_single_trace(channel=channels[i])
                 # xlist.append(x);  #keep all x data the same.
                 ylist.append(y);
 
@@ -1076,13 +1082,13 @@ class PulseTraceMultiple(Snspd):
             
         self.trace_x = x
         self.trace_y = np.asarray(total_ylist, dtype=np.float32)
-        self.source.set_output(False)    
+        self.inst.source.set_output(False)    
 
         return self.trace_x, self.trace_y
 
     def plot(self):
         """ Grabs new trace from scope and plots. Figure is saved to path """
-        # x,y = self.scope.get_single_trace(channel= self.scope_channel)
+        # x,y = self.inst.scope.get_single_trace(channel= self.inst.scope_channel)
 
         full_path = qf.save(self.properties, 'pulse_trace')
 #        data_dict = {'x':x,'y':y}
@@ -1115,11 +1121,11 @@ class PulseTraceSegments(Snspd):
         ''' Option for attenuator control. Set to 100dB for beam block. '''    
         if self.properties.get('Attenuator'):
             attenuation = self.properties['pulse_trace']['attenuation']
-            self.attenuator.set_attenuation_db(attenuation)
+            self.inst.attenuator.set_attenuation_db(attenuation)
             if attenuation == 100:
-                self.attenuator.set_beam_block(True)
+                self.inst.attenuator.set_beam_block(True)
             else:
-                self.attenuator.set_beam_block(False)
+                self.inst.attenuator.set_beam_block(False)
                 
         
         total_ylist = []
@@ -1127,39 +1133,39 @@ class PulseTraceSegments(Snspd):
         number_of_traces = self.properties['pulse_trace']['number_of_traces']
         
         if trigger_source:
-            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+            self.inst.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
         else:
-            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+            self.inst.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
         if bias_voltage:
-            self.source.set_voltage(bias_voltage)
+            self.inst.source.set_voltage(bias_voltage)
         else:
-            self.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
-        self.source.set_output(True)    
+            self.inst.source.set_voltage(self.properties['pulse_trace']['bias_voltage'])
+        self.inst.source.set_output(True)    
 
         if trigger_source:
-            self.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
+            self.inst.scope.set_trigger(source = trigger_source, volt_level = trigger_v, slope = 'positive')            
         else:
-            self.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
+            self.inst.scope.set_trigger(source = channels[0], volt_level = trigger_v, slope = 'positive')
         
-        self.scope.pyvisa.timeout = 10000
-        self.scope.clear_sweeps()
-        data = self.scope.get_multiple_trace_sequence(channels=channels, NumSegments=number_of_traces)
+        self.inst.scope.pyvisa.timeout = 10000
+        self.inst.scope.clear_sweeps()
+        data = self.inst.scope.get_multiple_trace_sequence(channels=channels, NumSegments=number_of_traces)
         
-        self.scope_data = data
-        self.scope.set_sample_mode()
-        self.scope.set_trigger_mode()
-        self.source.set_output(False)    
+        self.inst.scope_data = data
+        self.inst.scope.set_sample_mode()
+        self.inst.scope.set_trigger_mode()
+        self.inst.source.set_output(False)    
 
-        return self.scope_data
+        return self.inst.scope_data
 
     def plot(self):
         """ Grabs new trace from scope and plots. Figure is saved to path """
-        # x,y = self.scope.get_single_trace(channel= self.scope_channel)
+        # x,y = self.inst.scope.get_single_trace(channel= self.inst.scope_channel)
         full_path = qf.save(self.properties, 'pulse_trace')
-        self.scope.set_trigger_mode('Single')
-        self.scope.save_screenshot(full_path+'.png')
-        self.scope.set_trigger_mode()
+        self.inst.scope.set_trigger_mode('Single')
+        self.inst.scope.save_screenshot(full_path+'.png')
+        self.inst.scope.set_trigger_mode()
 
 # #        data_dict = {'x':x,'y':y}
 #         qf.plot(self.trace_x, self.trace_y,
@@ -1173,7 +1179,7 @@ class PulseTraceSegments(Snspd):
 #                 close=True)
 
     def save(self, data=None):
-        data_dict = {'data':self.scope_data, 
+        data_dict = {'data':self.inst.scope_data, 
                      'atten':self.properties['pulse_trace']['attenuation'], 
                      'vbias':self.properties['pulse_trace']['bias_voltage']}
         
@@ -1201,21 +1207,21 @@ class PulseTraceCurrentSweep(Snspd):
         pd_traces_x_list = []
         pd_traces_y_list = []
         start_time = time.time()
-        self.source.set_output(True)
+        self.inst.source.set_output(True)
         for n, i in enumerate(currents):
             print('   ---   Time elapsed for measurement %s of %s: %0.2f '\
                   'min    ---   ' % (n, len(currents), 
                                      (time.time()-start_time)/60.0))
-            self.source.set_voltage(i*self.R_srs)
+            self.inst.source.set_voltage(i*self.R_srs)
             pd_traces_x = [] # Photodiode pulses
             pd_traces_y = []
             snspd_traces_x = [] # Device pulses
             snspd_traces_y = []
-            self.scope.clear_sweeps()
+            self.inst.scope.clear_sweeps()
             for n in range(num_traces):
-                x, y = self.scope.get_single_trace(channel='C2')
+                x, y = self.inst.scope.get_single_trace(channel='C2')
                 snspd_traces_x.append(x);  snspd_traces_y.append(y)
-                x, y = self.scope.get_single_trace(channel='C3')
+                x, y = self.inst.scope.get_single_trace(channel='C3')
                 pd_traces_x.append(x);  pd_traces_y.append(y)
 
             snspd_traces_x_list.append(snspd_traces_x)
@@ -1228,37 +1234,37 @@ class PulseTraceCurrentSweep(Snspd):
 class KineticInductancePhase(Snspd):
      
     def run_sweep_current(self, Ic_break=None, save=None, plot=None):
-        self.VNA.write('CALC:FORM SMITh')
+        self.inst.VNA.write('CALC:FORM SMITh')
         start = self.properties['kinetic_inductance_phase']['start']
         stop = self.properties['kinetic_inductance_phase']['stop']
         steps = self.properties['kinetic_inductance_phase']['steps']
 
         currents = np.linspace(start, stop, steps)
             
-        self.if_bandwidth = self.VNA.get_if_bw()
-        self.fspan = self.VNA.get_span()
+        self.if_bandwidth = self.inst.VNA.get_if_bw()
+        self.fspan = self.inst.VNA.get_span()
         sweep_time = self.fspan/(self.if_bandwidth**2)
         
-        self.rf_power = self.VNA.get_power()
+        self.rf_power = self.inst.VNA.get_power()
         
-        self.VNA.select_measurement()
+        self.inst.VNA.select_measurement()
         
         for current in currents:
             print('Bias set to %0.3f uA' % (current*1e6))
-            self.source.set_voltage(current*self.R_srs)
-            self.source.set_output(True)
+            self.inst.source.set_voltage(current*self.R_srs)
+            self.inst.source.set_output(True)
             self.current = current*1e6
             
             if self.properties['Temperature']['name'] == 'ICE':
                 self.currentTemp = qf.ice_get_temp(select=1)
             else:
-                self.currentTemp = self.temp.read_temp(self.temp.channel)
+                self.currentTemp = self.inst.temp.read_temp(self.inst.temp.channel)
 
-            self.voltage = self.meter.read_voltage()
+            self.voltage = self.inst.meter.read_voltage()
             if Ic_break:
                 if(self.voltage>0.01):
                     print('Wire Switched')
-                    self.meter.reset()
+                    self.inst.meter.reset()
                     break
             t = sweep_time+10
             # print('Waiting %0.1f seconds for vna averging' % t)
@@ -1266,7 +1272,7 @@ class KineticInductancePhase(Snspd):
 
             sleep(10) #vna averging
         
-            self.f,self.re,self.im = self.VNA.get_freq_real_imag()
+            self.f,self.re,self.im = self.inst.VNA.get_freq_real_imag()
             self.log_mag = 20*np.log10(np.sqrt(np.square(self.re)+
                                                np.square(self.im)))
             self.phase = np.angle(self.re+self.im*1j,deg=True)
@@ -1275,8 +1281,8 @@ class KineticInductancePhase(Snspd):
                 self.plot()
             if save:
                 self.save()
-        self.source.set_output(False)
-        self.VNA.write('CALC:FORM MLOG')
+        self.inst.source.set_output(False)
+        self.inst.VNA.write('CALC:FORM MLOG')
 
 
              
@@ -1326,9 +1332,9 @@ class PulseTraceFFT_CurrentSweep(Snspd):
         self.T1 = []
         self.VOUT = []
         start_time = time.time()
-        self.source.set_output(True)
+        self.inst.source.set_output(True)
         
-        self.scope.clear_sweeps()
+        self.inst.scope.clear_sweeps()
         time.sleep(1)
 
         
@@ -1336,19 +1342,19 @@ class PulseTraceFFT_CurrentSweep(Snspd):
             print('   ---   Time elapsed for measurement %s of %s: %0.2f '\
                   'min    ---   ' % (n, len(currents), 
                                      (time.time()-start_time)/60.0))
-            self.source.set_voltage(i*self.R_srs)
+            self.inst.source.set_voltage(i*self.R_srs)
             
             time.sleep(1)
            
-            self.scope.label_channel('C1', 'V_device')
+            self.inst.scope.label_channel('C1', 'V_device')
 
-            self.scope.set_math('F1','FFT','C1')
-            self.scope.view_channel('F1')
+            self.inst.scope.set_math('F1','FFT','C1')
+            self.inst.scope.view_channel('F1')
             
             
        
-            t1,C1 = self.scope.get_wf_data('C1')
-            tf,Ft = self.scope.get_wf_data('F1')
+            t1,C1 = self.inst.scope.get_wf_data('C1')
+            tf,Ft = self.inst.scope.get_wf_data('F1')
             self.FFT.append(Ft)
             self.FREQ.append(tf)
             self.T1.append(t1)
@@ -1358,8 +1364,8 @@ class PulseTraceFFT_CurrentSweep(Snspd):
             time.sleep(1)
 
             
-        self.source.set_voltage(0)
-        self.source.set_output(False)   
+        self.inst.source.set_voltage(0)
+        self.inst.source.set_output(False)   
             
     def save(self):
         data_dict = {'FFT':self.FFT,'FREQ':self.FREQ,'T2':self.T1,'VOUT':self.VOUT, 'Ibias':self.Ibias}
