@@ -330,7 +330,7 @@ def ice_get_temp(select=None):
         
         if now-then>dt.timedelta(minutes=1):
             temp1 = ''
-            print("TEMPERATURE"+appender+': ICE Logging is off')
+            print('TEMPERATURE: ICE Logging is off')
         else:
             date1 = last[3]
             temp1 = float(last[4]) # A
