@@ -91,7 +91,7 @@ Primitive class-mocking function which creates a mock instance of a class, repli
 This function isn't related to the measurement-taking and saving in the rest of qnnpy, and is only for code-testing, for example creating mock instances of instruments to test code without actually being connected to the instrument. 
 
 ### Instrument Setup
-#### Instruments
+#### Instruments(properties: dict)
 This class sets up and stores all compatible instruments:
 - Counter
 	- Agilent53131a
