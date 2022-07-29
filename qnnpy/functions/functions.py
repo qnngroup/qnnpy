@@ -352,7 +352,7 @@ def ice_get_temp(select=None):
 
 
 #######################################################################
-        #       Miscellaneous
+        #       Code testing
 #######################################################################
 
 
@@ -384,7 +384,7 @@ def mock_builder(class_to_mock) -> object:
     return eval(f"Mock{class_to_mock.__name__}")
 
 #######################################################################
-        #       General function for setting up instruments
+        #       Instrument Setup
 #######################################################################
 class Instruments:
     """
@@ -398,20 +398,8 @@ class Instruments:
 
     """
     
-    def __init__(self, properties):
+    def __init__(self, properties: dict):
         self.instrument_list: list[str] = []
-        self.__instrument_dict: dict[str,object] = {}
-        
-        # #instantiates variables, prevents crashes if an instrument which is not specified in the config is attempted to be used
-        # self.attenuator: object = None
-        # self.counter: object = None
-        # self.scope: object = None
-        # #self.scope1: object = None # note: supposedly used for multiple of the same instrument
-        # self.meter: object = None
-        # self.source: object = None
-        # self.awg: object = None
-        # self.VNA: object = None
-        # self.temp: object = None
         
         # Attenuator
         if properties.get('Attenuator'):
