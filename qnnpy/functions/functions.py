@@ -350,10 +350,54 @@ def ice_get_temp(select=None):
     else:
         return data_dict
 
+
+#######################################################################
+        #       Miscellaneous
+#######################################################################
+
+
+
+def mock_builder(class_to_mock) -> object:
+    """
+    Cool class mocking method
+    Takes in a class (ie: mock_builder(float)), returns a new instance 
+    of that class (ie: Mockfloat), with mock versions of the original's 
+    methods that print out when the method is called
+
+    Parameters
+    ----------
+    class_to_mock : CLASS
+        Class that you want to make a mock version of, such as for testing
+
+    Returns
+    -------
+    Object
+        Mock instance of the inputted class.
+
+    """
+    method_list: list[str] = [func for func in dir(class_to_mock) if callable(getattr(class_to_mock, func))]
+    gen_code: str = f"class Mock{class_to_mock.__name__}:"
+    for m in method_list:
+        if not(m.startswith('__') and not m=='__init__'):
+            gen_code += f"\n\tdef {m}(*placeholder):\n\t\tprint('\033[1;33;49mMocking: \033[1;36;49mcalled \033[1;35;49m{m}()\033[1;36;49m in \033[0;35;49mMock{class_to_mock.__name__}\033[1;37;49m')\n\t\treturn None"
+    exec(gen_code)
+    return eval(f"Mock{class_to_mock.__name__}")
+
 #######################################################################
         #       General function for setting up instruments
 #######################################################################
 class Instruments:
+    """
+    Instruments general setup now supports using multiple of the same instrument. 
+    Currently duplicate instruments are created by naming the instrument in the 
+    yaml file as Source1, Source2... and are accessed using instruments(or whatever 
+    you named your Instruments variable).source1, instuments.source2... If you don't 
+    postfix your yaml instrument type with a number, it's assumed that only one
+    of that instrument is used, and that instrument is accessed normally using 
+    inst.source (without number).
+
+    """
+    
     def __init__(self, properties):
         self.instrument_list: list[str] = []
         self.__instrument_dict: dict[str,object] = {}
@@ -541,6 +585,7 @@ class Instruments:
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
+                # exec(f"self.meter{appender} = mock_builder(Keithley2700)")
 
         elif properties[f'Meter{appender}']['name'] == 'Keithley2400':
             # this is a source meter
@@ -551,6 +596,7 @@ class Instruments:
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
+                # exec(f"self.meter{appender} = mock_builder(YokogawaGS200)")
 
         elif properties[f'Meter{appender}']['name'] == 'Keithley2001':
             from qnnpy.instruments.keithley_2001 import Keithley2001
@@ -560,6 +606,7 @@ class Instruments:
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
+                # exec(f"self.meter{appender} = mock_builder(Keithley2001)")
         else:
             raise NameError('Invalid Meter. Meter name: "%s" is not configured' % properties[f'Meter{appender}']['name'])
         if instrument_num==1 and hasattr(self,"meter1"):
@@ -579,6 +626,7 @@ class Instruments:
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
+                # exec(f"self.source{appender} = mock_builder(SIM928)")
         elif properties[f'Source{appender}']['name'] == 'YokogawaGS200':
            from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
            try:
@@ -589,6 +637,7 @@ class Instruments:
                print(f'SOURCE{appender}: connected')
            except:
                print(f'SOURCE{appender}: failed to connect')
+               # exec(f"self.source{appender} = mock_builder(YokogawaGS200)")
         elif properties[f'Source{appender}']['name'] == 'Keithley2400':
             from qnnpy.instruments.keithley_2400 import Keithley2400
             try:
@@ -597,6 +646,7 @@ class Instruments:
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
+                # exec(f"self.source{appender} = mock_builder(Keithley2400)")
         else:
             raise NameError('Invalid Source. Source name: "%s" is not configured' % properties[f'Source{appender}']['name'])
         if instrument_num==1 and hasattr(self,"source1"):
@@ -647,7 +697,7 @@ class Instruments:
 
         if properties["Temperature"]['name'] == 'Cryocon350':
             from qnnpy.instruments.cryocon350 import Cryocon350
-            try: #bad coding practice... 
+            try:
                 exec(f"self.temp{appender} = Cryocon350(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
@@ -655,6 +705,7 @@ class Instruments:
             except:
                 properties['Temperature'+appender]['initial temp'] = 0
                 print("TEMPERATURE"+appender+': failed to connect')
+                # exec(f"self.temp{appender} = mock_builder(Cryocon350)")
 
         elif properties['Temperature'+appender]['name'] == 'Cryocon34':
             from qnnpy.instruments.cryocon34 import Cryocon34
@@ -666,6 +717,7 @@ class Instruments:
             except: 
                 properties['Temperature'+appender]['initial temp'] = 0
                 print("TEMPERATURE"+appender+': failed to connect')
+                # exec(f"self.temp{appender} = mock_builder(Cryocon34)")
 
         elif properties['Temperature'+appender]['name'] == 'ICE':
             try:
