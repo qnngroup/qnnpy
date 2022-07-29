@@ -52,6 +52,7 @@ Compatable Instruments:
 	- ICE 
 	- DEWAR
 
+Note: code for instrument setup has been moved to functions.Instruments, and instruments are now accessed through inst.scope, inst.source, etc.
 
 ##### average_counts
 This method belongs to the Snspd class and returns the average count rate for a given number of iterations. This function accepts the counting time, iterations, and trigger voltage. 
@@ -76,3 +77,46 @@ The path must include filename.txt. Bias the device at some value much lower tha
 #### PulseTraceCurrentSweep
 
 #### KineticInductancePhase
+
+## functions.py
+### Plotting
+### Configuration
+### Saving
+### Logging
+### Measurement
+### Code Testing
+#### mock_builder(class_to_mock) -> object
+Primitive class-mocking function which creates a mock instance of a class, replicating any function definitions within the class but replacing the functionality of the original functions with a simple print: <function> was called in <class name>
+
+This function isn't related to the measurement-taking and saving in the rest of qnnpy, and is only for code-testing, for example creating mock instances of instruments to test code without actually being connected to the instrument. 
+
+### Instrument Setup
+#### Instruments
+This class sets up and stores all compatible instruments:
+- Counter
+	- Agilent53131a
+- Attenuator
+	- JDSHA9
+- Scope
+	- LeCroy620Zi
+- Meter
+	- Keithley2700
+	- Keithley2400
+	- Keithley2001
+- Source
+	- SIM928
+- AWG
+	- Agilent33250a
+- VNA
+	- KeysightN5224a
+- Temperature
+	- Cryocon350
+	- Cryocon34
+	- ICE 
+	- DEWAR
+
+To use the class, store load_config(yaml_configuration_file) into a variable then pass the variable into Instruments, and store the result (ie: instruments = Instruments(load_config(config_file))   ). Instruments can now be accessed with instruments.scope, instruments.awg, instruments.VNA, etc. 
+
+If you want to use multiple of the same type of instrument, for example two source, modify your yaml file to include a Source1 and Source2. When instantiating the Instruments class, these two source will be accessible with instruments.source1, instruments.source2. instruments.source will automatically be set to instruments.source1 as well. 
+	
+If you do not postfix the instrument type in the yaml file with a number, then Instruments will assume you only intend on using one of that type of instrument and will only load one of that type of instrument (different types of instruments will still load). For example, having a Source and Source1 in a yaml file will only load Source, ignoring Source1 or any other Source. If you intend on using multiple instruments, don't start with any number other than 1 as well. 
