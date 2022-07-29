@@ -120,3 +120,5 @@ To use the class, store load_config(yaml_configuration_file) into a variable the
 If you want to use multiple of the same type of instrument, for example two source, modify your yaml file to include a Source1 and Source2. When instantiating the Instruments class, these two source will be accessible with instruments.source1, instruments.source2. instruments.source will automatically be set to instruments.source1 as well. 
 	
 If you do not postfix the instrument type in the yaml file with a number, then Instruments will assume you only intend on using one of that type of instrument and will only load one of that type of instrument (different types of instruments will still load). For example, having a Source and Source1 in a yaml file will only load Source, ignoring Source1 or any other Source. If you intend on using multiple instruments, don't start with any number other than 1 as well. 
+
+If an instrument fails to connect, then attempting to get that instrument will result in an attribute error. For example, if source fails to connect, then attempting to call instruments.source will yield "AttributeError: 'Instruments' object has no attribute 'source'"
