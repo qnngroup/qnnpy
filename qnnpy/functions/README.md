@@ -202,3 +202,27 @@ d.empty() # clear data
 if you want to access data in a data class, you can optionally use one of the following:
 voltages: list = d.get('voltage')
 voltages: list = d.voltage # beware that this will crash if 'voltage' was never passed in d.store()
+
+	
+	
+	
+	
+# irawizza functions.py update - Usage Example:
+import qnnpy.functions.functions as qf
++any other necessary imports
+
+config = r'YAML\CONFIG\FILE\LOCATION'
+properties = qf.load_config(config)
+instruments = qf.Instruments(properties)
++any instrument-specific setup, ie instruments.source.setup_read_volt()
+	
+d=qf.Data()
+p=qf.LivePlotter()
+	
+for i in range(100):
+    V, I = instruments.source.read_voltage_and_current()
+    d.store(voltage=V, current=I)
+    p.plot(V, I)
+
+qf.data_saver(properties, 'iv_sweep', meas_path=r'C:\Users\QNN\Documents\Measurements', data=d, plot=p, inst=instruments)
+	
