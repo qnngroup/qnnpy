@@ -160,8 +160,8 @@ If you do not postfix the instrument type in the yaml file with a number, then I
 
 If an instrument fails to connect, then attempting to get that instrument will result in an attribute error. For example, if source fails to connect, then attempting to call instruments.source will yield "AttributeError: 'Instruments' object has no attribute 'source'"
 	
-###Data storage
-####Data
+### Data storage
+#### Data
 The data class is used to store and save any collected data
 
 Optionally can be used to automatically save data on a specific interval, for long-term data collection. To set up automatic data saving, set the "autosave" argument when instantiating the Data class to True, for example: d = Data(autosave = True). Note that autosaving only works for csv files. Make sure to still call save() after all measurements have finished to save any final measurements which were taken in between the save_increment. Calling save() by default will save to whatever file location was generated when the data class was created, see data.save() documentation below. 
