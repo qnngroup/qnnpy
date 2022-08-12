@@ -226,3 +226,5 @@ for i in range(100):
 
 qf.data_saver(properties, 'iv_sweep', meas_path=r'C:\Users\QNN\Documents\Measurements', data=d, plot=p, inst=instruments)
 	
+
+this makes writing your own measurement scripts very easy, but if you still want pre-existing measurement scripts in snspd.py or ntron.py, then those should still work the same. 
