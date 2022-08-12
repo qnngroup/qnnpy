@@ -35,7 +35,7 @@ class Keithley2400(object):
         self.write(':SOUR:FUNC CURR') # Set operation mode to: source current
         print(':SOUR:CURR:LEVEL '+ current +'E-6')
         self.write(':SOUR:CURR:LEVEL '+ current +'E-6')
-        self.write(':SYST:RSEN 1') # Turn off "Remote Sensing" aka 4-wire measurement mode
+        self.write(':SYST:RSEN 1') # Turn on "Remote Sensing" aka 4-wire measurement mode
         self.write('SENS:FUNC \"VOLT\", \"CURR\"') # Have it output
 
 
@@ -106,3 +106,11 @@ class Keithley2400(object):
     def read_voltage(self):
         voltage, current = self.read_voltage_and_current()
         return voltage
+    
+    
+    def switch_front(self):
+        self.write(':ROUT:TERM FRON')
+        
+        
+    def switch_rear(self):
+        self.write(':ROUT:TERM REAR')
