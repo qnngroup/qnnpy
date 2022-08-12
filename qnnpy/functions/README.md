@@ -103,6 +103,22 @@ for x in range(5):
 
 ### Configuration
 ### Saving
+#### data_saver(parameters, measurement)
+the data_saver class is used to save data from both LivePlotter and Data classes into a pre-defined organized file structure based on the run configuration defined in the external yaml file. required arguments for the data_saver function are parameters, which is where the yaml file must be passed, and measurement, which is a string defining what measurement is being done (ie: iv_sweep)
+measurement data and information will be organized into {meas_path}/{sample_name}/{device_type}/{device_name}/{measurement}, where:
+meas_path - root folder, by default S:\SC\Measurements
+sample_name - the 'sample name' key under 'Save File' in the yaml file
+device_type - the 'device type' key under 'Save File' in the yaml file
+device name - the 'device name' key under 'Save File' in the yaml file
+measurement - whatever is passed into the 'measurement' argument when the function is being called
+
+other important arguments to include in the function are:
+data - the instance of the data class to be saved
+inst - the instance of the instruments class to be saved
+plot - instance of the LivePlotter class to be saved
+
+optionally, if instead of 'sample name', the 'Save File' key in the yaml file defines a 'sample name 1' and 'sample name 2', and the data or plot arguments is a list instead of a single instance of the class, then data_saver() will recursively call itself for every sample name included in the yaml file (in this example, 2), and element in the data or plot list. 
+
 ### Logging
 ### Measurement
 ### Code Testing
