@@ -80,6 +80,27 @@ The path must include filename.txt. Bias the device at some value much lower tha
 
 ## functions.py
 ### Plotting
+#### LivePlotter
+Live-updating plotter. Requires IPython to be enabled for interactive shell. Simpily call plot(x, y) and the plot will add your points live. Once you're done, you can save to a png or jpg by calling save() 
+
+Instantiation of the class can also takes optional arguments:
+title: str - title of the plot
+xlabel: str - label for the x axis
+ylabel: str - label for the y axis
+legend: bool - whether to show the legend or not
+legend_loc: str - location for the legend, default is "best", also can be "upper right", "lower left" etc
+max_len: int - maximum allowed length of each line in this plot, default is infinite. if the number of lines in one label exceeds this number, the oldest data points get cut off. if you're running a measurement for a very long time, it's best to set this to a number to prevent overusing memory
+
+plot() also optionally takes in a label: str argument to diffrentiate multiple lines and data points, along with most arguments used in the default matplotlib plot() method
+
+save() can take a name, file path, and file type. if no name is provided, a random name based on the current time will be used instead
+
+Basic usage example:
+p = LivePlotter()
+for x in range(5):
+    y = x+2
+    p.plot(x, y)
+
 ### Configuration
 ### Saving
 ### Logging
@@ -122,3 +143,20 @@ If you want to use multiple of the same type of instrument, for example two sour
 If you do not postfix the instrument type in the yaml file with a number, then Instruments will assume you only intend on using one of that type of instrument and will only load one of that type of instrument (different types of instruments will still load). For example, having a Source and Source1 in a yaml file will only load Source, ignoring Source1 or any other Source. If you intend on using multiple instruments, don't start with any number other than 1 as well. 
 
 If an instrument fails to connect, then attempting to get that instrument will result in an attribute error. For example, if source fails to connect, then attempting to call instruments.source will yield "AttributeError: 'Instruments' object has no attribute 'source'"
+	
+###Data storage
+####Data
+The data class is used to store and save any collected data
+
+Basic usage example:
+d = Data()
+for i in range(5):
+     V = take_voltage()
+     T = take_temperature()
+     d.store(voltage=V, temperature=T)
+d.save()
+d.empty() # clear data
+
+if you want to access data in a data class, you can optionally use one of the following:
+voltages: list = d.get('voltage')
+voltages: list = d.voltage # beware that this will crash if 'voltage' was never passed in d.store()
