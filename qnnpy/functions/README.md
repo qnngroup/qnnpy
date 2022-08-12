@@ -148,6 +148,32 @@ If an instrument fails to connect, then attempting to get that instrument will r
 ####Data
 The data class is used to store and save any collected data
 
+Optionally can be used to automatically save data on a specific interval, for long-term data collection. To set up automatic data saving, set the "autosave" argument when instantiating the Data class to True, for example: d = Data(autosave = True). Note that autosaving only works for csv files. Make sure to still call save() after all measurements have finished to save any final measurements which were taken in between the save_increment. Calling save() by default will save to whatever file location was generated when the data class was created, see data.save() documentation below. 
+	
+Other arguments can also be specified:
+autosave : bool, optional
+    When enabled, periodically empties out Data and auto-saves it to the file location provided. The default is False.
+    Note: If using autosave, remember to still call save() at the end to store any data in the current save_increment that hasn't been transferred yet!
+save_increment : int, optional
+    How often to autosave whenever store() is called. The default is every 128th time store() is called.
+path : str, optional
+    file path to save to. automatically sets up folders if full path doesn't exist. The default is None.
+name : str, optional
+    file name to save to. if a name is already provided in path, it is overridden by this. The default is None.
+file_type : str, optional
+    file type to save to. The default is 'csv'.
+preserve_pos_order : bool, optional
+    if store(v1=1,v2=2) then store(v2=3, v3=4) is called, by default v1
+    and v4 will be compressed into the first line, while v2 will appear
+    on lines 1 and 2. Enabling preserve_pos_order will create empty
+    columns to fix this ordering. The default is False.
+
+date.store() - stores data into an internal dictionary in the data class. also makes calls to save() and empty() if autosave is enabled
+	
+data.empty() - empties out any data but preserves the key names. for example if you ran d.store(voltage=1, temperature=10), then ran d.empty(), the keys voltage and temperature would still exist, but the values 1 and 10 would be emptied out. 
+	
+data.save() - saves the current contents of the data class. if autosave is being used, then it's likely that some of the contents of the data class have already been transferred into the file, so it's not guarenteed that this will save all data. 
+	
 Basic usage example:
 d = Data()
 for i in range(5):
