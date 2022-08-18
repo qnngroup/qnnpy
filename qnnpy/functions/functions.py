@@ -807,7 +807,7 @@ class Instruments:
                exec(f"self.source{appender} = YokogawaGS200(properties['Source{appender}']['port'])")
                # self.source.reset()
                exec(f"self.source{appender}.set_output(False)")
-               exec("self.source{appender}.set_voltage_range(5)")
+               # exec("self.source{appender}.set_voltage_range(5)")
                print(f'SOURCE{appender}: connected')
            except:
                print(f'SOURCE{appender}: failed to connect')
@@ -1010,10 +1010,6 @@ class Data:
     
     def last(self, key: str) -> object:
         return self.get(key)[-1]
-    
-    def close_csv(self):
-        if hasattr(self, 'live_csv'):
-            self.live_csv.close()
             
     def empty(self):
         """
