@@ -82,7 +82,7 @@ The path must include filename.txt. Bias the device at some value much lower tha
 ### Plotting
 #### LivePlotter
 Live-updating plotter. Requires IPython to be enabled for interactive shell. Simpily call plot(x, y) and the plot will add your points live. Once you're done, you can save to a png or jpg by calling save() 
-
+```
 Instantiation of the class can also takes optional arguments:
 title: str - title of the plot
 xlabel: str - label for the x axis
@@ -90,20 +90,24 @@ ylabel: str - label for the y axis
 legend: bool - whether to show the legend or not
 legend_loc: str - location for the legend, default is "best", also can be "upper right", "lower left" etc
 max_len: int - maximum allowed length of each line in this plot, default is infinite. if the number of lines in one label exceeds this number, the oldest data points get cut off. if you're running a measurement for a very long time, it's best to set this to a number to prevent overusing memory
-
+```
 plot() also optionally takes in a label: str argument to diffrentiate multiple lines and data points, along with most arguments used in the default matplotlib plot() method
 
 save() can take a name, file path, and file type. if no name is provided, a random name based on the current time will be used instead
 
 Basic usage example:
+
+```
 p = LivePlotter()
 for x in range(5):
     y = x+2
     p.plot(x, y)
+```
 
 ### Configuration
 ### Saving
 #### data_saver(parameters, measurement)
+```
 the data_saver class is used to save data from both LivePlotter and Data classes into a pre-defined organized file structure based on the run configuration defined in the external yaml file. required arguments for the data_saver function are parameters, which is where the yaml file must be passed, and measurement, which is a string defining what measurement is being done (ie: iv_sweep)
 measurement data and information will be organized into {meas_path}/{sample_name}/{device_type}/{device_name}/{measurement}, where:
 meas_path - root folder, by default S:\SC\Measurements
@@ -116,7 +120,7 @@ other important arguments to include in the function are:
 data - the instance of the data class to be saved
 inst - the instance of the instruments class to be saved
 plot - instance of the LivePlotter class to be saved
-
+```
 optionally, if instead of 'sample name', the 'Save File' key in the yaml file defines a 'sample name 1' and 'sample name 2', and the data or plot arguments is a list instead of a single instance of the class, then data_saver() will recursively call itself for every sample name included in the yaml file (in this example, 2), and element in the data or plot list. 
 
 ### Logging
@@ -191,6 +195,7 @@ data.empty() - empties out any data but preserves the key names. for example if 
 data.save() - saves the current contents of the data class. if autosave is being used, then it's likely that some of the contents of the data class have already been transferred into the file, so it's not guarenteed that this will save all data. 
 	
 Basic usage example:
+```
 d = Data()
 for i in range(5):
      V = take_voltage()
@@ -202,12 +207,13 @@ d.empty() # clear data
 if you want to access data in a data class, you can optionally use one of the following:
 voltages: list = d.get('voltage')
 voltages: list = d.voltage # beware that this will crash if 'voltage' was never passed in d.store()
-
+```
 	
 	
 	
 	
 # irawizza functions.py update - Usage Example:
+```
 import qnnpy.functions.functions as qf
 +any other necessary imports
 
@@ -225,6 +231,6 @@ for i in range(100):
     p.plot(V, I)
 
 qf.data_saver(properties, 'iv_sweep', meas_path=r'C:\Users\QNN\Documents\Measurements', data=d, plot=p, inst=instruments)
-	
+```
 
 this makes writing your own measurement scripts very easy, but if you still want pre-existing measurement scripts in snspd.py or ntron.py, then those should still work the same. 
