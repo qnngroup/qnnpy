@@ -274,4 +274,4 @@ properties = qf.load_config(config)
 
 qf.data_saver(properties, "test", r"C:\Users\QNN\Documents\Measurements", data = [sample_1_data, sample_2_data], inst = inst, plot = [sample_1_plot, sample_2_plot])
 ```
-also note that both the "data" and "plot" arguments are optional
+also note that both the "data" and "plot" arguments in data_saver() are optional
