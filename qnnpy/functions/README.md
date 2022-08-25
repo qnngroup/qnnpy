@@ -140,7 +140,7 @@ log_data_to_database("measurement_events", connection=None, user='IR', port=1)
 This will add a row to the 'measurement_events' table with the 'user' column as 'IR' and 'port' column as 1
 
 #### update_table(table_name: str, set_col: str, conditional: str = 'NULL', connection = None)
-allows you to run sql commands in the format `'UPDATE' table_name SET 'set_col' WHERE 'conditional'` easily from the terminal
+allows you to run sql commands in the format `UPDATE table_name SET set_col WHERE conditional` easily from the terminal
 
 
 ### Measurement
