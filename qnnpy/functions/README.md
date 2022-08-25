@@ -142,6 +142,14 @@ This will add a row to the 'measurement_events' table with the 'user' column as 
 #### update_table(table_name: str, set_col: str, conditional: str = 'NULL', connection = None)
 allows you to run sql commands in the format `UPDATE table_name SET set_col WHERE conditional` easily from the terminal
 
+if connection is not provided / None, then will connect to qnndb with Owen's username and password
+
+Example:
+```
+In [1]: update_table('measurement_ids', 'description=stuff', 'id>1 AND id<=3')
+Out: UPDATE measurement_ids SET description='stuff' WHERE id>1 AND id<=3
+```
+
 
 ### Measurement
 ### Code Testing
