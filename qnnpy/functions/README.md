@@ -234,3 +234,44 @@ qf.data_saver(properties, 'iv_sweep', meas_path=r'C:\Users\QNN\Documents\Measure
 ```
 
 this makes writing your own measurement scripts very easy, but if you still want pre-existing measurement scripts in snspd.py or ntron.py, then those should still work the same. 
+
+## Multiple samples example:
+Example yaml file, note how sample name 1 and sample name 2 are specified
+```
+User:
+  name: TST
+
+Save File:
+  sample name 1: SPG755
+  sample name 2: SPG765
+  device type: wire
+  device name: TST
+
+Source:
+  name: 'Keithley2400'
+  port: "GPIB0::14"
+
+Temperature:
+  name: 'Cryocon34'
+  port: 'GPIB0::12'
+  channel: 'C'
+```
+create seperate Data and LivePlotter classes for each sample:
+```
+import qnnpy.functions.functions as qf
+
+sample_1_data = qf.Data()
+sample_2_data = qf.Data()
+sample_1_plot = qf.LivePlotter()
+sample_2_plot = qf.LivePlotter()
+```
+now when you save, make sure you select the right yaml file, and include both data classes as an list, and both liveplotters as a list:
+```
+import qnnpy.functions.functions as qf
+
+config = r'Q:\qnnpy-beta\yml_configs\example_config.yaml'
+properties = qf.load_config(config)
+
+qf.data_saver(properties, "test", r"C:\Users\QNN\Documents\Measurements", data = [sample_1_data, sample_2_data], inst = inst, plot = [sample_1_plot, sample_2_plot])
+```
+also note that both the "data" and "plot" arguments in data_saver() are optional
