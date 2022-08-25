@@ -14,7 +14,7 @@ from datetime import datetime
 import scipy.io
 import re
 import numpy as np
-# import mariadb
+import mariadb
 import sys
 from time import sleep
 import time
@@ -22,6 +22,9 @@ import time
 import csv
 
 from typing import List
+
+if sys.platform == "win32":
+    import winshell, win32com.client
 
 ###############################################################################
 # Plotting
@@ -287,7 +290,7 @@ def save(parameters, measurement, data_dict={}, instrument_list=None, db=False, 
     
     return full_path
 
-#save as save but uses data instruments and liveplotter class
+#same as save but uses data instruments and liveplotter class
 def data_saver(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Measurements', data = None, inst = None, plot = None, file_name_append: str = ""):
     """
 
@@ -337,6 +340,8 @@ def data_saver(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Meas
             p = plot[i%len(plot)] if type(plot) == list else plot
             res.append(data_saver(parameters,measurement, meas_path, data=d, inst=inst, plot=p, file_name_append = str(i)))
         return res
+    
+    
     #ensure parameters is dict
     if type(parameters) != dict:
         try:
@@ -383,11 +388,27 @@ def data_saver(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Meas
             data.save(path=f"{full_path}.mat")
             output_log(parameters, full_path)
             print('File Saved:\n %s' % full_path)
+            #make "recents" shortcut
+            try:
+                if sys.platform=="win32":
+                    recents = os.path.join(meas_path, "recents")
+                    os.makedirs(recents, exist_ok=True)
+                    recents_path = os.path.join(recents, f'{sample_name}_measurement_{time_str}.lnk')
+                    target = file_path
+                    shell = win32com.client.Dispatch("WScript.Shell")
+                    shortcut = shell.CreateShortCut(recents_path)
+                    shortcut.Targetpath = target
+                    shortcut.save()
+                else:
+                    print("Only windows is supported for recent measurement shortcut")
+            except Exception as e:
+                print(f"failed to make shortcut in for recents: {e}")
             # saving to database
             try:
-                insert_measurement_event(user, measurement, sample_name, device_type, device_name, port)
-            except:
-                print('Logging to qnndb failed.')
+                log_data_to_database("measurement_events", connection=None, user=user, meas_type=measurement, sample_name=sample_name, device_type=device_type, device_id=device_name, port=port)
+                #insert_measurement_event(user, measurement, sample_name, device_type, device_name, port)
+            except Exception as e:
+                print(f'Logging to qnndb failed: {e}')
         if plot:
             plot.save(path=f"{full_path}.png")
     else:
@@ -412,7 +433,7 @@ def insert_measurement_event(user, meas_type, sample_name, device_type, device_i
                                     database= 'qnndb' )
     except mariadb.Error as e:
         print(f"Error connecting to MariaDB Platform: {e}")
-        sys.exit(1)
+        raise ConnectionError
     
     
     # Get Cursor
@@ -490,6 +511,130 @@ def output_log(parameters, path):
     file = open(path+'.txt', "w")
     file.write("\n".join("{}\t\t{}".format(k, v) for k, v in parameters.items()))
     file.close()
+
+def database_connection(**kwargs):
+    if kwargs == None or len(kwargs)==0:
+        try:
+            conn = mariadb.connect(host= "18.25.16.44", user= "omedeiro", port= 3307, password= 'vQ7-om(PKh', database= 'qnndb' )
+        except mariadb.Error as e:
+            print(f"Error connecting to MariaDB Platform: {e}")
+            raise ConnectionError
+    else:
+        try:
+            conn = mariadb.connect(kwargs)
+        except mariadb.Error as e:
+            print(f"Error connecting to MariaDB Platform: {e}")
+            raise ConnectionError
+    return conn
+
+def log_data_to_database(table_name: str, connection = None, **kwargs):
+    if connection!=None:
+        conn=connection
+    else:
+        conn = database_connection()
+    cur = conn.cursor()
+    column_names = "`"+"`, `".join(kwargs.keys())+"`"
+    values = "'"+"', '".join([str(v) for v in kwargs.values()])+"'"
+    command = "INSERT INTO `%s` (%s) VALUES (%s)" % (table_name, column_names, values)
+    cur.execute(command)
+    conn.commit()
+    if connection==None:
+        conn.close()
+        
+def update_table(table_name: str, set_col: str, conditional: str = 'NULL', connection = None):
+    """
+
+    Parameters
+    ----------
+    table_name : str
+        name of table to update.
+    set_col : str
+        SET sql command, for example set_col = 'thickness=0, tc=0'.
+    conditional : str
+        WHERE sql command, arguments without '=' will simpily get matched using '=' operator to columns in set_col.
+        to update an entire column without conditional, 'ALL'
+    connection : TYPE, optional
+        connection to database. The default is qnndb database.
+    Returns
+    -------
+    None.
+
+    """
+    if connection==None:
+        connection = database_connection()
+    command: str = "UPDATE %s SET %s" % (table_name, insert_quotes(set_col))
+    if not conditional == 'ALL':
+        conditional = insert_quotes(conditional)
+        command+=" WHERE "
+        conditional_operators: list[str] = ['=', '>', '<', '>=', '<=', '!=', 'BETWEEN', 'LIKE', 'IN']
+        if any(op in conditional for op in conditional_operators):
+            command+=conditional
+        else:
+            cols: list[str] = get_column_names(set_col)
+            vals: list[str] = conditional.split(",")
+            for c, v in zip(cols, vals):
+                command+=f"{c}={v.strip()}, "
+            command=command.rstrip(', ')
+    cur = connection.cursor()
+    print(command)
+    cur.execute(command)
+    connection.commit()
+    connection.close()
+
+
+def get_column_names(string: str) -> list[str]:
+    """
+    Helper method for update_table to get the column names when an input is formatted as 'col=val, col2=val2, col3=val3' etc
+    Parameters
+    ----------
+    string : str
+        sql command formatted as 'column=value, column=value...'
+        
+    Returns
+    -------
+    list of column names
+    """
+    res = []
+    builder = ''
+    build = True
+    for c in string:
+        if c=='=':
+            res.append(builder)
+            builder=''
+            build=False
+        elif build:
+            if not c.isspace():
+                builder+=c
+        elif c==',':
+            build=True
+    return res
+
+def insert_quotes(string: str) -> str:
+    res:str = ""
+    i: int = 0
+    while i<len(string):
+        c=string[i]
+        res+=c
+        if c=='=':
+            is_string = False
+            builder = ''
+            end: int = i
+            for j in range(i+1,len(string)):
+                end=j
+                if string[j]==',' or (is_string and string[j]==' '):
+                    end=j-1
+                    break
+                if not (string[j].isnumeric() or string[j] == '.' or string[j]=='-' or string[j].isspace()):
+                    is_string=True
+                builder+=string[j]
+            builder=builder.strip()
+            if not is_string or builder.upper()=="NULL":
+                res+=builder
+            else:
+                res+=f"'{builder}'"
+            i=end
+        i+=1
+    return res
 
 ###########################################################################
 #Measurement
@@ -600,8 +745,16 @@ class Instruments:
     VNA = None
     temp = None
     def __init__(self, properties: dict):
+        self.attenuator = None
+        self.counter = None
+        self.scope = None
+        self.meter = None
+        self.source = None
+        self.awg = None
+        self.VNA = None
+        self.temp = None
         self.instrument_list: List[str] = []
-        
+        self.instrument_dict: dict[str, object] = {}
         # Attenuator
         if properties.get('Attenuator'):
             self.attenuator_setup(properties)
@@ -695,6 +848,7 @@ class Instruments:
             try:
                 exec(f"self.attenuator{appender} = JDSHA9(properties['Attenuator{appender}']['port'])")
                 exec(f"self.attenuator{appender}.set_beam_block(True)")
+                exec(f"self.instruments_dict['attenuator{appender}']=self.attenuator{appender}")
                 print(f'ATTENUATOR{appender}: connected')
             except:
                 print(f'ATTENUATOR{appender}: failed to connect')
@@ -717,6 +871,7 @@ class Instruments:
                 #similary story for the other insturments
                 exec(f"self.counter{appender}.reset()")
                 exec(f"self.counter{appender}.basic_setup()")
+                exec(f"self.instruments_dict['counter{appender}']=self.counter{appender}")
                 # self.counter.write(':EVEN:HYST:REL 100')
                 print(f'COUNTER{appender}: connected')
             except:
@@ -737,6 +892,7 @@ class Instruments:
             try:
                 exec(f"self.scope{appender} = LeCroy620Zi('TCPIP::%s::INSTR' % properties['Scope{appender}']['port'])")
                 # self.scope_channel = properties[f'Scope{appender}']['channel']
+                exec(f"self.instruments_dict['scope{appender}']=self.scope{appender}")
                 print(f'SCOPE{appender}: connected')
             except:
                 print(f'SCOPE{appender}: failed to connect')
@@ -756,6 +912,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2700(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
+                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -767,6 +924,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2400(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
+                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -777,6 +935,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2001(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
+                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -797,6 +956,7 @@ class Instruments:
                 exec(f"self.source{appender} = SIM928(properties['Source{appender}']['port'], properties['Source{appender}']['port_alt'])")
                 exec(f"self.source{appender}.reset()")
                 exec(f"self.source{appender}.set_output(False)")
+                exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
@@ -808,6 +968,7 @@ class Instruments:
                # self.source.reset()
                exec(f"self.source{appender}.set_output(False)")
                # exec("self.source{appender}.set_voltage_range(5)")
+               exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
                print(f'SOURCE{appender}: connected')
            except:
                print(f'SOURCE{appender}: failed to connect')
@@ -817,6 +978,7 @@ class Instruments:
             try:
                 exec(f"self.source{appender} = Keithley2400(properties['Source{appender}']['port'])")
                 exec(f"self.source{appender}.reset()")
+                exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
@@ -836,6 +998,7 @@ class Instruments:
             try:
                 exec(f"self.awg{appender} = Agilent33250a(properties['AWG{appender}']['port'])")
                 exec(f"self.awg{appender}.beep()")
+                exec(f"self.instruments_dict['awg{appender}']=self.awg{appender}")
                 print(f'AWG{appender}: connected')
             except:
                 print(f'AWG{appender}: failed to connect')
@@ -855,6 +1018,7 @@ class Instruments:
             try:
                 exec(f"VNA{appender} = KeysightN5224a(properties['VNA{appender}']['port'])")
                 # self.VNA.reset()
+                exec(f"self.instruments_dict['VNA{appender}']=self.VNA{appender}")
                 print(f'VNA{appender}: connected')
             except:
                 print(f'VNA{appender}: failed to connect')
@@ -875,6 +1039,7 @@ class Instruments:
                 exec(f"self.temp{appender} = Cryocon350(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
+                exec(f"self.instruments_dict['temp{appender}']=self.temp{appender}")
                 print("TEMPERATURE"+appender+': connected | '+str(properties['Temperature'+appender]['initial temp']))
             except:
                 properties['Temperature'+appender]['initial temp'] = 0
@@ -887,6 +1052,7 @@ class Instruments:
                 exec(f"self.temp{appender} = Cryocon34(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
+                exec(f"self.instruments_dict['temp{appender}']=self.temp{appender}")
                 print("TEMPERATURE"+appender+': connected | '+str(properties['Temperature'+appender]['initial temp']))
             except: 
                 properties['Temperature'+appender]['initial temp'] = 0
@@ -948,20 +1114,28 @@ class Data:
         and v4 will be compressed into the first line, while v2 will appear
         on lines 1 and 2. Enabling preserve_pos_order will create empty
         columns to fix this ordering. The default is False.
-
+    connection : mariadb.connection, optional
+        If you want to auto-log data to a database, then you can set a connection here.
+        Just remember to run connection.close() after you're done!
+    table_name : str, optional
+        database table name
+    logtime: bool, optional
+        logs the time in the data dict along with other variables whenever store() is called
     Returns
     -------
     None.
 
     """
     #data: dict[str,list[object]]
-    date:dict
+    data:dict
     numcalls: int #number of times store is called, reset to 0 when empty() is called
     #save_increment = how often to save csv when calling store, every time (1), every other time (2)
-    def __init__(self, *, autosave: bool = False, save_increment: int = 128, path:str=None, name:str=None, file_type:str = 'csv', preserve_pos_order: bool=False):
+    def __init__(self, *, autosave: bool = False, save_increment: int = 128, path:str=None, name:str=None, file_type:str = 'csv', preserve_pos_order: bool=False, table_name: str = None, connection=None, logtime=False):
         self.data={}
         self.numcalls = 0
         self.preserve_pos = preserve_pos_order
+        self.connection=None
+        self.connectionattempts=0
         if path!=None:
             if '.' in path:
                 temp = path.rsplit(os.sep,1)
@@ -981,8 +1155,24 @@ class Data:
             #self.close_csv()
             self.save_increment = save_increment
             self.save_increment_counter = 0
+        if not connection==None:
+            cursor = connection.cursor()
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_name = '{0}'
+                """.format(table_name.replace('\'', '\'\'')))
+            if not cursor.fetchone()[0] == 1:
+                print(f"Table {table_name} does not exist.")
+                connection.close()
+            else:
+                self.connection=connection
+                self.dbtable_name = table_name
+        self.logtime = logtime
     
     def store(self,**kwargs):
+        if self.logtime:
+            kwargs['time']=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         for key in kwargs:
             if self.data.get(key) != None:
                 self.data[key].append(kwargs[key])
@@ -993,6 +1183,20 @@ class Data:
                 else:
                     self.data[key]=[kwargs[key]]
                 exec(f"self.{key}=self.data['{key}']")
+        if not self.connection==None:
+            try:
+                log_data_to_database(self.dbtable_name, self.connection, **kwargs)
+                self.connectionattempts=0
+            except Exception as e:
+                self.connectionattempts+=1
+                print(f"Data failed to log to database: {e}")
+                if self.connectionattempts>10: #times out connection after 10 failed attempts
+                    print("\033[1;31;49mDatabase connection has timed out, closing connection...\033[1;37;49m")
+                    try:
+                        self.connection.close()
+                    except:
+                        pass
+                    self.connection=None
         if self.preserve_pos and len(kwargs)<len(self.data):
             for key in self.data:
                 if kwargs.get(key) == None:
@@ -1001,6 +1205,20 @@ class Data:
             self.save_increment_counter+=1
             if self.save_increment_counter>=self.save_increment:
                 self.save(path=self.save_loc)
+                if not self.connection==None:
+                    try:
+                        self.connection.commit()
+                        self.connectionattempts=0
+                    except Exception as e:
+                        self.connectionattempts+=1
+                        print(f"Data failed to commit to database: {e}")
+                        if self.connectionattempts>10: #times out connection after 10 failed attempts
+                            print("\033[1;31;49mDatabase connection has timed out, closing connection...\033[1;37;49m")
+                            try:
+                                self.connection.close()
+                            except:
+                                pass
+                            self.connection=None
                 self.empty()
                 self.save_increment_counter=0
         self.numcalls += 1
@@ -1098,8 +1316,5 @@ class Data:
                     writer.writerows(zip(*self.data.values()))
                 print("data saved at *this user*\\forced_data_save.csv")
             except Exception as e:
-                print("Backup failed somehow, if you're seeing this things are really messed up: {e}")
-                
-        
-
+                print(f"Backup failed somehow, if you're seeing this things are really messed up: {e}")
 
