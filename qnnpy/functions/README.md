@@ -124,6 +124,33 @@ plot - instance of the LivePlotter class to be saved
 optionally, if instead of 'sample name', the 'Save File' key in the yaml file defines a 'sample name 1' and 'sample name 2', and the data or plot arguments is a list instead of a single instance of the class, then data_saver() will recursively call itself for every sample name included in the yaml file (in this example, 2), and element in the data or plot list. 
 
 ### Logging
+
+#### database_connection(**kwargs) -> mariadb.connection
+returns a connection to a database. if kwargs is not provided, then simpily returns a connection to qnndb using Owen's username and password
+
+#### log_data_to_database(table_name: str, connection = None, **kwargs)
+logs data provided in kwargs to a database table
+
+if connection is not provided or None, then simpily uses qnndb with Owen's username and password
+
+Example:
+```
+log_data_to_database("measurement_events", connection=None, user='IR', port=1)
+```
+This will add a row to the 'measurement_events' table with the 'user' column as 'IR' and 'port' column as 1
+
+#### update_table(table_name: str, set_col: str, conditional: str = 'NULL', connection = None)
+allows you to run sql commands in the format `UPDATE table_name SET set_col WHERE conditional` easily from the terminal
+
+if connection is not provided / None, then will connect to qnndb with Owen's username and password
+
+Example:
+```
+In [1]: update_table('measurement_ids', 'description=stuff', 'id>1 AND id<=3')
+Out: UPDATE measurement_ids SET description='stuff' WHERE id>1 AND id<=3
+```
+
+
 ### Measurement
 ### Code Testing
 #### mock_builder(class_to_mock) -> object
@@ -169,7 +196,9 @@ If an instrument fails to connect, then attempting to get that instrument will r
 The data class is used to store and save any collected data
 
 Optionally can be used to automatically save data on a specific interval, for long-term data collection. To set up automatic data saving, set the "autosave" argument when instantiating the Data class to True, for example: d = Data(autosave = True). Note that autosaving only works for csv files. Make sure to still call save() after all measurements have finished to save any final measurements which were taken in between the save_increment. Calling save() by default will save to whatever file location was generated when the data class was created, see data.save() documentation below. 
-	
+
+Optionally, can also be set up to automatically log to a database. This requires that the table to log to already exists, and that each inputted data key has a corresponding column in the database table. 
+```	
 Other arguments can also be specified:
 autosave : bool, optional
     When enabled, periodically empties out Data and auto-saves it to the file location provided. The default is False.
@@ -187,6 +216,14 @@ preserve_pos_order : bool, optional
     and v4 will be compressed into the first line, while v2 will appear
     on lines 1 and 2. Enabling preserve_pos_order will create empty
     columns to fix this ordering. The default is False.
+connection : mariadb.connection, optional
+    If you want to auto-log data to a database, then you can set a connection here.
+    Just remember to run connection.close() after you're done!
+table_name : str, optional
+    database table name
+logtime: bool, optional
+    logs the time in the data dict as 'time' in addition to other variables whenever store() is called
+```
 
 date.store() - stores data into an internal dictionary in the data class. also makes calls to save() and empty() if autosave is enabled
 	
@@ -208,8 +245,19 @@ if you want to access data in a data class, you can optionally use one of the fo
 voltages: list = d.get('voltage')
 voltages: list = d.voltage # beware that this will crash if 'voltage' was never passed in d.store()
 ```
-	
-	
+
+Date + database example:
+```
+import qnnpy.functions.functions as qf
+
+d = qf.Data(table_name = 'measurements', connection=qf.database_connection()) # see database_connection() for more info on this function
+for i in range(5):
+    V = take_voltage()
+    T = take_temperature()
+    d.store(voltage=V, temperature=T) # this requires the database table you're committing to to have columns named 'voltage' and 'temperature'
+
+d.connection.close() # make sure to close the connection after you're done! the Data class does not automatically close the connection. 
+```	
 	
 	
 # irawizza functions.py update - Usage Example:
