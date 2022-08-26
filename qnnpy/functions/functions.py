@@ -160,7 +160,7 @@ class LivePlotter:
                 os.makedirs(path)
             sys.path.append(path)
         if name==None:
-            name: str = time.strftime(f"plot_%Y-%m-%d_%H-%M-%S.{file_type}", time.localtime())
+            name: str = time.strftime(f"plot_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime())
         elif not '.' in name:
             name = f"{name}.{file_type}"
         self.fig.savefig(f"{path}{os.sep}{name}")
@@ -378,7 +378,7 @@ def data_saver(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Meas
         # else:
         #     measurement_alt = measurement
         # makes file path
-        time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+        time_str = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
         file_name = sample_name +"_"+measurement+"_"+ device_type_ext +"_"+ device_name +"_"+time_str+ (f"_({file_name_append})" if file_name_append != "" else "")
         file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement)
         os.makedirs(file_path, exist_ok=True)
@@ -1144,7 +1144,7 @@ class Data:
             if not os.path.exists(path):
                 os.makedirs(path)
         if name==None:
-            name: str = time.strftime(f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.localtime())
+            name: str = time.strftime(f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime())
         elif not '.' in name:
             name = f"{name}.{file_type}"
         if path==None: self.save_loc=name
@@ -1172,7 +1172,7 @@ class Data:
     
     def store(self,**kwargs):
         if self.logtime:
-            kwargs['time']=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            kwargs['time']=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
         for key in kwargs:
             if self.data.get(key) != None:
                 self.data[key].append(kwargs[key])
@@ -1287,7 +1287,7 @@ class Data:
                 os.makedirs(path)
             # sys.path.append(path)
         if name==None:
-            name: str = time.strftime(f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.localtime())
+            name: str = time.strftime(f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime())
         elif not '.' in name:
             name = f"{name}.{file_type}"
         if path == None: path = ''
