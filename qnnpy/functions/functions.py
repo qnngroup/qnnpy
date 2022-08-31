@@ -290,6 +290,25 @@ def save(parameters, measurement, data_dict={}, instrument_list=None, db=False, 
     
     return full_path
 
+def get_path(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Measurements'):
+    #ensure parameters is dict
+    if type(parameters) != dict:
+        try:
+            parameters = load_config(parameters)
+        except:
+            raise ValueError('save accepts dict from configured .yml file, try using load_config(parameters) first!')
+    #Setup variables from parameters for file path
+    if parameters.get('Save File'):
+        sample_name = parameters['Save File']['sample name'] if parameters.get('Save File').get('sample name') else "" #this field should describe the material SPX111 or GaN_ID#20
+        device_name = parameters['Save File']['device name'] if parameters.get('Save File').get('device name') else "" #this field should describe which device is being tested
+        device_type = parameters['Save File']['device type'] if parameters.get('Save File').get('device type') else "" #this field should describe device type ntron, snspd, coupler, memory
+    else:
+        sample_name, device_name, device_type = "", "", ""
+    if os.path.exists(meas_path):
+        return os.path.join(meas_path, sample_name, device_type, device_name, measurement)
+    return None
+    
+
 #same as save but uses data instruments and liveplotter class
 def data_saver(parameters: dict, measurement: str, meas_path: str = r'S:\SC\Measurements', data = None, inst = None, plot = None, file_name_append: str = ""):
     """
@@ -1224,11 +1243,18 @@ class Data:
         self.numcalls += 1
     
     def get(self, key: str) -> List[object]:
-        return self.data[key]
+        return self.data.get(key)
     
     def last(self, key: str) -> object:
-        return self.get(key)[-1]
-            
+        if self.get(key)!=None and len(self.get(key))>0:
+            return self.get(key)[-1]
+        return None
+    
+    def first(self, key: str) -> object:
+        if self.get(key)!=None and len(self.get(key))>0:
+            return self.get(key)[0]
+        return None
+    
     def empty(self):
         """
         empties out the values stored in the data dict, but retains any
@@ -1318,3 +1344,66 @@ class Data:
             except Exception as e:
                 print(f"Backup failed somehow, if you're seeing this things are really messed up: {e}")
 
+
+
+
+class Measurement:
+    def __init__(self, configuration_file, *, data = None, liveplotter = None):
+        """
+        Measurement class sets up a measurement and serves as the super class for IvSweep, TriggerSweep, etc
+
+        Parameters
+        ----------
+        configuration_file : str
+            configuration file to use for this measurement.
+        data : functions.Data, optional
+            overrides how this measurement's Data class is setup. The default is the Data() class.
+        liveplotter : functions.LivePlotter, optional
+            sets a liveplotter to use. The default is None, if liveplotter is set to True, will use the default LivePlotter() class.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.properties = load_config(configuration_file)
+        
+        #sets up data, by default uses default Data() class arguments
+        self.data=data
+        if data == None:
+            self.data=Data()
+        
+        #sets up liveplotter, by default doesn't use a liveplotter
+        self.liveplotter=liveplotter
+        if type(liveplotter)==bool and liveplotter==True:
+            self.liveplotter = LivePlotter()
+
+        self.sample_name, self.device_name, self.device_type = "", "", ""
+        if self.properties.get('Save File')!=None:
+            self.sample_name = self.properties['Save File'].get('sample name')
+            self.device_name = self.properties['Save File'].get('device name')
+            self.device_type = self.properties['Save File'].get('device type')
+
+        if self.properties.get('iv_sweep'):
+            self.R_srs=self.properties['iv_sweep'].get('series_resistance')
+            
+        self.isw=0
+        
+        self.instrument_list = []
+
+        #######################################################################
+        # Setup instruments
+        #######################################################################
+
+        self.inst = Instruments(self.properties)
+        
+        self.instrument_list = self.inst.instrument_list
+        # if there are any errors in setting up, compare older versions of
+        # snspd on github with qf.Instruments
+        
+    def save(self, measurement: str='None', root_folder_path: str = r'S:\SC\Measurements'):
+        self.data.store(isw=self.isw, R_srs = self.R_srs)
+        data_saver(self.properties, measurement, root_folder_path, self.data, self.inst, self.liveplotter)
+
+
+        
