@@ -566,12 +566,12 @@ def update_table(table_name: str, set_col: str, conditional: str = 'NULL', conne
     if not conditional == 'ALL':
         conditional = insert_quotes(conditional)
         command+=" WHERE "
-        conditional_operators: list[str] = ['=', '>', '<', '>=', '<=', '!=', 'BETWEEN', 'LIKE', 'IN']
+        conditional_operators: list = ['=', '>', '<', '>=', '<=', '!=', 'BETWEEN', 'LIKE', 'IN']
         if any(op in conditional for op in conditional_operators):
             command+=conditional
         else:
-            cols: list[str] = get_column_names(set_col)
-            vals: list[str] = conditional.split(",")
+            cols: list = get_column_names(set_col)
+            vals: list = conditional.split(",")
             for c, v in zip(cols, vals):
                 command+=f"{c}={v.strip()}, "
             command=command.rstrip(', ')
@@ -582,7 +582,7 @@ def update_table(table_name: str, set_col: str, conditional: str = 'NULL', conne
     connection.close()
 
 
-def get_column_names(string: str) -> list[str]:
+def get_column_names(string: str) -> list:
     """
     Helper method for update_table to get the column names when an input is formatted as 'col=val, col2=val2, col3=val3' etc
     Parameters
@@ -714,7 +714,7 @@ def mock_builder(class_to_mock) -> object:
         Mock instance of the inputted class.
 
     """
-    method_list: List[str] = [func for func in dir(class_to_mock) if callable(getattr(class_to_mock, func))]
+    method_list: List = [func for func in dir(class_to_mock) if callable(getattr(class_to_mock, func))]
     gen_code: str = f"class Mock{class_to_mock.__name__}:"
     for m in method_list:
         if not(m.startswith('__') and not m=='__init__'):
@@ -754,7 +754,7 @@ class Instruments:
         self.VNA = None
         self.temp = None
         self.instrument_list: List[str] = []
-        self.instrument_dict: dict[str, object] = {}
+        self.instrument_dict: dict = {}
         # Attenuator
         if properties.get('Attenuator'):
             self.attenuator_setup(properties)
