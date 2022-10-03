@@ -1,4 +1,4 @@
-import visa
+import pyvisa
 import numpy as np
 import time
 import scipy.io
@@ -11,7 +11,7 @@ class LeCroy620Zi(object):
     originate from the Automation Command Reference Manual for WaveRunner Oscilloscopes"""
 
     def __init__(self, visa_name):
-        rm = visa.ResourceManager()
+        rm = pyvisa.ResourceManager()
         self.pyvisa = rm.open_resource(visa_name)
         self.pyvisa.timeout = 10000 # Set response timeout (in milliseconds)
         # self.pyvisa.query_delay = 1 # Set extra delay time between write and read commands
@@ -75,7 +75,9 @@ class LeCroy620Zi(object):
         elif channel[0] == 'F': # If it's F1, F2...
             self.vbs_write('app.Math.%s.View = %s' % (channel, view))
 
-        
+    def set_active_input(self, channel='C1', activeInput='InputA'):
+        self.vbs_write('app.Acquisition.%s.ActiveInput = "%s"' % (channel, activeInput))
+
     def set_coupling(self, channel = 'C1', coupling = 'DC1M'):
         """ Coupling should be either AC1M, DC1M, DC50, or Gnd """
         self.vbs_write('app.Acquisition.%s.Coupling = "%s"' % (channel, coupling))
