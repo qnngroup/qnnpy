@@ -835,7 +835,7 @@ class Instruments:
                 else: 
                     break
         else:
-            properties['Temperature'] = {'initial temp': 'None'}
+            properties['Temperature'] = {'initial temp': 'None', 'name': 'None'}
             
     
     def attenuator_setup(self,properties:dict, instrument_num: int = 0):
@@ -848,7 +848,7 @@ class Instruments:
             try:
                 exec(f"self.attenuator{appender} = JDSHA9(properties['Attenuator{appender}']['port'])")
                 exec(f"self.attenuator{appender}.set_beam_block(True)")
-                exec(f"self.instruments_dict['attenuator{appender}']=self.attenuator{appender}")
+                exec(f"self.instrument_dict['attenuator{appender}']=self.attenuator{appender}")
                 print(f'ATTENUATOR{appender}: connected')
             except:
                 print(f'ATTENUATOR{appender}: failed to connect')
@@ -871,7 +871,7 @@ class Instruments:
                 #similary story for the other insturments
                 exec(f"self.counter{appender}.reset()")
                 exec(f"self.counter{appender}.basic_setup()")
-                exec(f"self.instruments_dict['counter{appender}']=self.counter{appender}")
+                exec(f"self.instrument_dict['counter{appender}']=self.counter{appender}")
                 # self.counter.write(':EVEN:HYST:REL 100')
                 print(f'COUNTER{appender}: connected')
             except:
@@ -892,7 +892,7 @@ class Instruments:
             try:
                 exec(f"self.scope{appender} = LeCroy620Zi('TCPIP::%s::INSTR' % properties['Scope{appender}']['port'])")
                 # self.scope_channel = properties[f'Scope{appender}']['channel']
-                exec(f"self.instruments_dict['scope{appender}']=self.scope{appender}")
+                exec(f"self.instrument_dict['scope{appender}']=self.scope{appender}")
                 print(f'SCOPE{appender}: connected')
             except:
                 print(f'SCOPE{appender}: failed to connect')
@@ -912,7 +912,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2700(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
-                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
+                exec(f"self.instrument_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -924,7 +924,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2400(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
-                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
+                exec(f"self.instrument_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -935,7 +935,7 @@ class Instruments:
             try:
                 exec(f"self.meter{appender} = Keithley2001(properties['Meter{appender}']['port'])")
                 exec(f"self.meter{appender}.reset()")
-                exec(f"self.instruments_dict['meter{appender}']=self.meter{appender}")
+                exec(f"self.instrument_dict['meter{appender}']=self.meter{appender}")
                 print(f'METER{appender}: connected')
             except:
                 print(f'METER{appender}: failed to connect')
@@ -956,7 +956,7 @@ class Instruments:
                 exec(f"self.source{appender} = SIM928(properties['Source{appender}']['port'], properties['Source{appender}']['port_alt'])")
                 exec(f"self.source{appender}.reset()")
                 exec(f"self.source{appender}.set_output(False)")
-                exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
+                exec(f"self.instrument_dict['source{appender}']=self.source{appender}")
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
@@ -968,7 +968,7 @@ class Instruments:
                # self.source.reset()
                exec(f"self.source{appender}.set_output(False)")
                # exec("self.source{appender}.set_voltage_range(5)")
-               exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
+               exec(f"self.instrument_dict['source{appender}']=self.source{appender}")
                print(f'SOURCE{appender}: connected')
            except:
                print(f'SOURCE{appender}: failed to connect')
@@ -978,7 +978,7 @@ class Instruments:
             try:
                 exec(f"self.source{appender} = Keithley2400(properties['Source{appender}']['port'])")
                 exec(f"self.source{appender}.reset()")
-                exec(f"self.instruments_dict['source{appender}']=self.source{appender}")
+                exec(f"self.instrument_dict['source{appender}']=self.source{appender}")
                 print(f'SOURCE{appender}: connected')
             except:
                 print(f'SOURCE{appender}: failed to connect')
@@ -998,7 +998,7 @@ class Instruments:
             try:
                 exec(f"self.awg{appender} = Agilent33250a(properties['AWG{appender}']['port'])")
                 exec(f"self.awg{appender}.beep()")
-                exec(f"self.instruments_dict['awg{appender}']=self.awg{appender}")
+                exec(f"self.instrument_dict['awg{appender}']=self.awg{appender}")
                 print(f'AWG{appender}: connected')
             except:
                 print(f'AWG{appender}: failed to connect')
@@ -1018,7 +1018,7 @@ class Instruments:
             try:
                 exec(f"VNA{appender} = KeysightN5224a(properties['VNA{appender}']['port'])")
                 # self.VNA.reset()
-                exec(f"self.instruments_dict['VNA{appender}']=self.VNA{appender}")
+                exec(f"self.instrument_dict['VNA{appender}']=self.VNA{appender}")
                 print(f'VNA{appender}: connected')
             except:
                 print(f'VNA{appender}: failed to connect')
@@ -1039,7 +1039,7 @@ class Instruments:
                 exec(f"self.temp{appender} = Cryocon350(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
-                exec(f"self.instruments_dict['temp{appender}']=self.temp{appender}")
+                exec(f"self.instrument_dict['temp{appender}']=self.temp{appender}")
                 print("TEMPERATURE"+appender+': connected | '+str(properties['Temperature'+appender]['initial temp']))
             except:
                 properties['Temperature'+appender]['initial temp'] = 0
@@ -1052,7 +1052,7 @@ class Instruments:
                 exec(f"self.temp{appender} = Cryocon34(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
-                exec(f"self.instruments_dict['temp{appender}']=self.temp{appender}")
+                exec(f"self.instrument_dict['temp{appender}']=self.temp{appender}")
                 print("TEMPERATURE"+appender+': connected | '+str(properties['Temperature'+appender]['initial temp']))
             except: 
                 properties['Temperature'+appender]['initial temp'] = 0
@@ -1062,7 +1062,7 @@ class Instruments:
         elif properties['Temperature'+appender]['name'] == 'ICE':
             try:
                 properties['Temperature'+appender]['initial temp'] = ice_get_temp(select=1)
-                print("TEMPERATURE"+appender+': connected' + ice_get_temp(select=1))
+                print("TEMPERATURE"+appender+': connected T=' + str(ice_get_temp(select=1)))
             except:
                 properties['Temperature'+appender]['initial temp'] = 0
                 print("TEMPERATURE"+appender+': failed to connect')
