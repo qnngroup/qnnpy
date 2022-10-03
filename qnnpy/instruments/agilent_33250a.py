@@ -193,7 +193,9 @@ class Agilent33250a(object):
         self.get_catalog()
         self.set_arb_wf(t, v, name='PULSE_TR')
                     
-    def sync_output(self, chan):
-        self.write('SOURCE%s:FUNC:ARBitrary:SYNChronize' % chan)
-        
+    def sync_phase(self, chan):
+        # self.write('SOURCE%s:FUNC:ARBitrary:SYNChronize' % chan)
+        self.write('SOURCE%s:PHASe:SYNChronize' % chan)
+
+
         
