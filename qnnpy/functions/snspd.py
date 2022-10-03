@@ -30,6 +30,9 @@ class Snspd:
         if self.properties.get('iv_sweep'):
             self.R_srs = self.properties['iv_sweep']['series_resistance']
             
+        if self.properties.get('double_sweep'):
+            self.R_srs_g = self.properties['double_sweep']['series_resistance_g']
+
         self.isw = 0
         self.instrument_list = []
 
@@ -487,7 +490,7 @@ class IvSweep(Snspd):
         full_path = qf.save(self.properties, 'iv_sweep')
         qf.plot(np.array(self.v_read), np.array(self.i_read)*1e6,
                 title=self.sample_name+" "+self.device_type+" "+self.device_name,
-                xlabel='Voltage (mV)',
+                xlabel='Voltage (V)',
                 ylabel='Current (uA)',
                 path=full_path,
                 show=True,
@@ -544,6 +547,124 @@ class IvSweepScope(Snspd):
         
         self.full_path = qf.save(self.properties, 'iv_sweep_scope', self.data_dict_iv_sweep_scope, instrument_list = self.instrument_list)    
         self.inst.scope.save_screenshot(self.full_path+'screen_shot'+'.png', white_background=False)
+
+
+class DoubleSweep(Snspd):
+    """ Class object for iv sweeps
+
+    Configuration: iv_sweep:
+    [start: initial bias current],
+    [stop: final bias current],
+    [steps: number of points],
+    [sweep: number of iterations],
+    [full_sweep: Include both positive and negative bias],
+    [series_resistance: resistance at voltage source ie R_srs]
+    
+    """
+    def run_sweep(self):
+        """ Runs IV sweep with config paramters
+        This constructs #steps between start and 75% of final current.
+        Then, #steps between 75% and 100% of final current.
+        
+
+        """
+        self.inst.source1.reset()
+        self.inst.source2.reset()
+
+        self.inst.meter.reset()
+
+        self.inst.source1.set_output(False)
+        self.inst.source2.set_output(False)
+
+        start = self.properties['double_sweep']['start']
+        stop = self.properties['double_sweep']['stop']
+        steps = self.properties['double_sweep']['steps']
+        sweep = self.properties['double_sweep']['sweep']
+        Ig_start = self.properties['double_sweep']['Ig_start']
+        Ig_stop = self.properties['double_sweep']['Ig_stop']
+        Ig_steps = self.properties['double_sweep']['Ig_steps']
+        
+        
+        # To select full (positive and negative) trace or half trace
+        full_sweep = self.properties['double_sweep']['full_sweep']
+        Isource1 = np.linspace(start, stop, steps) #Coarse
+        #Isource2 = np.linspace(stop*0.75, stop, steps) #Fine
+
+        Isource_Ig = np.linspace(Ig_start, Ig_stop, Ig_steps)
+
+        if full_sweep == True:
+            Isource = np.concatenate([Isource1, Isource1[::-1]])
+            Isource = np.concatenate([Isource, -Isource])
+        else:
+            Isource = Isource1
+        self.v_set = np.tile(Isource, sweep) * self.R_srs
+        self.v_set_g = np.tile(Isource_Ig, sweep) * self.R_srs_g
+
+        self.inst.source.set_output(True)
+        self.inst.source2.set_output(True)
+        sleep(1)
+        self.v_list = []
+        self.i_list = []
+
+        self.ig_list = []
+        for m in self.v_set_g:
+            voltage = []
+            current = []
+            self.inst.source2.set_voltage(m)
+            sleep(0.1)
+            for n in self.v_set:
+                self.inst.source.set_voltage(n)
+                sleep(0.1)
+    
+                vread = self.inst.meter.read_voltage() # Voltage
+    
+                iread = (n-vread)/self.R_srs#(set voltage - read voltage)
+    
+                print('Vd=%.4f V, Id=%.2f uA, Ig=%.2f uA, R =%.2f' %(vread, iread*1e6, m*1e6/self.R_srs_g, vread/iread))
+                voltage.append(vread)
+                current.append(iread)
+                
+            #ADDED by Andrew...
+            #Turn off both voltage sources to provide reset time
+            self.inst.source.set_voltage(0.0)
+            self.inst.source2.set_voltage(0.0)
+            sleep(2)
+            #######
+            
+            self.v_list.append(np.asarray(voltage, dtype=np.float32))
+            self.i_list.append(np.asarray(current, dtype=np.float32))
+            self.ig_list.append(m/self.R_srs_g)
+            
+            
+            
+        
+        
+        
+    def plot(self):
+        full_path = qf.save(self.properties, 'double_sweep')
+        qf.plot(self.v_list, self.i_list,
+                title=self.sample_name+" "+self.device_type+" "+self.device_name,
+                xlabel='Voltage (V)',
+                ylabel='Current (A)',
+                label = self.ig_list,
+                path=full_path,
+                show=True,
+                close=True)
+
+    def save(self):
+
+        #Set up data dictionary
+
+        data_dict = {'V_source': self.v_set,
+                 'V_device': self.v_list,
+                 'I_device': self.i_list,
+                 'I_gate': self.ig_list,
+                 'R_srs': self.R_srs,
+                 'temp': self.properties['Temperature']['initial temp']}
+
+
+        self.full_path = qf.save(self.properties, 'double_sweep', data_dict, 
+                                 instrument_list = self.instrument_list)
 
         
 
@@ -786,10 +907,10 @@ class PulseTraceSingle(Snspd):
             
         for i in range(len(channels)):
             x, y = self.inst.scope.get_single_trace(channel=channels[i])
-            # xlist.append(x);  #keep all x data the same.
+            xlist.append(x); 
             ylist.append(y);
 
-        self.trace_x = x
+        self.trace_x = xlist
         self.trace_y = ylist
         return self.trace_x, self.trace_y
 
