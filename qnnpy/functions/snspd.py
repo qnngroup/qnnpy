@@ -8,6 +8,8 @@ import qnnpy.functions.functions as qf
 import time
 from time import sleep
 import numpy as np
+import signal
+from sys import exit
 
 class Snspd:
     """ Class for SNSPD measurement. This class handels the instrument
@@ -44,6 +46,16 @@ class Snspd:
         self.inst = qf.Instruments(self.properties)
         # if there are any errors in setting up, compare older versions of
         # snspd on github with qf.Instruments
+        signal.signal(signal.SIGINT, self.handler)
+        
+    def handler(self, signum, frame):
+        '''
+        Safer exit handling (e.g. on ctrl+c)
+        '''
+        self.inst.source.set_voltage(0)
+        self.inst.source.set_output(False)
+        exit(1)
+     
 
 
     def average_counts(self, counting_time, iterations, trigger_v):
@@ -649,6 +661,7 @@ class DoubleSweep(Snspd):
                 label = self.ig_list,
                 path=full_path,
                 show=True,
+                linestyle = '-o',
                 close=True)
 
     def save(self):
@@ -746,6 +759,67 @@ class PhotonCounts(Snspd):
             count_rate_list.append(count_rate_avg) #final countrate at this current is the average of each itteration
             print('Current value %0.2f uA - Count rate = %0.2e   (%s of %s: %0.2f min)' % (j*1e6, count_rate_avg, n+1, len(currents), (time.time()-start_time)/60.0))
         self.inst.attenuator.set_beam_block(True)
+        self.inst.source.set_output(False)
+        self.LCR = np.asarray(count_rate_list, dtype=np.float32)
+
+#        self.LCR = currents*3 # here for testing
+        return self.LCR
+    
+    def dark_counts_noattn(self):
+        """ Dark Count Rate -- adjust laser manually"""
+
+        #Variable Setup
+        iterations = self.properties['photon_counts']['iterations']
+        start = self.properties['photon_counts']['start']
+        stop = self.properties['photon_counts']['stop']
+        step = self.properties['photon_counts']['step']
+        counting_time = self.properties['photon_counts']['counting_time']
+        trigger_v = self.properties['photon_counts']['trigger_v']
+
+        currents = np.arange(start, stop, step)
+        self.currents = currents
+
+        count_rate_list = []
+
+        print('\\\\\\\\ DARK COUNT RATE \\\\\\\\')
+        for n, j in enumerate(currents): #sweep current
+            start_time = time.time()
+            self.inst.source.set_voltage(voltage=j*self.R_srs)
+            count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
+
+            count_rate_list.append(count_rate_avg) #final countrate at this current is the average of each itteration
+            print('Current value %0.2f uA - Count rate = %0.2e   (%s of %s: %0.2f min)' % (j*1e6, count_rate_avg, n+1, len(currents), (time.time()-start_time)/60.0))
+
+        self.DCR = np.asarray(count_rate_list, dtype=np.float32)
+        self.inst.source.set_output(False)
+#        self.DCR = currents*2  # here for testing
+
+        return self.DCR
+    
+    def light_counts_noattn(self):
+        """ Photon Count Rate -- adjust laser manually"""
+        #Variable Setup
+        iterations = self.properties['photon_counts']['iterations']
+        start = self.properties['photon_counts']['start']
+        stop = self.properties['photon_counts']['stop']
+        step = self.properties['photon_counts']['step']
+        counting_time = self.properties['photon_counts']['counting_time']
+        trigger_v = self.properties['photon_counts']['trigger_v']
+        self.attenuation = self.properties['photon_counts']['attenuation_db']
+
+        currents = np.arange(start, stop, step)
+        self.currents = currents
+
+        count_rate_list = []
+        
+        print('\\\\\\\\ LIGHT COUNT RATE \\\\\\\\')
+        for n, j in enumerate(currents): #sweep current
+            start_time = time.time()
+            self.inst.source.set_voltage(voltage=j*self.R_srs)
+            sleep(0.1)
+            count_rate_avg = Snspd.average_counts(self, counting_time, iterations, trigger_v)
+            count_rate_list.append(count_rate_avg) #final countrate at this current is the average of each itteration
+            print('Current value %0.2f uA - Count rate = %0.2e   (%s of %s: %0.2f min)' % (j*1e6, count_rate_avg, n+1, len(currents), (time.time()-start_time)/60.0))
         self.LCR = np.asarray(count_rate_list, dtype=np.float32)
 
 #        self.LCR = currents*3 # here for testing
@@ -912,6 +986,7 @@ class PulseTraceSingle(Snspd):
 
         self.trace_x = xlist
         self.trace_y = ylist
+        self.inst.source.set_output(False)
         return self.trace_x, self.trace_y
 
     def plot(self):
@@ -955,7 +1030,7 @@ class PulseTraceMultiple(Snspd):
             if self.properties['pulse_trace']['attenuation'] == 100:
                 self.inst.attenuator.set_beam_block(True)
         
-        
+        total_xlist = []
         total_ylist = []
         trigger_v = self.properties['pulse_trace']['trigger_level']
         number_of_traces = self.properties['pulse_trace']['number_of_traces']
@@ -974,16 +1049,19 @@ class PulseTraceMultiple(Snspd):
             while self.inst.scope.get_trigger_mode() != 'Stopped\n':
                 sleep(0.001)
             
+            xlist = [];
             ylist = [];
             for i in range(len(channels)):
                 x, y = self.inst.scope.get_single_trace(channel=channels[i])
-                # xlist.append(x);  #keep all x data the same.
+                xlist.append(x);  #keep all x data the same.
                 ylist.append(y);
 
+            total_xlist.append(np.asarray(xlist, dtype=np.float32))
             total_ylist.append(np.asarray(ylist, dtype=np.float32))
+
             print('Acquired Trace %0.f of %0.f' %(n+1, number_of_traces))
             
-        self.trace_x = x
+        self.trace_x = np.asarray(total_xlist, dtype=np.float32)
         self.trace_y = np.asarray(total_ylist, dtype=np.float32)
         self.inst.source.set_output(False)    
 
