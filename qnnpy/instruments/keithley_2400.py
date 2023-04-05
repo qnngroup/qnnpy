@@ -107,6 +107,10 @@ class Keithley2400(object):
         voltage, current = self.read_voltage_and_current()
         return voltage
     
+    def read_resistance(self):
+        voltage, current = self.read_voltage_and_current()
+        return voltage
+    
     
     def switch_front(self):
         self.write(':ROUT:TERM FRON')
