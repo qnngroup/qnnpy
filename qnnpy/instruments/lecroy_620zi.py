@@ -12,7 +12,7 @@ class LeCroy620Zi(object):
 
     def __init__(self, visa_name):
         rm = pyvisa.ResourceManager()
-        self.pyvisa = rm.open_resource(visa_name)
+        self.pyvisa = rm.open_resource(visa_name, write_termination='\n')
         self.pyvisa.timeout = 10000 # Set response timeout (in milliseconds)
         # self.pyvisa.query_delay = 1 # Set extra delay time between write and read commands
         self.write('COMM_HEADER OFF') # Get rid of the leading 'VBS ' crap
@@ -107,8 +107,14 @@ class LeCroy620Zi(object):
         self.vbs_write('app.Acquisition.Horizontal.HorScale = %0.6e' % time_per_div)
         self.vbs_write('app.Acquisition.Horizontal.HorOffset = %0.6e' % time_offset)
 
-    def set_memory_samples(self, num_samples = 1e6):
+    def set_max_samples(self, num_samples = 1e6):
         self.vbs_write('app.Acquisition.Horizontal.MaxSamples = %0.3e' % num_samples)
+
+    def set_sample_rate(self, num_samples = 1e9):
+        self.vbs_write('app.Acquisition.Horizontal.SampleRate = %0.3e' % num_samples)
+
+    def set_num_points(self, num_samples = 1e3):
+        self.vbs_write('app.Acquisition.Horizontal.NumPoints = %0.3e' % num_samples)
 
 
     def set_trigger(self, source = 'C1', volt_level = 0.1, slope = 'positive'):
@@ -336,7 +342,7 @@ class LeCroy620Zi(object):
         interval=abs(x[0]-x[1])
         xlist=[];
         ylist=[];
-        totdp=np.int(np.size(x)/NumSegments)
+        totdp=np.int64(np.size(x)/NumSegments)
         for j in range(NumSegments):
             xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
             ylist.append(y[0+j*totdp:totdp+j*totdp])
@@ -355,11 +361,12 @@ class LeCroy620Zi(object):
             while self.get_trigger_mode() == 'Single\n':
                 sleep(1e-4)
         for c in channels:
+            print(c)
             x,y = self.get_wf_data(channel=c)
             interval=abs(x[0]-x[1])
             xlist=[];
             ylist=[];
-            totdp=np.int(np.size(x)/NumSegments)
+            totdp=np.int64(np.size(x)/NumSegments)
             
             for j in range(NumSegments):
                 xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
