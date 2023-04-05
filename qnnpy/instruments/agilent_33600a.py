@@ -4,7 +4,9 @@ import numpy as np
 #the commonds can be found in the following link
 #http://rfmw.em.keysight.com/bihelpfiles/Trueform/webhelp/US/Default.htm?lc=eng&cc=US&id=2197433
 class Agilent33600a(object):
-    """Python class for Agilent 33600a 80MHz Frequency Generator, written by Adam McCaughan"""
+    """Python class for Agilent 33600a 80MHz Frequency Generator, written by Adam McCaughan
+    Modified for qnnpy compatibility by Emma Batson
+    """
 
     def __init__(self, visa_name):
         rm = pyvisa.ResourceManager()
@@ -21,8 +23,18 @@ class Agilent33600a(object):
     def query(self, string):
         return self.pyvisa.query(string) 
     
+    def beep(self):
+        self.pyvisa.write('SYST:BEEP')
+    
     def reset(self):
         self.write('*RST')
+        
+    def sync_phase(self, ch='Ch1'):
+        if ch == 'Ch1':
+            channel=1
+        else:
+            channel=2
+        self.write('SOURce{}:PHASe:SYNChronize'.format(channel))
     
     def set_usual_unit(self):
         self.write('SOURce1:APPLy?')
@@ -32,15 +44,15 @@ class Agilent33600a(object):
         self.write('DISP:VIEW STAN')
 
     def set_dual_channel_coupling(self, ch='Ch1', state='ON'):
-        if state is 'ON':
-                if ch is 'Ch1':  
+        if state == 'ON':
+                if ch == 'Ch1':  
                     self.write('SOUR1:FREQ:COUP ON')
-                elif ch is 'Ch2':  
+                elif ch == 'Ch2':  
                     self.write('SOUR2:FREQ:COUP ON')
-        elif state is 'OFF':
-                if ch is 'Ch1':  
+        elif state == 'OFF':
+                if ch == 'Ch1':  
                     self.write('SOUR1:FREQ:COUP OFF')
-                elif ch is 'Ch2':  
+                elif ch == 'Ch2':  
                     self.write('SOUR2:FREQ:COUP OFF')
         else: print ('error')               
 
@@ -57,11 +69,15 @@ class Agilent33600a(object):
         self.write('APPLy:SQUare %0.6e Hz, %0.6e VPP, %.6e V' %(freq, vpp, voffset))
         self.write('FUNCtion:SQUare:DCYCle %0.2e' %duty_cycle)
 
+    def set_ramp(self, freq=1000, vpp=0.1, voffset=0, symm=100, source=1):
+        # Ramp frequency is limited to 200 kHz
+        self.write('SOUR{}:APPL:RAMP {}, {}, {}'.format(source, freq, vpp, voffset))
+        self.write('SOUR{}:FUNC:RAMP:SYMM {}'.format(source, symm))
 
     def set_pulse(self, ch = 'Ch1', freq=1000, vlow=0.0, vhigh=1.0, phase = 1.0, width = 100e-6, leading_edge_time = 2.9E-9, trailing_edge_time = 2.9E-9):
-        if ch is'Ch1':
+        if ch == 'Ch1':
                 channel = 1
-        elif ch is 'Ch2':
+        elif ch == 'Ch2':
                 channel = 2
 
         vpp = vhigh-vlow
@@ -81,6 +97,13 @@ class Agilent33600a(object):
 
     def set_voffset(self, voffset = 0.0):
         self.write('VOLT:OFFS %0.6e' % (voffset))
+        
+    def set_phase(self, ch='Ch1', angle=0):
+        if ch == 'Ch1':
+                channel = 1
+        elif ch == 'Ch2':
+                channel = 2
+        self.write('SOURce{}:PHASe {}'.format(channel, angle))
 
     def set_vhighlow(self, vlow=0.0, vhigh=1.0):
         if vhigh > vlow:
@@ -92,10 +115,24 @@ class Agilent33600a(object):
             self.set_voffset((vhigh+vlow)/2.0)
             self.set_polarity(inverted = True)
 
-    def set_output(self,ch = 'Ch1', output='ON'):
-        if ch is'Ch1':
+    def set_output(self, output=False, ch='both'):
+        ''' breaking legacy behavior to make compatible with
+        other sources. default behavior is to turn both channels
+        on or off
+        '''
+        if output:
+            state = 'ON'
+        else:
+            state = 'OFF'
+        if ch == 'both' or ch == 'Ch1':
+            self.write('OUTP1 {}'.format(state))
+        if ch == 'both' or ch == 'Ch2':
+            self.write('OUTP2 {}'.format(state))
+
+    def set_output_legacy(self,ch = 'Ch1', output='ON'):
+        if ch == 'Ch1':
                 channel = 1
-        elif ch is 'Ch2':
+        elif ch == 'Ch2':
                 channel = 2
         
         if output in ['on','ON','On','oN']:   self.write('OUTP%1.0d ON' % (channel))
@@ -161,11 +198,12 @@ class Agilent33600a(object):
         self.timeout = temp
         # self.write('FUNC USER') # Output the selected waveform
 
+    '''
     def setup_heartbeat_wf(self):
         heartbeat_t = [0.0, 4.0/8, 5.0/8, 6.0/8,  7.0/8, 8.0/8]
         heartbeat_v = [0.0,   0.0,   1.0,   0.0,   -1.0,   0.0]
         freq_gen.set_arb_wf(t = heartbeat_t, v = heartbeat_v, name = 'HEARTBEA')
-
+    '''
 
     def select_arb_wf(self, name = 'HEARTBEA'):
         name = name[0:8].upper()
