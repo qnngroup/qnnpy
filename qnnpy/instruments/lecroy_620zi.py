@@ -68,7 +68,14 @@ class LeCroy620Zi(object):
         self.vbs_write('app.ClearSweeps') #
         time.sleep(0.2) # Necessary to allow the scope time to reset all values
 
-    
+    def set_dialog_page(self, page='Measure'):
+        # changes the displayed dialog page
+        self.vbs_write('app.SystemControl.DialogPage = "%s"' % (page))
+        
+    def set_dialog_page_right(self, page='Skew Clock 1'):
+        # changes the displayed dialog page
+        self.vbs_write('app.SystemControl.RightDialogPage = "%s"' % (page))
+        
     def view_channel(self, channel = 'C1', view = True):
         if channel[0] == 'C':  # If it's C1, C3, etc
             self.vbs_write('app.Acquisition.%s.View = %s' % (channel, view))
@@ -191,11 +198,18 @@ class LeCroy620Zi(object):
         if status == 'off':
             self.vbs_write('app.Acquisition.AuxOutput.AuxMode = "Off"')
             
+    def set_measurement_clock_level(self, measurement='P1', clock='1', levelIs='Absolute', level=0.1):
+        self.vbs_write('app.Measure.%s.Operator.Clock%sLevelIs = %s' % (measurement, clock, levelIs))
+        if levelIs == 'Absolute':
+            self.vbs_write('app.Measure.%s.Operator.Clock%sAbsLevel = %s' % (measurement, clock, level))
+        if levelIs == 'Percent':
+            self.vbs_write('app.Measure.%s.Operator.Clock%sPctLevel = %s' % (measurement, clock, level))
+            
             
     def get_parameter_value(self, parameter = 'P1'):
         return float(self.vbs_ask('app.Measure.%s.Out.Result.Value' % parameter))
 
-
+    
 
     def get_trigger_mode(self):
         return self.vbs_ask('app.Acquisition.TriggerMode')
