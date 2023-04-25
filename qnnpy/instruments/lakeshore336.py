@@ -72,4 +72,8 @@ class Lakeshore336(object):
         ENABLE = str(output[2])
         return s
         
-           
+    def all_off(self):
+        self.set_range(1,0)
+        self.set_range(2,0)
+        self.set_range(3,0)
+        self.set_range(4,0)
