@@ -252,6 +252,9 @@ def save(parameters, measurement, data_dict={}, instrument_list=None, db=False, 
         device_type_ext = device_type
         port = 1
         
+    if parameters['Save File'].get('cell'):
+        device_name_ext = 'cell'+parameters['Save File']['cell']
+        
     time_str = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
             
     ''' Shorten parameter list to only include current measurement and the instruments used'''
@@ -272,7 +275,10 @@ def save(parameters, measurement, data_dict={}, instrument_list=None, db=False, 
             measurement_alt = measurement
                 
         file_name = sample_name +"_"+measurement_alt+"_"+ device_type_ext +"_"+ device_name +"_"+time_str 
-        file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement)
+        if parameters['Save File'].get('cell'):
+            file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement, parameters['Save File']['cell'])
+        else:
+            file_path = os.path.join(file_path, sample_name, device_type, device_name, measurement)
         os.makedirs(file_path, exist_ok=True)
         full_path = os.path.join(file_path, file_name)
         if data_dict:
@@ -582,32 +588,32 @@ def update_table(table_name: str, set_col: str, conditional: str = 'NULL', conne
     connection.close()
 
 
-def get_column_names(string: str) -> list[str]:
-    """
-    Helper method for update_table to get the column names when an input is formatted as 'col=val, col2=val2, col3=val3' etc
-    Parameters
-    ----------
-    string : str
-        sql command formatted as 'column=value, column=value...'
+# def get_column_names(string: str) -> list[str]:
+#     """
+#     Helper method for update_table to get the column names when an input is formatted as 'col=val, col2=val2, col3=val3' etc
+#     Parameters
+#     ----------
+#     string : str
+#         sql command formatted as 'column=value, column=value...'
         
-    Returns
-    -------
-    list of column names
-    """
-    res = []
-    builder = ''
-    build = True
-    for c in string:
-        if c=='=':
-            res.append(builder)
-            builder=''
-            build=False
-        elif build:
-            if not c.isspace():
-                builder+=c
-        elif c==',':
-            build=True
-    return res
+#     Returns
+#     -------
+#     list of column names
+#     """
+#     res = []
+#     builder = ''
+#     build = True
+#     for c in string:
+#         if c=='=':
+#             res.append(builder)
+#             builder=''
+#             build=False
+#         elif build:
+#             if not c.isspace():
+#                 builder+=c
+#         elif c==',':
+#             build=True
+#     return res
 
 def insert_quotes(string: str) -> str:
     res:str = ""
@@ -876,6 +882,20 @@ class Instruments:
                 print(f'COUNTER{appender}: connected')
             except:
                 print(f'COUNTER{appender}: failed to connect')
+        elif properties[f'Counter{appender}']['name'] == 'Keysight53230a':
+            from qnnpy.instruments.keysight_53230a import Keysight53230a
+            try:
+                exec(f"self.counter{appender} = Keysight53230a(properties['Counter{appender}']['port'])")
+                #without the reset command this section will evaluate connected
+                #even though the GPIB could be wrong
+                #similary story for the other insturments
+                exec(f"self.counter{appender}.reset()")
+                exec(f"self.counter{appender}.basic_setup()")
+                exec(f"self.instrument_dict['counter{appender}']=self.counter{appender}")
+                # self.counter.write(':EVEN:HYST:REL 100')
+                print(f'COUNTER{appender}: connected')
+            except:
+                print(f'COUNTER{appender}: failed to connect')
         else:
             raise NameError('Invalid counter. Counter name is not '\
                             'configured')
@@ -890,12 +910,26 @@ class Instruments:
         if properties[f'Scope{appender}']['name'] == 'LeCroy620Zi':
             from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
             try:
-                exec(f"self.scope{appender} = LeCroy620Zi('TCPIP::%s::INSTR' % properties['Scope{appender}']['port'])")
+                if properties[f'Scope{appender}']['port'][0:3] == 'USB':
+                    exec(f"self.scope{appender} = LeCroy620Zi('%s' % properties['Scope{appender}']['port'])")
+                else:
+                    exec(f"self.scope{appender} = LeCroy620Zi('TCPIP::%s::INSTR' % properties['Scope{appender}']['port'])")
+
                 # self.scope_channel = properties[f'Scope{appender}']['channel']
                 exec(f"self.instrument_dict['scope{appender}']=self.scope{appender}")
                 print(f'SCOPE{appender}: connected')
             except:
                 print(f'SCOPE{appender}: failed to connect')
+                
+        elif properties[f'Scope{appender}']['name'] == 'KeysightDSOX':
+            from qnnpy.instruments.keysight_dsox import KeysightDSOX
+            try: 
+                exec(f"self.scope{appender} = KeysightDSOX('%s' % properties['Scope{appender}']['port'])")
+                exec(f"self.instrument_dict['scope{appender}']=self.scope{appender}")
+                print(f'SCOPE{appender}: connected')
+            except :
+                print(f'SCOPE{appender}: failed to connect')
+            
         else:
             raise NameError('Invalid Scope. Scope name is not configured')
         if instrument_num==1 and hasattr(self,"scope1"):
@@ -1002,6 +1036,16 @@ class Instruments:
                 print(f'AWG{appender}: connected')
             except:
                 print(f'AWG{appender}: failed to connect')
+        elif properties['AWG'+appender]['name'] == 'Agilent33600a':
+            from qnnpy.instruments.agilent_33600a import Agilent33600a
+            try:
+                exec(f"self.awg{appender} = Agilent33600a(properties['AWG{appender}']['port'])")
+                exec(f"self.awg{appender}.beep()")
+                exec(f"self.instrument_dict['awg{appender}']=self.awg{appender}")
+                print(f'AWG{appender}: connected')
+            except:
+                print(f'AWG{appender}: failed to connect')
+                
         else:
             raise NameError('Invalid AWG. AWG name: "%s" is not configured' % properties['AWG'+appender]['name'])
         if instrument_num==1 and hasattr(self,"awg1"):
@@ -1033,18 +1077,18 @@ class Instruments:
         if instrument_num==0: appender=''
         self.instrument_list.append("Temperature"+appender)
 
-        if properties["Temperature"]['name'] == 'Cryocon350':
-            from qnnpy.instruments.cryocon350 import Cryocon350
+        if properties["Temperature"]['name'] == 'Lakeshore336':
+            from qnnpy.instruments.lakeshore336 import Lakeshore336
             try:
-                exec(f"self.temp{appender} = Cryocon350(properties['Temperature{appender}']['port'])")
+                exec(f"self.temp{appender} = Lakeshore336(properties['Temperature{appender}']['port'])")
                 exec(f"self.temp{appender}.channel = properties['Temperature{appender}']['channel']")
                 exec(f"properties['Temperature{appender}']['initial temp'] = self.temp{appender}.read_temp(self.temp{appender}.channel)")
                 exec(f"self.instrument_dict['temp{appender}']=self.temp{appender}")
                 print("TEMPERATURE"+appender+': connected | '+str(properties['Temperature'+appender]['initial temp']))
-            except:
+            except Exception as e:
                 properties['Temperature'+appender]['initial temp'] = 0
-                print("TEMPERATURE"+appender+': failed to connect')
-                # exec(f"self.temp{appender} = mock_builder(Cryocon350)")
+                print("TEMPERATURE"+appender+': failed to connect with message:')
+                print(e)
 
         elif properties['Temperature'+appender]['name'] == 'Cryocon34':
             from qnnpy.instruments.cryocon34 import Cryocon34
