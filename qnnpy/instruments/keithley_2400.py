@@ -20,6 +20,9 @@ class Keithley2400(object):
 
     def reset(self):
         self.write('*RST')
+        
+    def local_key(self):
+        self.write('SYST:KEY 23')
 
 
     def setup_read_volt(self):
@@ -40,7 +43,7 @@ class Keithley2400(object):
 
 
     def setup_2W_source_I_read_V(self):
-        self.write('*RST')
+        #self.write('*RST')
         self.write(':SOUR:FUNC CURR') # Set operation mode to: source current
         self.write(':SOUR:CURR:LEVEL 0E-6') # Set current level to 0 uA
         self.write(':SYST:RSEN 0') # Turn off "Remote Sensing" aka 4-wire measurement mode
@@ -93,8 +96,13 @@ class Keithley2400(object):
         read_str = self.query(':READ?')
         # See page 18-51 of manual, returns: voltage, current, resistance, timestamp, status info
         # Returns something like '5.275894E-05,-1.508318E-06,+9.910000E+37,+2.562604E+03,+3.994000E+04'
-        data = read_str.split(',')
-        voltage, current = float(data[0]), float(data[1])
+        #data = read_str.split(',')
+        print(read_str[0])
+        #voltage= float(data[0][:-3])
+        #voltage= data
+        #print(data)
+        #current = float(data[1])
+        current = 0
         return voltage, current
 
 
