@@ -24,7 +24,7 @@ class Agilent53131a(object):
     def reset(self):
         self.write('*RST')
 
-    def basic_setup(self):
+    def basic_setup(self, coupling='AC', impedance='1M'):
         self.write('*RST')
         self.write('*CLS')
 
@@ -32,9 +32,15 @@ class Agilent53131a(object):
         self.write(':EVEN:LEV -0.200V')  # Set trigger level
         self.write(':EVEN:SLOP POS') # Or POS. Trigger on negative slope
         self.write(':EVEN:HYST:REL 0') # Set hysteresis 0 indicates high sensitivity
-        self.write(':INP:COUP AC') # Or DC.  Input coupling
-        # self.write(':INP:IMP 50') # Set input impedance to 50ohms
-        self.write(':INP:IMP 1E6') # Set input impedance to 1 MOhms
+        if coupling == 'AC':
+            self.write(':INP:COUP AC') # Or DC.  Input coupling
+        elif coupling == 'DC':
+            self.write(':INP:COUP DC')
+       
+        if impedance == '1M':
+           self.write(':INP:IMP 1E6') # Set input impedance to 1 MOhms
+        elif impedance == '50':
+            self.write(':INP:IMP 50') # Set input impedance to 50ohms
 
         self.write(':INP:FILT OFF') # Turn off 100kHz lowpass filter
         self.write(':FUNC "TOT 1"') # Totalize on channel 1
@@ -53,6 +59,12 @@ class Agilent53131a(object):
             self.write(':INP:IMP 50')
         else:
             self.write(':INP:IMP 1E6')
+            
+    def set_coupling(self, value='AC'):
+        if value == 'AC':
+            self.write(':INP:COUP AC')
+        else:
+            self.write(':INP:COUP DC')
             
     def set_trigger(self, trigger_voltage = -0.075, trigger_slope = None):
         if trigger_slope == 'POS' or trigger_slope == 'NEG':
@@ -89,4 +101,3 @@ class Agilent53131a(object):
             dcr.append(self.count_rate(counting_time))
             print('Trigger voltage = %0.3f  /  Count rate %0.1f' % (trigger_voltage, dcr[-1]))
         return v, np.array(dcr)
-
