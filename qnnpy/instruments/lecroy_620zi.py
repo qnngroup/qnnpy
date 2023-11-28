@@ -68,6 +68,11 @@ class LeCroy620Zi(object):
         self.vbs_write('app.ClearSweeps') #
         time.sleep(0.2) # Necessary to allow the scope time to reset all values
 
+
+    def wait_until_idle(self, max_time=5):
+        self.vbs_write(f'app.WaitUntilIdle({max_time})')
+        
+        
     def set_dialog_page(self, page='Measure'):
         # changes the displayed dialog page
         self.vbs_write('app.SystemControl.DialogPage = "%s"' % (page))
@@ -192,6 +197,10 @@ class LeCroy620Zi(object):
             self.vbs_write('app.Math.%s.Source1 = "%s"' % (math_channel, source2))
 
 
+    def set_deskew(self, math_channel = 'F1', skew = 10e-9):
+        self.vbs_write(f'app.Math.{math_channel}.Operator1Setup.WaveDeskew = {skew}')
+        
+        
     def set_aux_trigger_out(self, status = 'on'):
         if status == 'on':
             self.vbs_write('app.Acquisition.AuxOutput.AuxMode = "TriggerOut"')
@@ -206,10 +215,18 @@ class LeCroy620Zi(object):
             self.vbs_write('app.Measure.%s.Operator.Clock%sPctLevel = %s' % (measurement, clock, level))
             
             
+    def set_measurement_gate(self, measurement='P1', gate_start=0, gate_stop=10):
+        self.vbs_write(f'app.Measure.{measurement}.GateStart = {gate_start}')
+        self.vbs_write(f'app.Measure.{measurement}.GateStop = {gate_stop}')
+        
     def get_parameter_value(self, parameter = 'P1'):
         return float(self.vbs_ask('app.Measure.%s.Out.Result.Value' % parameter))
-
     
+    def get_parameter_mean(self, parameter = 'P1'):
+        return float(self.vbs_ask('app.Measure.Measure("%s").mean.Result.Value' % parameter))
+    
+    def get_parameter_std(self, parameter = 'P1'):
+        return float(self.vbs_ask('app.Measure.Measure("%s").sdev.Result.Value' % parameter))
 
     def get_trigger_mode(self):
         return self.vbs_ask('app.Acquisition.TriggerMode')
@@ -243,9 +260,31 @@ class LeCroy620Zi(object):
         y = data*vgain - voffset
         return x,y
 
+    def get_event_time(self, channel='C1'):
+        vt_cy_time = self.vbs_ask('app.Acquisition.%s.Out.Result.FirstEventTime' % channel)
+        timestamp = self.decode_time(vt_cy_time)
+        return vt_cy_time, timestamp
 
+    def decode_time(self, vt_cy_time):
+        '''
+        Parameters
+        ----------
+        vt_cy_time : VT_CY time from scope specs
 
-    def get_single_trace(self, channel = 'C1'):
+        Returns
+        -------
+        datetime
+
+        '''
+        epoch = datetime.datetime(2000, 1, 1)
+        nanoseconds_since_epoch = int(float(vt_cy_time[:-2])*10000)
+        delta = datetime.timedelta(microseconds=(nanoseconds_since_epoch//1000))
+        timestamp = epoch + delta
+        formatted_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')
+        #print(formatted_timestamp)
+        return timestamp
+
+    def get_single_trace(self, channel = 'C1', save_data=True):
         """ Sets scope to "single" trigger mode to acquire one trace, then waits until the trigger has happened
         (indicated by the trigger mode changing to "Stopped").  Returns blank lists if no trigger occurs within 1 second """
         n = 0; x = np.array([]); y = np.array([])
@@ -253,8 +292,11 @@ class LeCroy620Zi(object):
         while self.get_trigger_mode() == 'Single' or n > 1e10:
             time.sleep(1e-4)
             n = n+1
-        x,y = self.get_wf_data(channel=channel)
-        return x,y
+        if save_data:
+            x,y = self.get_wf_data(channel=channel)
+            return x,y
+        else:
+            pass
 
 
     # def get_math_data(self,channel='C1'):  # e.g. channel = C1 or F3 etc
@@ -265,7 +307,8 @@ class LeCroy620Zi(object):
         return int(self.vbs_ask('app.Math.%s.Out.Result.Sweeps' % channel))
 
     def get_num_data_points(self, channel = 'P1'):
-        return int(self.vbs_ask('app.Measure.%s.num.REsult.Value' % channel))
+        return int(self.vbs_ask('app.Measure.%s.num.Result.Value' % channel))
+    
         
 
     # def save_screenshot(self, filename = 'Hellokitty', filepath = 'C:\\LecroyScreenshots\\', grid_area_only = True):
@@ -279,7 +322,10 @@ class LeCroy620Zi(object):
     #     self.vbs_write('app.Hardcopy.Directory = "%s"' % filepath)
     #     self.vbs_write('app.Hardcopy.Print')
 
-
+    def set_math_vertical_scale(self, math_channel = 'F1', vertical_scale=10e-9, vertical_offset=0):
+        self.vbs_write('app.Math.%s.Operator1Setup.VerScale = %s' % (math_channel, vertical_scale))
+        self.vbs_write('app.Math.%s.Operator1Setup.Center = %s' % (math_channel, vertical_offset))
+        
     def setup_math_trend(self, math_channel = 'F1', source = 'P1', num_values = 10e3):
         self.set_math(math_channel = math_channel, operator = 'Trend', source1 = source)
         self.vbs_write('app.Math.%s.Operator1Setup.Values = %s' % (math_channel, num_values))
@@ -303,6 +349,9 @@ class LeCroy620Zi(object):
         self.vbs_write('app.Math.%s.Operator1Setup.HorScale = %s' % (math_channel, width_per_div))
         self.view_channel(channel = math_channel, view = True)
         
+    def set_math_trend_values(self, math_channel='F1', num_values=1e3):
+        self.vbs_write('app.Math.%s.Operator1Setup.Values = %s' % (math_channel, num_values))
+
     def math_histogram_clear_sweeps(self, math_channel='F1'):
         self.vbs_write('app.Math.%s.ClearSweeps' % math_channel)
 
@@ -366,10 +415,14 @@ class LeCroy620Zi(object):
 
     
     def get_multiple_trace_sequence(self, channels = ['C1', 'C2'], NumSegments=1000):
+        '''
+        If display mode (overlay, waterfall, adjacent) is not active turn off persistent trace
+
+        '''
         full_dict = {}    
         self.set_sequence_mode()
         self.set_segments(NumSegments)
-        self.clear_sweeps()
+        # self.clear_sweeps()
         self.set_trigger_mode(trigger_mode = 'Single')
         if self.get_trigger_mode() == 'Single\n':
             while self.get_trigger_mode() == 'Single\n':
@@ -506,6 +559,9 @@ class LeCroy620Zi(object):
 
         return data_dict
 
+
+    def recall_setup(self, setup=1):
+        self.vbs_write(f'app.SaveRecall.Setup.RecallInternal{setup}')
 # lecroy_ip = '18.62.10.141'
 # lecroy = LeCroy620Zi("TCPIP::%s::INSTR" % lecroy_ip)
 # x,y = lecroy.get_wf_data('F1')
