@@ -1,4 +1,17 @@
 import pyvisa
+from enum import Enum
+
+class MeasFunction(Enum):
+    VOLT = 1
+    VOLTAC = 2
+    CURR = 3
+    CURRAC = 4
+    RES     = 5 # 2pt res
+    FRES    = 6 # 4pt res
+    FREQ    = 7
+    PER     = 8
+    TEMP    = 9
+    
 
 class Keithley2700(object):
     """Python class for Keithley 2700 Data Acquisition System, written by Adam McCaughan"""
@@ -17,15 +30,25 @@ class Keithley2700(object):
     def query(self, string):
         return self.pyvisa.query(string)
 
+    def local_key(self):
+        self.write('SYST:KEY 17')
         
     def reset(self):
         self.write('*RST')
     def read_voltage(self):
+        self.write("FUNC 'VOLT'")
         read_str = self.query(':READ?')
         # Returns something like '+1.99919507E-01VDC,+6283.313SECS,+60584RDNG#'
         E_location = read_str.find('E') # Finds location of E in read value
         voltage_str = read_str[0 : read_str.find('E')+4]
         return float(voltage_str) # Return just the first number (voltage)
+    
+    def read_resistance(self):
+        self.write("FUNC 'RES'")
+        read_str = self.query(':READ?')
+        E_location = read_str.find('E')
+        res_str = read_str[0 : read_str.find('E')+4]
+        return float(res_str)
     
     # def set_compliance_v(self, compliance_v = 10e-6):
     #     self.write(':SENS:VOLT:PROT %0.3e' % compliance_v)
@@ -45,5 +68,15 @@ class Keithley2700(object):
     
     def set_filter(self, state = 'OFF'):
         self.write(':VOLT:AVER:STAT ' + state) # Enable or disable the filter. 
+        
+    def set_autorange(self, meas_fxn):
+        if meas_fxn == MeasFunction.CURRAC:
+            meas_str = 'CURR:AC'
+        elif meas_fxn == MeasFunction.VOLTAC:
+            meas_str = 'VOLT:AC'
+        else:
+            meas_str = str(meas_fxn)
+        self.write(f'{meas_str}:RANG:AUTO ON')
 
-
+    #def go_to_local(self):
+       # self.query('GTL')
