@@ -8,6 +8,8 @@ Created on Mon Jan 23 10:39:04 2023
 from time import sleep
 import pyvisa
 
+LAKESHORE_MODE_MAP = {'0':'Off', '1':'Closed Loop PID', '2':'Zone', '3':'Open Loop', '4':'Monitor Out', '5':'Warmup Supply'}
+
 class Lakeshore336(object):
 
     def __init__(self, visa_name):
@@ -70,6 +72,15 @@ class Lakeshore336(object):
         MODE = str(output[0])
         INPUT = str(output[1])
         ENABLE = str(output[2])
+        return s
+    
+    def get_formatted_output(self, output=1):
+        s = self.query('OUTMODE? '+str(output))
+        output = s.split(',')
+        MODE = str(output[0])
+        INPUT = str(output[1])
+        ENABLE = str(output[2])
+        print('MODE: '+LAKESHORE_MODE_MAP[MODE]+'\n INPUT: '+INPUT+'\n ENABLE: '+str(bool(ENABLE)))
         return s
         
     def all_off(self):
