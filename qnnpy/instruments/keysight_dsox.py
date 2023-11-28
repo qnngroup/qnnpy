@@ -57,6 +57,7 @@ class KeysightDSOX(object):
     def set_trigger_level(self, v=0.1):
         self.write(':TRIG:EDGE:LEV '+str(v))
         
+        # Max 40e-6 
     def set_timebase_scale(self, t=1e-6):
         self.write(':TIM:SCAL '+str(t))
     #test from here    
@@ -65,8 +66,10 @@ class KeysightDSOX(object):
         {MAIN | WINDow | XY |ROLL}
         '''
         self.write(':TIM:MODE '+mode)
-    
+        
+
     def set_channel_bwLimit(self, bw='0', channel='1'):
+        ''' '0' is false, '1' is true '''
         self.write(':CHAN'+str(channel)+':BWL '+str(bw))
         
     def set_channel_display(self, display='1', channel='1'):
@@ -122,7 +125,8 @@ class KeysightDSOX(object):
         self.write(':WGEN'+str(output)+':FUNC:SQU:DCYC '+str(dcycle))
         
         
-    def set_awg_output(self, val=1, output='1'):
+    def set_awg_output(self, val='1', output='1'):
+        ''' 1 for ON, 0 for OFF'''
         self.write(':WGEN'+str(output)+':OUTP '+str(val))
     
     def set_awg_output_mode(self, mode='NORM', output='1'):
