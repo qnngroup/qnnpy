@@ -4,6 +4,10 @@ import numpy as np
 class Agilent33250a(object):
     """Python class for Agilent 33250a 80MHz Frequency Generator, written by Adam McCaughan"""
 #http://rfmw.em.keysight.com/bihelpfiles/Trueform/webhelp/US/Default.htm?lc=eng&cc=US&id=2197433
+
+#error messages
+# https://rfmw.em.keysight.com/wireless/helpfiles/e4982a/product_information/error_messages/error_messages.htm
+
     def __init__(self, visa_name):
         rm = pyvisa.ResourceManager()
         self.pyvisa = rm.open_resource(visa_name)
@@ -32,10 +36,16 @@ class Agilent33250a(object):
         self.write('DATA:DEL %s' % name)
         
     def get_catalog(self):
-        'List the names of all waveforms currently available for selection.'
+        'List the names of all waveforms in volatile memory currently available for selection.'
         return self.query('DATA:CATalog?')
+    
+    def get_catalog_int(self):
+        'List the names of sequence or arb files in internal memory'
+        return self.query('MMEM:CAT:DATA:ARB?')
+        
 
     def get_error(self):
+        # https://rfmw.em.keysight.com/wireless/helpfiles/e4982a/product_information/error_messages/error_messages.htm
         print(self.query('SYST:ERR?'))
         
     def get_phase(self, chan=1):
@@ -43,6 +53,9 @@ class Agilent33250a(object):
     
     def get_amplitude(self, chan=1):
         return self.query('SOURCE%s:VOLT?' % (chan))  
+    
+    def get_freq(self, chan=1):
+        return self.query('SOURCE%s:FREQ?' % (chan))  
     
     def set_sin(self, freq=1000, vpp=0.1, voffset=0, chan=1):
         # In a string, %0.6e converts a number to scientific notation like
@@ -65,6 +78,15 @@ class Agilent33250a(object):
     def set_vpp(self, vpp=0.1, chan=1):
         self.write('SOURCE%s:VOLT %0.6e' % (chan, vpp))
 
+    def set_arb_freq(self, freq=1e3, chan=1):
+        self.write('SOURCE%s:FUNC:ARB:FREQ %0.6e' % (chan, freq))
+
+    def set_arb_sample_rate(self, srate=1e4, chan=1):
+        self.write('SOURCE%s:FUNC:ARB:SRAT %0.6e' % (chan, srate))
+        
+        
+    def set_arb_sync(self):
+        self.write('FUNC:ARB:SYNC')
 
     def set_vhighlow(self, vlow=0.0, vhigh=1.0):
         if vhigh > vlow:
@@ -179,14 +201,14 @@ class Agilent33250a(object):
         self.write('*CLS') # clear status
         self.write(f'SOURce{chan}:DATA:VOLatile:CLEar') # clears volatile waveform memory
         self.query(f'SOUR{chan}:DATA:VOL:FREE?') # returns number of points available (free) in volatile memory
-        self.get_error() # check for error
+        # self.get_error() # check for error
         self.write('FORM:BORD SWAP') #least-significant byte (LSB) of each data point is first. Most computers use this.
 
         self.query('DATA:CAT?') # returns the contents of volatile waveform memory, including arbitrary waveforms and sequences
 
         waveform = waveform.astype('float32') # set single precision
         mw = np.max(np.abs(waveform)) #find max for normalization
-        waveform = waveform/mw # normalize between +/-1
+        # waveform = waveform/mw # normalize between +/-1
         arbBytes = str(len(waveform)*4) # number of bytes to send
         header = f'SOURce{chan}:DATA:ARBitrary {name}, #{len(arbBytes)}{arbBytes}'
 
@@ -204,7 +226,29 @@ class Agilent33250a(object):
         self.write(f'SOUR{chan}:FUNC ARB')
         self.set_vpp(mw, chan)
     
+    def set_arb_vpeak(self, v, chan):
+        self.write(f'SOURce{chan}FUNC:ARBitrary:PTPeak {v}')
     
+    def set_sequence(self, name, chan):
+        self.write('*CLS') # clear status
+        self.write(f'SOURce{chan}:DATA:VOLatile:CLEar') # clears volatile waveform memory
+
+        write_start = '"INT:\WRITE0.ARB",0,once,highAtStartGoLow,50'
+        write1 = '"INT:\WRITE1.ARB",0,once,maintain,50'
+        write0 = '"INT:\WRITE0.ARB",0,once,maintain,50'
+        sequence = f'"{name}",'+','.join([write_start, write0, write0, write1, write1, write0, write1, write1])
+        n = str(len(sequence))
+        header = f'SOUR{chan}:DATA:SEQ #{len(n)}{n}'
+        message = header+sequence
+        
+        self.write(f'MMEM:LOAD:DATA{chan} "INT:\WRITE0.arb"')
+        self.write(f'MMEM:LOAD:DATA{chan} "INT:\WRITE1.arb"')
+
+        self.pyvisa.write_raw(message)
+        self.write(f'SOURce{chan}:FUNCtion:ARBitrary {name}')
+        # self.get_error()
+        
+   
     def setup_heartbeat_wf(self):
         heartbeat_t = [0.0, 4.0/8, 5.0/8, 6.0/8,  7.0/8, 8.0/8]
         heartbeat_v = [0.0,   0.0,   1.0,   0.0,   -1.0,   0.0]
