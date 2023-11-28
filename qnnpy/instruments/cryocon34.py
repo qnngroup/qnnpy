@@ -71,7 +71,9 @@ class Cryocon34(object):
         self.write('SYSTEM:BEEP 1')
         sleep(0.5)
         
-    def heat_up(self, load = 50, range='50W', source_channel = 'B', setpoint = 293):
+    def heat_up(self, load = 50, range='50W', source_channel = 'B', setpoint = 293,
+                P=0.5, I=5.0, D=0.0):
+        self.set_pid(P,I,D)
         self.write('LOOP 1:SETPT ' + str(setpoint))
         self.write('LOOP 1:LOAD ' + str(load))
         self.write('LOOP 1:RANGE ' + range)
@@ -79,6 +81,7 @@ class Cryocon34(object):
         self.write('LOOP 1:TYPE Rampp')  # Default to off in case of trouble
         self.write('LOOP 1:PMAN 5')
         self.start_heater()
+        
         
 
 
