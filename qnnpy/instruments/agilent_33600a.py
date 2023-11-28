@@ -61,24 +61,54 @@ class Agilent33600a(object):
         # print '%.6e' %(1234.56789) outputs '1.234568e+03'
         self.write('APPL:SIN %0.6e HZ, %0.6e VPP, %0.6e V' % (freq,vpp,voffset))
 
-    def set_square(self, freq = 1000, vpp = 0.1, voffset = 0, duty_cycle = 0.5):
+    def set_square(self, ch='Ch1', freq = 1000, vpp = 0.1, voffset = 0, duty_cycle = 0.5, phase=0.0):
         #duty cycle limit
         #20% to 80% (frequency < 25 MHz)
         #40% to 60% (25 MHz < frequency < 50 MHz)
         #50% (frequency > 50 MHz)
-        self.write('APPLy:SQUare %0.6e Hz, %0.6e VPP, %.6e V' %(freq, vpp, voffset))
-        self.write('FUNCtion:SQUare:DCYCle %0.2e' %duty_cycle)
+        if ch=='Ch1':
+            channel = 1
+        elif ch=='Ch2': 
+            channel = 2
+            
+        self.write('SOUR%1.0d:APPLy:SQUare %0.6e Hz, %0.6e VPP, %.6e V' %(channel, freq, vpp, voffset))
+        self.write('SOUR%1.0d:FUNCtion:SQUare:DCYCle %0.2e' %(channel, duty_cycle*100))
+        self.write('SOUR%1.0d:PHAS %0.3e' % (channel,phase))
 
-    def set_ramp(self, freq=1000, vpp=0.1, voffset=0, symm=100, source=1):
+    def set_ramp(self, ch='Ch1', freq=1000, vpp=0.1, voffset=0, symm=100):
+        if ch=='Ch1':
+            channel = 1
+        elif ch=='Ch2': 
+            channel = 2
         # Ramp frequency is limited to 200 kHz
-        self.write('SOUR{}:APPL:RAMP {}, {}, {}'.format(source, freq, vpp, voffset))
-        self.write('SOUR{}:FUNC:RAMP:SYMM {}'.format(source, symm))
+        self.write('SOUR{}:APPL:RAMP {}, {}, {}'.format(channel, freq, vpp, voffset))
+        self.write('SOUR{}:FUNC:RAMP:SYMM {}'.format(channel, symm))
+        
+    def set_triangle(self, ch='Ch1', freq=1000, vpp=0.1, voffset=0, phase=0):
+        if ch=='Ch1':
+            channel = 1
+        elif ch=='Ch2': 
+            channel = 2
+        # Ramp frequency is limited to 200 kHz
+        self.write('SOUR{}:APPL:TRI {}, {}, {}'.format(channel, freq, vpp, voffset))
+        self.write('SOUR%1.0d:PHAS %0.3e' % (channel,phase))
+        
+    def set_dc(self, ch='Ch1', voffset = 0):
+        if ch is'Ch1':
+                channel = 1
+        elif ch is 'Ch2':
+                channel = 2
+                
+        self.write('SOUR%1.0d:APPL:DC' % (channel))
+        self.write('SOUR%1.0d:VOLT:OFFS %0.3e' % (channel, voffset))
 
     def set_pulse(self, ch = 'Ch1', freq=1000, vlow=0.0, vhigh=1.0, phase = 1.0, width = 100e-6, leading_edge_time = 2.9E-9, trailing_edge_time = 2.9E-9):
         if ch == 'Ch1':
                 channel = 1
         elif ch == 'Ch2':
                 channel = 2
+        else :
+            print('error')
 
         vpp = vhigh-vlow
         voffset = (vhigh+vlow)/2.0
