@@ -49,14 +49,14 @@ class YokogawaGS200(object):
         self.write(':SENS:REM OFF') #2 wire
         #self.write(':SENS ON')
         
-#    def setup_4W_source_I_read_V(self):
-#        self.write('*RST')
-#        #Set current source mode
-#        self.write(':SOUR:FUNC CURR')
-#        self.write(':SOUR:LEV:AUTO 0E-6')
-#        #Enable measurement mode
-#        self.write(':SENS:REM ON') #4 wire
-#        self.write(':SENS ON')
+    # def setup_4W_source_I_read_V(self):
+    #     self.write('*RST')
+    #     #Set current source mode
+    #     self.write(':SOUR:FUNC CURR')
+    #     self.write(':SOUR:LEV:AUTO 0E-6')
+    #     #Enable measurement mode
+    #     self.write(':SENS:REM ON') #4 wire
+    #     self.write(':SENS ON')
          
 #    def set_measurement_time(self, integration_time = 1):
 #        # Set integration time in terms of power line cycle. 1 = 1/60th of a second
@@ -136,6 +136,13 @@ class YokogawaGS200(object):
         # Limit value for voltage when used in current source mode
         # from 1 V to 30 V
         self.write(':SOUR:PROT:VOLT %0.3e' % compliance_v)
+        
+    def read_voltage(self):
+        read_str = self.query(':READ?')
+        # Returns something like '+1.99919507E-01VDC,+6283.313SECS,+60584RDNG#'
+        E_location = read_str.find('E') # Finds location of E in read value
+        voltage_str = read_str[0 : read_str.find('E')+4]
+        return float(voltage_str) # Return just the first number (voltage)
         
     def set_output(self, output = False):
         if output is True:  self.write(':OUTP ON')
