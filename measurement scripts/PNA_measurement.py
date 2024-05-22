@@ -1,5 +1,7 @@
 # %%
 import sys
+import numpy as np
+import matplotlib.pyplot as plt
 
 sys.path.append("/Users/dizhu/Documents/github_repo/qnn-lab-instr-python")
 

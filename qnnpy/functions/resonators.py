@@ -35,7 +35,7 @@ class Resonators:
                     # self.pna.set_power(0)
                     self.pna.set_scale_auto()
                     print("PNA: connected")
-                except:
+                except Exception:
                     print("PNA: failed to connect")
             else:
                 qf.lablog(
@@ -55,7 +55,7 @@ class Resonators:
                     self.meter = Keithley2700(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
 
             elif self.properties["Meter"]["name"] == "Keithley2400":
@@ -66,7 +66,7 @@ class Resonators:
                     self.meter = Keithley2400(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
 
             elif self.properties["Meter"]["name"] == "Keithley2001":
@@ -76,7 +76,7 @@ class Resonators:
                     self.meter = Keithley2001(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
             else:
                 qf.lablog(
@@ -108,11 +108,11 @@ class Resonators:
                             self.properties["Source"]["port"],
                             self.properties["Source"]["port_alt2"],
                         )
-                    except:
+                    except Exception:
                         print("No second SRS specified")
 
                     print("SOURCE: connected")
-                except:
+                except Exception:
                     print("SOURCE: failed to connect")
             else:
                 qf.lablog(
@@ -138,7 +138,7 @@ class Resonators:
                         self.temp.read_temp(self.temp.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "Cryocon34":
@@ -151,7 +151,7 @@ class Resonators:
                         self.temp.read_temp(self.temp.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "ICE":
@@ -160,14 +160,14 @@ class Resonators:
                         select=1
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "DEWAR":
                 try:
                     self.properties["Temperature"]["initial temp"] = 4.2
                     print("TEMPERATURE: ~connected~ 4.2K")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             else:
@@ -302,7 +302,7 @@ class IvSweep(Resonators):
         Isource1 = np.linspace(start, stop * 0.75, steps)  # Coarse
         Isource2 = np.linspace(stop * 0.75, stop, steps)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -355,7 +355,7 @@ class IvSweep(Resonators):
         Isource1 = np.linspace(start, stop * percent, num1)  # Coarse
         Isource2 = np.linspace(stop * percent, stop, num2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -408,7 +408,7 @@ class IvSweep(Resonators):
         Isource1 = np.arange(start, stop * percent + spacing1, spacing1)  # Coarse
         Isource2 = np.arange(stop * percent, stop + spacing2, spacing2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -465,7 +465,7 @@ class IvSweep(Resonators):
                 "Isw_avg = %.4f µA :--: Isw_std = %.4f µA"
                 % (self.isw * 1e6, isws.std() * 1e6)
             )
-        except:
+        except Exception:
             print("Could not calculate Isw. Isw set to 0")
             self.isw = 0
 

@@ -53,7 +53,7 @@ class Microwave:
                         self.counter.basic_setup()
                         # self.counter.write(':EVEN:HYST:REL 100')
                         print("COUNTER: connected")
-                    except:
+                    except Exception:
                         print("COUNTER: failed to connect")
                 else:
                     raise NameError(
@@ -71,7 +71,7 @@ class Microwave:
                     self.attenuator = JDSHA9(self.properties["Attenuator"]["port"])
                     self.attenuator.set_beam_block(True)
                     print("ATTENUATOR: connected")
-                except:
+                except Exception:
                     print("ATTENUATOR: failed to connect")
             else:
                 raise NameError("Invalid Attenuator. Attenuator name is not configured")
@@ -89,7 +89,7 @@ class Microwave:
                     )
                     self.scope_channel = self.properties["Scope"]["channel"]
                     print("SCOPE: connected")
-                except:
+                except Exception:
                     print("SCOPE: failed to connect")
             else:
                 raise NameError("Invalid Scope. Scope name is not configured")
@@ -105,7 +105,7 @@ class Microwave:
                     self.meter = Keithley2700(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
 
             elif self.properties["Meter"]["name"] == "Keithley2400":
@@ -116,7 +116,7 @@ class Microwave:
                     self.meter = Keithley2400(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
 
             elif self.properties["Meter"]["name"] == "Keithley2001":
@@ -126,7 +126,7 @@ class Microwave:
                     self.meter = Keithley2001(self.properties["Meter"]["port"])
                     self.meter.reset()
                     print("METER: connected")
-                except:
+                except Exception:
                     print("METER: failed to connect")
             else:
                 raise NameError(
@@ -148,7 +148,7 @@ class Microwave:
                     )
                     self.source.reset()
                     print("SOURCE: connected")
-                except:
+                except Exception:
                     print("SOURCE: failed to connect")
 
             elif self.properties["Source"]["name"] == "YokogawaGS200":
@@ -160,7 +160,7 @@ class Microwave:
                     self.source.set_output(False)
                     self.source.set_voltage_range(5)
                     print("SOURCE: connected")
-                except:
+                except Exception:
                     print("SOURCE: failed to connect")
 
             else:
@@ -180,7 +180,7 @@ class Microwave:
                     self.awg = Agilent33250a(self.properties["AWG"]["port"])
                     self.awg.reset()
                     print("AWG: connected")
-                except:
+                except Exception:
                     print("AWG: failed to connect")
             else:
                 raise NameError(
@@ -200,7 +200,7 @@ class Microwave:
                     # self.VNA.reset()
                     self.VNA.get_start()
                     print("VNA: connected")
-                except:
+                except Exception:
                     print("VNA: failed to connect")
             else:
                 raise NameError(
@@ -222,7 +222,7 @@ class Microwave:
                         self.temp.read_temp(self.temp.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "Cryocon34":
@@ -235,7 +235,7 @@ class Microwave:
                         self.temp.read_temp(self.temp.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "ICE":
@@ -244,14 +244,14 @@ class Microwave:
                         select=1
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             elif self.properties["Temperature"]["name"] == "DEWAR":
                 try:
                     self.properties["Temperature"]["initial temp"] = 4.2
                     print("TEMPERATURE: ~connected~ 4.2K")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
 
             else:

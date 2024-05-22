@@ -167,16 +167,16 @@ class LivePlotter:
     ):
         # if self.start_time == 0:
         # self.start_time = time.time()
-        if markercolor == None:
+        if markercolor is None:
             markercolor = color
-        if self.data.get(label) == None:
+        if self.data.get(label) is None:
             self.data[label] = ([x], [y], self.colors[self.def_col_idx])
             self.def_col_idx += 1
             # self.data[label]=([x],[y],[time.time()-self.start_time])
         else:
             self.data[label][0].append(x)
             self.data[label][1].append(y)
-            if color == None:
+            if color is None:
                 color = self.data[label][2]
             if self.max_len > 1 and len(self.data[label][0]) > self.max_len:
                 self.data[label][0].pop(0)
@@ -205,12 +205,12 @@ class LivePlotter:
             if "." in path:
                 temp = path.rsplit(os.sep, 1)
                 path = temp[0]
-                if name == None:
+                if name is None:
                     name = temp[1]
             if not os.path.exists(path):
                 os.makedirs(path)
             sys.path.append(path)
-        if name == None:
+        if name is None:
             name: str = time.strftime(
                 f"plot_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
@@ -244,7 +244,7 @@ def load_config(filename=None):
             check_sample_name(sample_name)
         elif parameters.get("Save File").get("sample name 1"):
             for i in range(5):
-                if parameters["Save File"].get(f"sample name {i+1}") == None:
+                if parameters["Save File"].get(f"sample name {i+1}") is None:
                     break
                 check_sample_name(parameters["Save File"][f"sample name {i+1}"])
 
@@ -415,16 +415,16 @@ def data_saver(
     # for saving multiple samples
     if (
         parameters.get("Save File")
-        and parameters.get("Save File").get("sample name") == None
+        and parameters.get("Save File").get("sample name") is None
     ):
         res: list = []
         for i in range(4):  # maximum of 4 samples can be saved at a time
-            if parameters["Save File"].get(f"sample name {i+1}") == None:
+            if parameters["Save File"].get(f"sample name {i+1}") is None:
                 break
             d = data[i % len(data)] if type(data) == list else data
             p = plot[i % len(plot)] if type(plot) == list else plot
             parameters["Save File"] = (
-                {} if parameters.get("Save File") == None else parameters["Save File"]
+                {} if parameters.get("Save File") is None else parameters["Save File"]
             )
             parameters["Save File"]["sample name"] = (
                 parameters["Save File"][f"sample name {i+1}"]
@@ -649,7 +649,7 @@ def lablog_measurement(parameters, measurement=None):
     The lablog_measurement method logs the measurement history within the lab.
 
     """
-    if type(parameters) != dict:
+    if isinstance(parameters, dict) == False:
         raise ValueError("log_measurement accepts dictionary from configured .yml file")
     formatter = logging.Formatter(
         "%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"
@@ -694,7 +694,7 @@ def output_log(parameters, path):
 
 
 def database_connection(**kwargs):
-    if kwargs == None or len(kwargs) == 0:
+    if kwargs is None or len(kwargs) == 0:
         try:
             conn = mariadb.connect(
                 host="18.25.16.44",
@@ -726,7 +726,7 @@ def log_data_to_database(table_name: str, connection=None, **kwargs):
     command = "INSERT INTO `%s` (%s) VALUES (%s)" % (table_name, column_names, values)
     cur.execute(command)
     conn.commit()
-    if connection == None:
+    if connection is None:
         conn.close()
 
 
@@ -751,7 +751,7 @@ def update_table(
     None.
 
     """
-    if connection == None:
+    if connection is None:
         connection = database_connection()
     command: str = "UPDATE %s SET %s" % (table_name, insert_quotes(set_col))
     if not conditional == "ALL":
@@ -1536,17 +1536,17 @@ class Data:
             if "." in path:
                 temp = path.rsplit(os.sep, 1)
                 path = temp[0]
-                if name == None:
+                if name is None:
                     name = temp[1]
             if not os.path.exists(path):
                 os.makedirs(path)
-        if name == None:
+        if name is None:
             name: str = time.strftime(
                 f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
         elif "." not in name:
             name = f"{name}.{file_type}"
-        if path == None:
+        if path is None:
             self.save_loc = name
         else:
             self.save_loc = f"{path}{os.sep}{name}"
@@ -1556,7 +1556,7 @@ class Data:
             # self.close_csv()
             self.save_increment = save_increment
             self.save_increment_counter = 0
-        if not connection == None:
+        if not connection is None:
             cursor = connection.cursor()
             cursor.execute(
                 """
@@ -1577,7 +1577,7 @@ class Data:
         if self.logtime:
             kwargs["time"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
         for key in kwargs:
-            if self.data.get(key) != None:
+            if self.data.get(key) is not None:
                 self.data[key].append(kwargs[key])
             else:
                 if self.preserve_pos and self.numcalls > 0:
@@ -1586,7 +1586,7 @@ class Data:
                 else:
                     self.data[key] = [kwargs[key]]
                 exec(f"self.{key}=self.data['{key}']")
-        if not self.connection == None:
+        if self.connection is not None:
             try:
                 log_data_to_database(self.dbtable_name, self.connection, **kwargs)
                 self.connectionattempts = 0
@@ -1601,18 +1601,18 @@ class Data:
                     )
                     try:
                         self.connection.close()
-                    except:
+                    except Exception:
                         pass
                     self.connection = None
         if self.preserve_pos and len(kwargs) < len(self.data):
             for key in self.data:
-                if kwargs.get(key) == None:
+                if kwargs.get(key) is None:
                     self.data[key].append("")
         if self.autosave:
             self.save_increment_counter += 1
             if self.save_increment_counter >= self.save_increment:
                 self.save(path=self.save_loc)
-                if not self.connection == None:
+                if not self.connection is None:
                     try:
                         self.connection.commit()
                         self.connectionattempts = 0
@@ -1691,27 +1691,27 @@ class Data:
         -------
         None
         """
-        if path == None and name == None and file_type == "csv":
+        if path is None and name is None and file_type == "csv":
             path = self.save_loc
-        if path != None and os.sep not in path:
+        if path is not None and os.sep not in path:
             name = path
             path = None
-        if path != None:
+        if path is not None:
             if "." in path:
                 temp = path.rsplit(os.sep, 1)
                 path = temp[0]
-                if name == None:
+                if name is None:
                     name = temp[1]
             if not os.path.exists(path):
                 os.makedirs(path)
             # sys.path.append(path)
-        if name == None:
+        if name is None:
             name: str = time.strftime(
                 f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
         elif "." not in name:
             name = f"{name}.{file_type}"
-        if path == None:
+        if path is None:
             path = ""
         try:
             mode: str = "w"

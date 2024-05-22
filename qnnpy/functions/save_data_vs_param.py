@@ -34,7 +34,8 @@ def save_xy_vs_param(
     zip_file=True,
 ):
     """Save list-of-lists X and Y data, along with list P (parameter) as MATLAB .mat file and Python .pickle file
-    and additionally zips those .mat and .pickle files together with a .png of the graph"""
+    and additionally zips those .mat and .pickle files together with a .png of the graph
+    """
     X = np.array(X)
     Y = np.array(Y)
     P = np.array(P)
@@ -79,7 +80,7 @@ def save_xy_vs_param(
         plt.show()
     else:
         plt.close()
-    return (file_path, name)
+    return file_path
 
 
 def save_x_vs_param(
@@ -94,7 +95,8 @@ def save_x_vs_param(
     zip_file=True,
 ):
     """Save list-of-lists X data, along with list P (parameter) as MATLAB .mat file and Python .pickle file
-    and additionally zips those .mat and .pickle files together with a .png of the graph"""
+    and additionally zips those .mat and .pickle files together with a .png of the graph
+    """
     data_dict = {xname: X, pname: P, "comments": comments}
     time_str = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
     file_name = "%s %s %s" % (test_type, time_str, test_name)

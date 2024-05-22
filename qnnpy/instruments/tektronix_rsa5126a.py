@@ -56,7 +56,7 @@ class RSA5126A(object):
         self.write("{} {}".format(string, freq * 1e9))
 
     def get_spectrum(self, channel=None):
-        if channel == None:
+        if channel is None:
             string = "READ:SPEC:TRAC?"
         else:
             string = "READ:SPEC:TRAC{:d}?".format(channel)

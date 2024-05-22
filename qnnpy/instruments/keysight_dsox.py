@@ -5,6 +5,7 @@ Created on Tue Mar 28 09:40:21 2023
 @author: QNN
 """
 
+import datetime
 import numpy as np
 import pyvisa
 
@@ -187,7 +188,7 @@ class KeysightDSOX(object):
 
     def save_screenshot(self, file_name=None, white_background=True):
         print("screen shot not saved. need to set up")
-        if file_name == None:
+        if file_name is None:
             time_str = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             file_name = time_str
 

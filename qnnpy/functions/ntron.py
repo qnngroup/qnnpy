@@ -42,12 +42,12 @@ class nTron:
         # if there are any errors in setting up, compare older versions of
         # ntron on github with qf.Instruments
 
-    def voltage2current(self, V, attenuation, R=50):
+    def voltage2current(self, V: float, attenuation: float, R: float = 50):
         V = V * 10 ** (attenuation / 20)
-        I = V / R
-        return I
+        current = V / R
+        return current
 
-    def current2voltage(self, I, attenuation, R=50):
+    def current2voltage(self, I: float, attenuation: float, R: float = 50):
         V = I * R
         V = V / 10 ** (attenuation / 20)
         return V
@@ -87,7 +87,7 @@ class IvSweep(nTron):
         Isource1 = np.linspace(start, stop, steps)  # Coarse
         # Isource2 = np.linspace(stop*0.75, stop, steps) #Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:
@@ -134,7 +134,7 @@ class IvSweep(nTron):
         full_sweep = self.properties["iv_sweep"]["full_sweep"]
         Isource1 = np.linspace(start, stop, steps)
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:
@@ -186,7 +186,7 @@ class IvSweep(nTron):
         Isource1 = np.linspace(start, stop * percent, num1)  # Coarse
         Isource2 = np.linspace(stop * percent, stop, num2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -240,7 +240,7 @@ class IvSweep(nTron):
         Isource1 = np.arange(start, stop * percent + spacing1, spacing1)  # Coarse
         Isource2 = np.arange(stop * percent, stop + spacing2, spacing2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -282,7 +282,7 @@ class IvSweep(nTron):
         full_sweep = self.properties["iv_sweep"]["full_sweep"]
         Isource1 = np.linspace(start, stop, steps)
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:
@@ -372,7 +372,7 @@ class IvSweep(nTron):
                 "Isw_avg = %.4f µA :--: Isw_std = %.4f µA"
                 % (self.isw * 1e6, isws.std() * 1e6)
             )
-        except:
+        except Exception:
             print("Could not calculate Isw. Isw set to 0")
             self.isw = 0
 
@@ -470,7 +470,7 @@ class DoubleSweep(nTron):
 
         Isource_Ig = np.linspace(Ig_start, Ig_stop, Ig_steps)
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:
@@ -642,7 +642,7 @@ class ProbeStationDoubleSweep(nTron):
 
         Isource_Ig = np.linspace(Ig_start, Ig_stop, Ig_steps)
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:

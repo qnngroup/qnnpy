@@ -38,7 +38,7 @@ class SIM928(object):
         self.write_simport("VOLT %0.4e" % (voltage))
 
     def set_output(self, output=False):
-        if output == True:
+        if output:
             self.write_simport("OPON")
         else:
             self.write_simport(

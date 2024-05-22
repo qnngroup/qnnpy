@@ -309,7 +309,7 @@ class KeysightN5224a(object):
         try:
             raw_f = self.query("CALC:X?")
             raw = self.query("CALC:DATA? FDATA")
-        except:
+        except Exception as e:
             print(
                 'If SCPI command "unterminated", check that measurement has been selected'
             )
@@ -317,11 +317,11 @@ class KeysightN5224a(object):
         f = str(raw_f).split(",")
         data = str(raw).split(",")
 
-        R = data[::2]  # Every other element starting with element 0
-        I = data[1::2]
+        real_arr = data[::2]  # Every other element starting with element 0
+        imag_arr = data[1::2]
 
         freq = np.asarray(np.float_(f))
-        real = np.asarray(np.float_(R))
-        imag = np.asarray(np.float_(I))
+        real = np.asarray(np.float_(real_arr))
+        imag = np.asarray(np.float_(imag_arr))
 
         return freq, real, imag

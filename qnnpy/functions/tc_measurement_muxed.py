@@ -39,7 +39,7 @@ class TcMeasurement:
                         self.temp.read_temp(self.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception as e:
                     print("TEMPERATURE: failed to connect")
             ###################################################################
             elif self.properties["Temperature"]["name"] == "Cryocon34":
@@ -52,14 +52,14 @@ class TcMeasurement:
                         self.temp.read_temp(self.channel)
                     )
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
             ###################################################################
             elif self.properties["Temperature"]["name"] == "ICE":
                 try:
                     self.properties["Temperature"]["initial temp"] = qf.ice_get_temp()
                     print("TEMPERATURE: connected")
-                except:
+                except Exception:
                     print("TEMPERATURE: failed to connect")
             ###################################################################
             else:

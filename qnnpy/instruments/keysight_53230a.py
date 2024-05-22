@@ -2,6 +2,7 @@ from time import sleep
 
 import numpy as np
 import pyvisa
+import time
 
 
 class Keysight53230a(object):

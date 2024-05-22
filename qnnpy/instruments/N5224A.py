@@ -106,11 +106,11 @@ class N5224A(object):
         self.write("FORM4;")  # Make the data output in ASCII
         data = self.ask_for_values("OUTPFORM;")
 
-        F = np.linspace(f_start, f_stop, num_pts, endpoint=True)
-        R = data[::2]  # Every other element starting with element 0
-        I = data[1::2]
+        freq = np.linspace(f_start, f_stop, num_pts, endpoint=True)
+        real = data[::2]  # Every other element starting with element 0
+        imag = data[1::2]
         self.write("CONT")
-        return F, R, I
+        return freq, real, imag
 
     def run_sweep_mag(self):
         """Runs a sweep using whatever settings are currently on the NA and returns the real
@@ -173,12 +173,9 @@ class N5224A(object):
         f = str(raw_f).split(",")
         data = str(raw).split(",")
 
-        R = data[::2]  # Every other element starting with element 0
-        I = data[1::2]
-
         freq = np.asarray(np.float_(f))
-        real = np.asarray(np.float_(R))
-        imag = np.asarray(np.float_(I))
+        real = np.asarray(np.float_(data[::2]))
+        imag = np.asarray(np.float_(data[1::2]))
 
         return freq, real, imag
 
@@ -206,8 +203,8 @@ class N5224A(object):
         self.write("FORM4;")  # Make the data output in ASCII
         data = self.ask_for_values("OUTPFORM;")
 
-        F = np.logspace(np.log10(f_start), np.log10(f_stop), num_pts, endpoint=True)
-        R = data[::2]  # Every other element starting with element 0
-        I = data[1::2]
+        freq = np.logspace(np.log10(f_start), np.log10(f_stop), num_pts, endpoint=True)
+        real = data[::2]  # Every other element starting with element 0
+        imag = data[1::2]
         self.write("CONT")
-        return F, R, I
+        return freq, real, imag

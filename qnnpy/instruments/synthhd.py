@@ -84,7 +84,7 @@ class SynthHD:
 
     def set_freq(self, freq):
         """in MHz"""
-        if type(freq) is list:
+        if isinstance(freq, list):
             # validity check
             self.freqs = freq[: len(SynthHD.allowed_chns) - 1]
             for idx, chn in enumerate(SynthHD.allowed_chns[1:]):
@@ -101,7 +101,7 @@ class SynthHD:
     #            print('Error: Frequency not valid. ', freq)
 
     def set_power(self, power):
-        if type(power) is list:
+        if isinstance(power, list):
             # validity check
             self.powers = power
             for idx, chn in enumerate(SynthHD.allowed_chns[1:]):

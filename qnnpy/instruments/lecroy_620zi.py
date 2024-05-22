@@ -166,7 +166,7 @@ class LeCroy620Zi(object):
         )
 
     def label_channel(self, channel="C1", label="Channel 1 label text"):
-        if (label == "") or (label == False) or (label == None):
+        if (label == "") or (label is False) or (label is None):
             self.vbs_write("app.Acquisition.%s.ViewLabels = False" % channel)
         else:
             self.vbs_write('app.Acquisition.%s.LabelsText = "%s"' % (channel, label))
@@ -422,7 +422,7 @@ class LeCroy620Zi(object):
         ]  # will occasionally return 1-2 more than num_sweeps
 
     def save_screenshot(self, file_name=None, white_background=True):
-        if file_name == None:
+        if file_name is None:
             time_str = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             file_name = time_str + " lecroy screenshot.png"
 
@@ -579,7 +579,7 @@ class LeCroy620Zi(object):
                         print("Not useful")
                 if i % 100 == 0:
                     (print(i),)
-            except:
+            except Exception:
                 print("error")
 
         data_dict = {}

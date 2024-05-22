@@ -858,11 +858,7 @@ class BK4060_AWG(VisaInstrument):
         Returns:
             The name of the waveform.
         """
-        return self.ask(
-            "SEQuence:ELEMent{}:WAVeform{}?".format(
-                element_no,
-            )
-        )
+        return self.ask("SEQuence:ELEMent{}:WAVeform{}?".format(element_no, channel))
 
     def set_sqel_event_jump_target_index(
         self, element_no: int, jtar_index_no: int

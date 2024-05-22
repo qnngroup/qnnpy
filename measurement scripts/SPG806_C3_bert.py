@@ -112,7 +112,7 @@ for j in range(0, 10000):
     write_string = []
     start_flag = True
     for c in byte_list[i]:
-        if start_flag == True:
+        if start_flag:
             suffix = ",0,once,highAtStartGoLow,50"
         else:
             suffix = ",0,once,maintain,50"

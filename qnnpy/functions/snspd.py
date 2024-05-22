@@ -57,11 +57,11 @@ class Snspd:
         try:
             self.inst.source.set_voltage(0)
             self.inst.source.set_output(False)
-        except:
+        except Exception:
             pass
         try:
             self.inst.awg.set_output(False)
-        except:
+        except Exception:
             pass
         exit(1)
 
@@ -92,7 +92,7 @@ class Snspd:
             try:
                 self.inst.counter.set_impedance(self.properties["Counter"]["impedance"])
                 self.inst.counter.set_coupling(self.properties["Counter"]["coupling"])
-            except:
+            except Exception:
                 pass
             self.inst.counter.set_trigger(trigger_v)
             count_rate = self.inst.counter.count_rate(
@@ -410,7 +410,7 @@ class IvSweep(Snspd):
             if self.inst.meter.name == "Keithley2400":
                 self.inst.meter.setup_read_volt()
                 self.inst.meter.write("OUTP ON")
-        except:
+        except Exception:
             pass
 
         for n in self.v_set:
@@ -443,7 +443,7 @@ class IvSweep(Snspd):
         Isource1 = np.linspace(start, stop * 0.75, steps)  # Coarse
         Isource2 = np.linspace(stop * 0.75, stop, steps)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -499,7 +499,7 @@ class IvSweep(Snspd):
         Isource1 = np.linspace(start, stop * percent, num1)  # Coarse
         Isource2 = np.linspace(stop * percent, stop, num2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -552,7 +552,7 @@ class IvSweep(Snspd):
         Isource1 = np.arange(start, stop * percent + spacing1, spacing1)  # Coarse
         Isource2 = np.arange(stop * percent, stop + spacing2, spacing2)  # Fine
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate(
                 [Isource1, Isource2, Isource2[::-1], Isource1[::-1]]
             )
@@ -609,7 +609,7 @@ class IvSweep(Snspd):
                 "Isw_avg = %.4f µA :--: Isw_std = %.4f µA"
                 % (self.isw * 1e6, isws.std() * 1e6)
             )
-        except:
+        except Exception:
             print("Could not calculate Isw. Isw set to 0")
             self.isw = 0
 
@@ -657,7 +657,7 @@ class IvSweepScope(Snspd):
         self.inst.awg.set_freq(freq)
         try:
             self.inst.awg.set_ramp(freq=freq, vpp=awg_amp, symm=0)
-        except:
+        except Exception:
             pass
         temperature = self.inst.temp.read_temp()
         # temperature=0
@@ -678,7 +678,7 @@ class IvSweepScope(Snspd):
 
         try:
             self.inst.awg.set_output(False)
-        except:
+        except Exception:
             pass
 
         self.data_dict_iv_sweep_scope = data
@@ -738,7 +738,7 @@ class DoubleSweep(Snspd):
 
         Isource_Ig = np.linspace(Ig_start, Ig_stop, Ig_steps)
 
-        if full_sweep == True:
+        if full_sweep:
             Isource = np.concatenate([Isource1, Isource1[::-1]])
             Isource = np.concatenate([Isource, -Isource])
         else:
@@ -951,7 +951,7 @@ class PhotonCounts(Snspd):
             mid_stop = self.properties["photon_counts"]["mid_stop"]
             high_res_step = self.properties["photon_counts"]["high_res_step"]
             fine_sweep = True
-        except:
+        except Exception:
             fine_sweep = False
         counting_time = self.properties["photon_counts"]["counting_time"]
         trigger_v = self.properties["photon_counts"]["trigger_v"]
@@ -1010,7 +1010,7 @@ class PhotonCounts(Snspd):
             mid_stop = self.properties["photon_counts"]["mid_stop"]
             high_res_step = self.properties["photon_counts"]["high_res_step"]
             fine_sweep = True
-        except:
+        except Exception:
             fine_sweep = False
         counting_time = self.properties["photon_counts"]["counting_time"]
         trigger_v = self.properties["photon_counts"]["trigger_v"]
