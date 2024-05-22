@@ -4,69 +4,82 @@ Created on Tue Jun 16 12:50:01 2020
 
 @author: omedeiro & emmabat
 """
+
 from typing_extensions import ParamSpecKwargs
 import qnnpy.functions.functions as qf
 import os
 import sys
 from time import sleep
 
+
 class TcMeasurement:
     def __init__(self, configuration_file):
-        
         #######################################################################
         #       Load .yaml configuraiton file
         #######################################################################
-        
+
         # qf is a package of base functions that can be used in any class.
         self.properties = qf.load_config(configuration_file)
-        
+
         # LabJack U12
         from qnnpy.instruments.labjack_u12 import LabJackU12
+
         self.mux = LabJackU12()
-        self.mux_names = ['S0', 'S1', 'S2']
-        self.mapping = {'EN': 3, 'S0': 2, 'S1': 1, 'S2': 0}
-        
+        self.mux_names = ["S0", "S1", "S2"]
+        self.mapping = {"EN": 3, "S0": 2, "S1": 1, "S2": 0}
+
         # Temperature Controller
-        if self.properties.get('Temperature'):
+        if self.properties.get("Temperature"):
             ###################################################################
-            if self.properties['Temperature']['name'] == 'Cryocon350':
+            if self.properties["Temperature"]["name"] == "Cryocon350":
                 from qnnpy.instruments.cryocon350 import Cryocon350
+
                 try:
-                    self.temp = Cryocon350(self.properties['Temperature']['port'])
-                    self.channel = self.properties['Temperature']['channel']
-                    self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.channel)
-                    print('TEMPERATURE: connected')
+                    self.temp = Cryocon350(self.properties["Temperature"]["port"])
+                    self.channel = self.properties["Temperature"]["channel"]
+                    self.properties["Temperature"]["initial temp"] = (
+                        self.temp.read_temp(self.channel)
+                    )
+                    print("TEMPERATURE: connected")
                 except:
-                    print('TEMPERATURE: failed to connect')
+                    print("TEMPERATURE: failed to connect")
             ###################################################################
-            elif self.properties['Temperature']['name'] == 'Cryocon34':
+            elif self.properties["Temperature"]["name"] == "Cryocon34":
                 from qnnpy.instruments.cryocon34 import Cryocon34
+
                 try:
-                    self.temp = Cryocon34(self.properties['Temperature']['port'])
-                    self.channel = self.properties['Temperature']['channel']
-                    self.properties['Temperature']['initial temp'] = self.temp.read_temp(self.channel)
-                    print('TEMPERATURE: connected')
+                    self.temp = Cryocon34(self.properties["Temperature"]["port"])
+                    self.channel = self.properties["Temperature"]["channel"]
+                    self.properties["Temperature"]["initial temp"] = (
+                        self.temp.read_temp(self.channel)
+                    )
+                    print("TEMPERATURE: connected")
                 except:
-                    print('TEMPERATURE: failed to connect')
+                    print("TEMPERATURE: failed to connect")
             ###################################################################
-            elif self.properties['Temperature']['name'] == 'ICE':
+            elif self.properties["Temperature"]["name"] == "ICE":
                 try:
-                    self.properties['Temperature']['initial temp'] = qf.ice_get_temp()
-                    print('TEMPERATURE: connected')
+                    self.properties["Temperature"]["initial temp"] = qf.ice_get_temp()
+                    print("TEMPERATURE: connected")
                 except:
-                    print('TEMPERATURE: failed to connect')
+                    print("TEMPERATURE: failed to connect")
             ###################################################################
             else:
-                qf.lablog('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
-                raise NameError('Invalid Temperature Controller. TEMP name: "%s" is not configured' % self.properties['Temperature']['name'])
-
+                qf.lablog(
+                    'Invalid Temperature Controller. TEMP name: "%s" is not configured'
+                    % self.properties["Temperature"]["name"]
+                )
+                raise NameError(
+                    'Invalid Temperature Controller. TEMP name: "%s" is not configured'
+                    % self.properties["Temperature"]["name"]
+                )
 
     def run_sweep(self, min_temp, num_channels, wait_time=1):
-        """ Sweep temperature and record voltage
-        
+        """Sweep temperature and record voltage
+
         Configuration : tc_measurement:
         [start: initial temperature setpoint],
-        [stop: final temperature setpoint], 
+        [stop: final temperature setpoint],
         [iterations: number of start-stop-start sweeps]
         """
         temp = self.get_temp()
@@ -91,31 +104,38 @@ class TcMeasurement:
                 sleep(0.1)
                 voltage = self.mux.read_analog(channel)
                 sleep(0.05)
-                self.all_voltages[channel-1].append(voltage)
+                self.all_voltages[channel - 1].append(voltage)
             sleep(wait_time)
         return self.temps, self.all_voltages
 
-
     def get_temp(self):
-        if self.properties['Temperature']['name']== 'ICE':
+        if self.properties["Temperature"]["name"] == "ICE":
             return qf.ice_get_temp(select=1)
         else:
             return self.temp.read_temp(self.channel)
-            
+
     def plot(self):
-        full_path = qf.save(self.properties, 'temperature sweep')
-        qf.plot(self.temps, self.all_voltages,
-                title=self.sample_name+" "+self.device_type,
-                xlabel = 'Temperature [K]',
-                ylabel = 'Voltage [V]',
-                path=full_path,
-                show=True,
-                linestyle='-',
-                close=True)    
-        
-        
+        full_path = qf.save(self.properties, "temperature sweep")
+        qf.plot(
+            self.temps,
+            self.all_voltages,
+            title=self.sample_name + " " + self.device_type,
+            xlabel="Temperature [K]",
+            ylabel="Voltage [V]",
+            path=full_path,
+            show=True,
+            linestyle="-",
+            close=True,
+        )
+
     def save(self):
-        data_dict = {'temps': self.temps,
-                     'voltages': self.all_voltages,}
-        qf.save(self.properties, 'temperature sweep', data_dict, 
-                instrument_list = self.instrument_list)
+        data_dict = {
+            "temps": self.temps,
+            "voltages": self.all_voltages,
+        }
+        qf.save(
+            self.properties,
+            "temperature sweep",
+            data_dict,
+            instrument_list=self.instrument_list,
+        )

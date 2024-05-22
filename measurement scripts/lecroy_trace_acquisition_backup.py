@@ -2,75 +2,32 @@
 import sys
 import os
 
-#snspd_measurement_code_dir = r'/Users/dizhu/Dropbox (MIT)/QNN lab/Device testing/snspd_measurement_python_code'
-snspd_measurement_code_dir =  r'C:\Users\ICE\Desktop\Di Zhu ICE Oxford\snspd-measurement-code'
-dir1 = os.path.join(snspd_measurement_code_dir,'instruments')
-dir2 = os.path.join(snspd_measurement_code_dir,'useful_functions')
-dir3 = os.path.join(snspd_measurement_code_dir,'measurement')
+sys.path.append('C:\Users\ICE\Desktop\git-repo\qnn-lab-instr-python')
 
-if snspd_measurement_code_dir not in sys.path:
-    sys.path.append(snspd_measurement_code_dir)
-    sys.path.append(dir1)
-    sys.path.append(dir2)
-    sys.path.append(dir3)
 
-#import library
-from lecroy_620zi import LeCroy620Zi
+from qnnpy.instruments.keithley_2700 import Keithley2700
+from qnnpy.instruments.srs_sim928 import SIM928
+from qnnpy.functions.save_data_vs_param import *
+
 import visa
 import numpy as np
 from matplotlib import pyplot as plt
 from time import sleep
+import numpy as np
 from datetime import datetime
 import scipy
-import pyvisa
+
+
+#import library
+from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
+
 #########################################
 ### Connect to instruments
 #########################################
 
-
-
-from useful_functions.save_data_vs_param import *
-from agilent_53131a import Agilent53131a
-from jds_ha9 import JDSHA9
-#from instruments.ThorlabsPM100_meta import *
-from cryocon34 import *
-from keithley_2700 import *
-from fva3100_optical_attenuator import *
-import visa
-import numpy as np
-from matplotlib import pyplot as plt
-from time import sleep
-import numpy as np
-import scipy
-from Lakeshore350 import Lakeshore350
-from datetime import datetime
-import datetime as datetime
-from lecroy_620zi import *
-import scipy.io as sio
-import os
-from srs_sim928 import *
-
-# #%%
-
 #%%
-# lecroy_ip = 'QNN-SCOPE1.MIT.EDU'
-lecroy_ip = '18.25.22.73'
-
+lecroy_ip = 'QNN-SCOPE1.MIT.EDU'
 lecroy = LeCroy620Zi("TCPIP::%s::INSTR" % lecroy_ip)
-
-
-#lecroy_ip = 'QNN-SCOPE1.MIT.EDU'
-#lecroy = LeCroy620Zi("TCPIP::%s::INSTR" % lecroy_ip)
-# counter = Agilent53131a('GPIB0::4')
-# counter.basic_setup()
-#cryocon = Cryocon34('GPIB0::5')
-# attenuator = JDSHA9('GPIB0::7')
-#attenuator = FVA3100('GPIB0::10'); attenuator.set_beam_block(True)
-SRS = SIM928('GPIB0::1', 4); SRS.reset()
-#initiate the power meter
-# pm = ThorlabsPM100Meta('USB0::0x1313::0x8078::P0001093::INSTR')
-k = Keithley2700("GPIB0::18"); k.reset()
-
 #%%
 def save_traces(lecroy = lecroy, channels = ['C1', 'C2', 'F1', 'F2'], fname = 'file.mat', fpath = ''):
     """save all traces indicated"""
@@ -110,28 +67,6 @@ def my_get_single_trace(channel = 'C1'):
             #SRS.set_output(True)
     x,y = lecroy.get_wf_data(channel=channel)
     return x,y
-
-def my_get_single_trace_sequence(channel = 'C1',NumSegments= 1000):
-    """ Sets scope to "single" trigger mode to acquire one trace, then waits until the trigger has happened
-    (indicated by the trigger mode changing to "Stopped").  """
-    lecroy.set_sequence_mode()
-    lecroy.set_segments(NumSegments)
-    lecroy.set_trigger_mode(trigger_mode = 'Single')
-    if lecroy.get_trigger_mode() == 'Single\n':
-        while lecroy.get_trigger_mode() == 'Single\n':
-            #SRS.set_output(False)
-            sleep(1e-4)
-            #SRS.set_output(True)
-    x,y = lecroy.get_wf_data(channel=channel)
-    interval=abs(x[0]-x[1])
-    xlist=[];
-    ylist=[];
-    totdp=np.int(np.size(x)/NumSegments)
-    for j in range(NumSegments):
-        
-        xlist.append(x[0+j*totdp:totdp+j*totdp]-totdp*interval*j)
-        ylist.append(y[0+j*totdp:totdp+j*totdp])
-    return xlist,ylist
     
 def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [0,0], fpath='', fname='myfile'):
     """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
@@ -201,7 +136,7 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
     else:
         fname = fname+'.mat'
     #add time to the file name
-    t = datetime.datetime.now()
+    t = datetime.now()
     tstr = t.strftime('%Y%m%d')+'_%02d%02d%02d_'% (t.hour, t.minute, t.second)
     #save matlab file
     ffull = os.path.join(fpath, tstr+fname)
@@ -210,137 +145,33 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
     scname = os.path.join(fpath, tstr+fname.split('.')[0]+'.png')
     lecroy.save_screenshot(scname)
             
-def save_traces_multiple_sequence(channels = ['C1', 'C2'], num_traces = 20, NumSegments = 1000, threshold = [0,0], fpath='', fname='myfile'):
-    """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
-    0 if unused"""
-    num_ch = len(channels)
-    x1list = []; y1list = [];
-    x2list = []; y2list = [];
-    x3list = []; y3list = [];
-    x4list = []; y4list = [];
-    q = 0 #number of not useless points
-    for i in range(num_traces):
-        print('Trace %d of %d' % (i, num_traces))
-        try:
-            if num_ch>0:
-                x,y = my_get_single_trace_sequence(channels[0],NumSegments)
-                if max(abs(y[0]))>threshold[0]:
-                    x1list.append(x)
-                    y1list.append(y)
-                else:
-                    q = q+1
-                    print('Not useful')
-            if num_ch>1:
-                x,y = my_get_single_trace_sequence(channels[1],NumSegments)
-                if max(abs(y[0]))>threshold[1]:
-                    x2list.append(x)
-                    y2list.append(y)
-                else:
-                    q = q+1
-                    print('Not useful')
-            if num_ch>2:
-                x,y = my_get_single_trace_sequence(channels[2],NumSegments)
-                if max(abs(y[0]))>threshold[2]:
-                    x3list.append(x)
-                    y3list.append(y)
-                else:
-                    q = q+1
-                    print('Not useful')
-            if num_ch>3:
-                x,y = my_get_single_trace_sequence(channels[3],NumSegments)
-                if max(abs(y[0]))>threshold[3]:
-                    x4list.append(x)
-                    y4list.append(y)
-                else:
-                    q = q+1
-                    print('Not useful')
-            if i%100 == 0:
-                print(i),
-        except:
-            print('error')
-    
-    data_dict = {}
 
-    if num_ch>0:
-        x1list=np.reshape(x1list, (len(x1list)*len(x1list[0]),len(x1list[0][0])))
-        y1list=np.reshape(y1list, (len(y1list)*len(y1list[0]),len(y1list[0][0])))
-        data_dict[channels[0]+'x']=x1list
-        data_dict[channels[0]+'y']=y1list
-    if num_ch>1:
-        x2list=np.reshape(x2list, (len(x2list)*len(x2list[0]),len(x2list[0][0])))
-        y2list=np.reshape(y2list, (len(y2list)*len(y2list[0]),len(y2list[0][0])))
-        data_dict[channels[1]+'x']=x2list
-        data_dict[channels[1]+'y']=y2list
-    if num_ch>2:
-        x3list=np.reshape(x3list, (len(x3list)*len(x3list[0]),len(x3list[0][0])))
-        y3list=np.reshape(y3list, (len(y3list)*len(y3list[0]),len(y3list[0][0])))
-        data_dict[channels[2]+'x']=x3list
-        data_dict[channels[2]+'y']=y3list
-    if num_ch>3:
-        x4list=np.reshape(x4list, (len(x4list)*len(x4list[0]),len(x4list[0][0])))
-        y4list=np.reshape(y4list, (len(y4list)*len(y4list[0]),len(y4list[0][0])))
-        data_dict[channels[3]+'x']=x4list
-        data_dict[channels[3]+'y']=y4list
-    
-    if '.' in fname:
-        if fname.split('.')[1] != 'mat':
-            print('file extension error') 
-    else:
-        fname = fname+'.mat'
-    #add time to the file name
-    t = datetime.datetime.now()
-    tstr = t.strftime('%Y%m%d')+'_%02d%02d%02d_'% (t.hour, t.minute, t.second)
-    #save matlab file
-    ffull = os.path.join(fpath, tstr+fname)
-    scipy.io.savemat(ffull, mdict=data_dict)
-    #save screen shot
-    scname = os.path.join(fpath, tstr+fname.split('.')[0]+'.png')
-    lecroy.save_screenshot(scname)
-    
 #%%
 #fpath = r'C:\Users\ICE\Desktop\Di Zhu ICE Oxford\data\SPF190B\20180131'
 #fname = 'jitter_lmd=1550_att=0dB_Ib=22uA_10x10_taper_C2-P2_C3-P5'
 
-fpath = r'S:\SC\Measurements\SPG667\snspd\P1\jitter'
+#filedirectry = r'C:\Users\ICE\Desktop\Di Zhu ICE Oxford\data\SPF831_PNR_v3\SPDC'
+fpath = filedirectry
 
 #%%
-R_srs = 100e3
-
-Isource_max =9.4e-6
-step = 0.2e-6
-#here we go
-Isource = np.arange(9e-6, Isource_max, step)
-
-V_source = Isource*R_srs
+fname = 'PPNRv2_500MHz_1550nm_no_attenuation'
+save_traces(channels = ['C1','C2', 'C3', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10'], fname = fname, fpath = fpath)
+lecroy.set_trigger_mode('Normal')
 
 
-SRS.set_voltage(0)
-SRS.set_output(True)
-k.read_voltage()
-sleep(1)
-
-for v in V_source:
-    SRS.set_voltage(v)
-    sleep(0.1)
-    fname = '1550nm_jitter_'+str(int(v*100))
-    save_traces_multiple(channels = ['C2','C3'],num_traces = 50000 , fname = fname, fpath = fpath)
-
-
-
-# save_traces(channels = ['C2','C3', 'C3', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10'], fname = fname, fpath = fpath)
-# save_traces_multiple_sequence(channels = ['C2','C3'],num_traces = 100 , NumSegments=500, fname = fname, fpath = fpath)
-# ave_traces_multiple(channels = ['C2', 'C3'], num_traces = 1000, threshold = [0, 0, 0], fpath=fpath, fname=fname)
-
-# lecroy.set_trigger_mode('Stop')
+#%%
+fname = 'PNRv3_SPDC_fiber_path_only'
+save_traces(channels = ['C1','C2', 'F1'], fname = fname, fpath = fpath)
+lecroy.set_trigger_mode('Stop')
 
 #%%
 #save pulse shapes
-fname ='pulse_shape_30dB'
-save_traces_multiple(channels = ['C1', 'C2', 'C3'], num_traces = 1000, threshold = [0, 0, 0], fpath=fpath, fname=fname)
+fname ='pulse_trace_T=4p5K_Ib=12p8uA'
+save_traces_multiple(channels = ['C2'], num_traces = 500, threshold = [0], fpath=fpath, fname=fname)
   
 #%%
 #save jitter
-num_samples = 5e4
+num_samples = 300e3
 while lecroy.get_num_data_points('P1') < num_samples:
     print lecroy.get_num_data_points('P1'), 
     sleep(5)
@@ -348,8 +179,8 @@ while lecroy.get_num_data_points('P1') < num_samples:
         print 'latched'
         SRS.set_output(False); sleep(0.1); SRS.set_output(True)
         
-fname = fname = 'jitter_lmd=1550_att=0dB_Ib=22uA_10x10_taper_C2-P2_C3-P5_1Gamp'
-save_traces(channels = ['C1','C2', 'C3', 'F1', 'F2', 'F3', 'F4', 'F5', 'F5','F6','F7', 'F8'], fname = fname, fpath = fpath)
+fname = fname = 'ref_jitter_lmd=1550_LNA2500_LNA2000_T=1p3'
+save_traces(channels = ['C2', 'C3', 'F2'], fname = fname, fpath = fpath)
 
 
 #%%

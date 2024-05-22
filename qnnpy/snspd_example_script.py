@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun May  2 16:40:13 2021
+Created on Sun Aug 29 13:28:12 2021
 
 @author: omedeiro
 
-wide wire SPG513
+wide wire SPG600
 """
 
 import sys
@@ -12,7 +12,7 @@ import sys
 sys.path.append(r"Q:\qnnpy")
 import qnnpy.functions.snspd as snspd
 
-config = r"S:\SC\Measurements\SPG527\SPG527_config.yml"
+config = r"S:\SC\Measurements\SPG600\SPG600_config_300mK.yml"
 
 
 # %% Iv Sweep

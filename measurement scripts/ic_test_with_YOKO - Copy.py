@@ -25,8 +25,7 @@ import numpy as np
 # k = Keithley2400("GPIB0::14"); k.reset()
 k = Keithley2700("GPIB0::3")
 k.reset()
-YOKO = YokogawaGS200("GPIB0::20")
-YOKO.reset()
+# YOKO = YokogawaGS200("GPIB0::20"); YOKO.reset()
 # YOKO.setup_source_current()
 # YOKO.set_current_range(ran=4)
 
@@ -51,16 +50,16 @@ YOKO.reset()
 #########################################
 ### Sample information
 #########################################
-sample_name = "MGB255B"
-device_name = "p1_4K_0mW"
+sample_name = "MgB2190A"
+device_name = "p2"
 comments = ""
 test_name = sample_name + "_" + device_name + "_" + comments
-filedirectry = r"S:\SC\Personal\EB\MgB2\MGB255B\P1_laser"
+filedirectry = r"S:\SC\Personal\EB\MgB2\MGB190"
 R_srs = 10e3
 # counter.set_trigger(0.04)
 
-Isource_max = 2100e-6
-step = 10e-6
+Isource_max = 2000e-6
+step = 200e-6
 # here we go
 Isource1 = np.arange(0, Isource_max, step)
 Isource2 = np.arange(Isource_max, -Isource_max, -step)
@@ -71,35 +70,25 @@ V_source = Isource * R_srs
 # k.set_output(output = True)
 V_device = []
 I_device = []
-YOKO.set_voltage(0)
-YOKO.set_output(True)
+# YOKO.set_current(0)
+# YOKO.set_output(True)
 k.read_voltage()
 sleep(1)
 
 
-# for i in Isource:
-#     YOKO.set_voltage(i*R_srs)
-#     sleep(0.1)
-#     vread = k.read_voltage()
-#     vdev = vread - i*R_srs
-#     #iread = (v-vread)/R_srs
-#     print('V=%.4f V, R =%.2f' %(vread, vread/i))
-#     V_device.append(vdev)
-#     I_device.append(i)
-# #k.set_output(output = False)
-
-for v in V_source:
-    YOKO.set_voltage(v)
+for i in Isource:
+    # YOKO.set_current(i*R_srs)
     sleep(0.1)
     vread = k.read_voltage()
-    iread = (v - vread) / R_srs
-    print("V=%.4f V, I=%.2f uA, R =%.2f" % (vread, iread * 1e6, vread / iread))
+    # vdev = vread - i*R_srs
+    # iread = (v-vread)/R_srs
+    print("V=%.4f V, R =%.2f" % (vread, vread / i))
     V_device.append(vread)
-    I_device.append(iread)
-    # Temps=ice_get_temp()
-YOKO.set_output(False)
+    I_device.append(i)
+# k.set_output(output = False)
+# YOKO.set_output(False)
 # search the switching current in the ramping up
-Isw = I_device[np.argmax(np.array(V_device) > 0.005) - 1]
+# Isw = I_device[np.argmax(np.array(V_device)>.005)-1]
 
 data_dict = {"V_device": V_device, "I_device": I_device, "step": step}
 file_path, file_name = save_data_dict(
@@ -110,7 +99,7 @@ file_path, file_name = save_data_dict(
     zip_file=True,
 )
 
-plt.plot(np.array(V_device), np.array(I_device) * 1e6, "-o")
+plt.plot(np.array(V_device) * 1e6, "-o")
 plt.xlabel("Voltage (V)")
 plt.ylabel("Current (uA)")
 plt.title("I-V " + device_name + ", Isw = %.2f uA" % (Isw * 1e6))

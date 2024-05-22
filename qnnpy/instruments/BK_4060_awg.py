@@ -21,18 +21,22 @@ from qcodes.utils.helpers import create_on_off_val_mapping
 # conditionally import lomentum for support of lomentum type sequences
 try:
     from lomentum.tools import get_element_channel_ids, is_subsequence
+
     USE_LOMENTUM = True
 except ImportError:
     USE_LOMENTUM = False
 
 log = logging.getLogger(__name__)
 
+
 class _MarkerDescriptor(NamedTuple):
     marker: int
     channel: int
 
+
 def parsestr(v: str) -> str:
     return v.strip().strip('"')
+
 
 class BK4060_AWG(VisaInstrument):
     """
@@ -44,101 +48,103 @@ class BK4060_AWG(VisaInstrument):
         - The output channels are always in Amplitude/Offset mode
         - The output markers are always in High/Low mode
     """
+
     # BSMV_parameters=['C1:BSWV WVTP', 'FRQ', 'PERI', 'AMP', 'AMPVRMS', 'MAX_OUTPUT_AMP', 'OFST', 'HLEV', 'LLEV', 'PHSE', 'DUTY',
     #                 'STATE', 'TIME', 'DLAY', 'TRSR', 'EDGE', 'CARR,WVTP', 'CARR,FREQ', 'CARR,AMP', 'CARR,OFST', 'CARR,PHSE', 'CARR,DUTY']
-    parameter_name_command: Dict[str, str] = {'waveform': 'WVTP',
-                                            'frequency': 'FRQ',
-                                            'period': 'PERI',
-                                            'amplitude': 'AMP',
-                                            'max_out_amp': 'MAX_OUTPUT_AMP',
-                                            'offset': 'OFST',
-                                            'phase': 'PHSE',
-                                            'high_level': 'HLEV',
-                                            'low_level': 'LLEV',
-                                            'duty_cycle': 'DUTY',
-                                            'state': 'STATE',
-                                            'cycle': 'TIME',
-                                            'bperiod': 'PRD',
-                                            'delay': 'DLAY',
-                                            'symmetry': 'SYM',
-                                            'trigger': 'TRSR',
-                                            'edge': 'EDGE',
-                                            'carrier_wave': 'CARR,WVTP',
-                                            'carrier_freq': 'CARR,FREQ',
-                                            'carrier_amp': 'CARR,AMP',
-                                            'carrier_offset': 'CARR,OFST',
-                                            'carrier_phase': 'CARR,PHSE',
-                                            'carrier_duty': 'CARR,DUTY'
-                                            }
+    parameter_name_command: Dict[str, str] = {
+        "waveform": "WVTP",
+        "frequency": "FRQ",
+        "period": "PERI",
+        "amplitude": "AMP",
+        "max_out_amp": "MAX_OUTPUT_AMP",
+        "offset": "OFST",
+        "phase": "PHSE",
+        "high_level": "HLEV",
+        "low_level": "LLEV",
+        "duty_cycle": "DUTY",
+        "state": "STATE",
+        "cycle": "TIME",
+        "bperiod": "PRD",
+        "delay": "DLAY",
+        "symmetry": "SYM",
+        "trigger": "TRSR",
+        "edge": "EDGE",
+        "carrier_wave": "CARR,WVTP",
+        "carrier_freq": "CARR,FREQ",
+        "carrier_amp": "CARR,AMP",
+        "carrier_offset": "CARR,OFST",
+        "carrier_phase": "CARR,PHSE",
+        "carrier_duty": "CARR,DUTY",
+    }
     AWG_FILE_FORMAT_HEAD = {
-        'SAMPLING_RATE': 'd',    # d
-        'REPETITION_RATE': 'd',    # # NAME?
-        'HOLD_REPETITION_RATE': 'h',    # True | False
-        'CLOCK_SOURCE': 'h',    # Internal | External
-        'REFERENCE_SOURCE': 'h',    # Internal | External
-        'EXTERNAL_REFERENCE_TYPE': 'h',    # Fixed | Variable
-        'REFERENCE_CLOCK_FREQUENCY_SELECTION': 'h',
-        'REFERENCE_MULTIPLIER_RATE': 'h',    #
-        'DIVIDER_RATE': 'h',   # 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256
-        'TRIGGER_SOURCE': 'h',    # Internal | External
-        'INTERNAL_TRIGGER_RATE': 'd',    #
-        'TRIGGER_INPUT_IMPEDANCE': 'h',    # 50 ohm | 1 kohm
-        'TRIGGER_INPUT_SLOPE': 'h',    # Positive | Negative
-        'TRIGGER_INPUT_POLARITY': 'h',    # Positive | Negative
-        'TRIGGER_INPUT_THRESHOLD': 'd',    #
-        'JUMP_TIMING': 'h',    # Sync | Async
-        'INTERLEAVE': 'h',    # On |  This setting is stronger than .
-        'ZEROING': 'h',    # On | Off
-        'COUPLING': 'h',    # The Off | Pair | All setting is weaker than .
-        'RUN_MODE': 'h',    # Continuous | Triggered | Gated | Sequence
-        'WAIT_VALUE': 'h',    # First | Last
-        'RUN_STATE': 'h',    # On | Off
-        'INTERLEAVE_ADJ_PHASE': 'd',
-        'INTERLEAVE_ADJ_AMPLITUDE': 'd',
+        "SAMPLING_RATE": "d",  # d
+        "REPETITION_RATE": "d",  # # NAME?
+        "HOLD_REPETITION_RATE": "h",  # True | False
+        "CLOCK_SOURCE": "h",  # Internal | External
+        "REFERENCE_SOURCE": "h",  # Internal | External
+        "EXTERNAL_REFERENCE_TYPE": "h",  # Fixed | Variable
+        "REFERENCE_CLOCK_FREQUENCY_SELECTION": "h",
+        "REFERENCE_MULTIPLIER_RATE": "h",  #
+        "DIVIDER_RATE": "h",  # 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256
+        "TRIGGER_SOURCE": "h",  # Internal | External
+        "INTERNAL_TRIGGER_RATE": "d",  #
+        "TRIGGER_INPUT_IMPEDANCE": "h",  # 50 ohm | 1 kohm
+        "TRIGGER_INPUT_SLOPE": "h",  # Positive | Negative
+        "TRIGGER_INPUT_POLARITY": "h",  # Positive | Negative
+        "TRIGGER_INPUT_THRESHOLD": "d",  #
+        "JUMP_TIMING": "h",  # Sync | Async
+        "INTERLEAVE": "h",  # On |  This setting is stronger than .
+        "ZEROING": "h",  # On | Off
+        "COUPLING": "h",  # The Off | Pair | All setting is weaker than .
+        "RUN_MODE": "h",  # Continuous | Triggered | Gated | Sequence
+        "WAIT_VALUE": "h",  # First | Last
+        "RUN_STATE": "h",  # On | Off
+        "INTERLEAVE_ADJ_PHASE": "d",
+        "INTERLEAVE_ADJ_AMPLITUDE": "d",
     }
     AWG_FILE_FORMAT_CHANNEL = {
         # Include NULL.(Output Waveform Name for Non-Sequence mode)
-        'OUTPUT_WAVEFORM_NAME_N': 's',
-        'CHANNEL_STATE_N': 'h',  # On | Off
-        'ANALOG_DIRECT_OUTPUT_N': 'h',  # On | Off
-        'ANALOG_FILTER_N': 'h',  # Enum type.
-        'ANALOG_METHOD_N': 'h',  # Amplitude/Offset, High/Low
+        "OUTPUT_WAVEFORM_NAME_N": "s",
+        "CHANNEL_STATE_N": "h",  # On | Off
+        "ANALOG_DIRECT_OUTPUT_N": "h",  # On | Off
+        "ANALOG_FILTER_N": "h",  # Enum type.
+        "ANALOG_METHOD_N": "h",  # Amplitude/Offset, High/Low
         # When the Input Method is High/Low, it is skipped.
-        'ANALOG_AMPLITUDE_N': 'd',
+        "ANALOG_AMPLITUDE_N": "d",
         # When the Input Method is High/Low, it is skipped.
-        'ANALOG_OFFSET_N': 'd',
+        "ANALOG_OFFSET_N": "d",
         # When the Input Method is Amplitude/Offset, it is skipped.
-        'ANALOG_HIGH_N': 'd',
+        "ANALOG_HIGH_N": "d",
         # When the Input Method is Amplitude/Offset, it is skipped.
-        'ANALOG_LOW_N': 'd',
-        'DIGITAL_METHOD_N': 'h',  # Amplitude/Offset, High/Low
+        "ANALOG_LOW_N": "d",
+        "DIGITAL_METHOD_N": "h",  # Amplitude/Offset, High/Low
         # When the Input Method is High/Low, it is skipped.
-        'DIGITAL_AMPLITUDE_N': 'd',
+        "DIGITAL_AMPLITUDE_N": "d",
         # When the Input Method is High/Low, it is skipped.
-        'DIGITAL_OFFSET_N': 'd',
+        "DIGITAL_OFFSET_N": "d",
         # When the Input Method is Amplitude/Offset, it is skipped.
-        'DIGITAL_HIGH_N': 'd',
+        "DIGITAL_HIGH_N": "d",
         # When the Input Method is Amplitude/Offset, it is skipped.
-        'DIGITAL_LOW_N': 'd',
-        'EXTERNAL_ADD_N': 'h',  # AWG5000 only
-        'PHASE_DELAY_INPUT_METHOD_N':   'h',  # Phase/DelayInme/DelayInints
-        'PHASE_N': 'd',  # When the Input Method is not Phase, it is skipped.
+        "DIGITAL_LOW_N": "d",
+        "EXTERNAL_ADD_N": "h",  # AWG5000 only
+        "PHASE_DELAY_INPUT_METHOD_N": "h",  # Phase/DelayInme/DelayInints
+        "PHASE_N": "d",  # When the Input Method is not Phase, it is skipped.
         # When the Input Method is not DelayInTime, it is skipped.
-        'DELAY_IN_TIME_N': 'd',
+        "DELAY_IN_TIME_N": "d",
         # When the Input Method is not DelayInPoint, it is skipped.
-        'DELAY_IN_POINTS_N': 'd',
-        'CHANNEL_SKEW_N': 'd',
-        'DC_OUTPUT_LEVEL_N': 'd',  # V
+        "DELAY_IN_POINTS_N": "d",
+        "CHANNEL_SKEW_N": "d",
+        "DC_OUTPUT_LEVEL_N": "d",  # V
     }
 
     def __init__(
-            self,
-            name: str,
-            address: str,
-            timeout: int = 180,
-            num_channels: int = 2,
-            **kwargs: Any):
-        
+        self,
+        name: str,
+        address: str,
+        timeout: int = 180,
+        num_channels: int = 2,
+        **kwargs: Any,
+    ):
         # Sanity Check inputs
         # if name not in ['ch1', 'ch2', 'ch3']:
         #     raise ValueError("Invalid Channel: {}, expected 'ch1' or 'ch2' or 'ch3'"
@@ -148,33 +154,37 @@ class BK4060_AWG(VisaInstrument):
         #                      .format(chan))
         """
         Initializes the BK4060.
-        
+
         Args:
             name: name of the instrument
             address: GPIB or ethernet address as used by VISA
             timeout: visa timeout, in secs. long default (180)
                 to accommodate large waveforms
             num_channels: number of channels on the device
-            device_clear must be False or it will give error 1073807360, 
+            device_clear must be False or it will give error 1073807360,
             this awg cannot be cleared buffered SCPI comments.
-        
+
         """
         super().__init__(name, address, timeout=timeout, device_clear=False, **kwargs)
 
         self._address = address
         self.num_channels = num_channels
 
-        self._values: Dict[str, Dict[str, Dict[str, Union[np.ndarray, float, None]]]] = {}
-        self._values['files'] = {}
+        self._values: Dict[
+            str, Dict[str, Dict[str, Union[np.ndarray, float, None]]]
+        ] = {}
+        self._values["files"] = {}
 
-        self.add_function('reset', call_cmd='*RST')
+        self.add_function("reset", call_cmd="*RST")
 
-        self.add_parameter('clock_source',
-                           label='Clock source',
-                           get_cmd='ROSCillator?',
-                           set_cmd='ROSCillator, ' + '{}',
-                           vals=vals.Enum('INT', 'EXT'),
-                           get_parser=self.newlinestripper)
+        self.add_parameter(
+            "clock_source",
+            label="Clock source",
+            get_cmd="ROSCillator?",
+            set_cmd="ROSCillator, " + "{}",
+            vals=vals.Enum("INT", "EXT"),
+            get_parser=self.newlinestripper,
+        )
 
         # # sequence parameter(s)
         # self.add_parameter('sequence_length',
@@ -213,10 +223,10 @@ class BK4060_AWG(VisaInstrument):
         #                    )
 
         # Channel parameters #
-        
-        for i in range(1, self.num_channels+1):
-            output_state_cmd = f'C{i}:OUTP'
-            waveform_cmd = f'C{i}:BSWV WVTP'
+
+        for i in range(1, self.num_channels + 1):
+            output_state_cmd = f"C{i}:OUTP"
+            waveform_cmd = f"C{i}:BSWV WVTP"
             # amp_cmd = f'C{i}:BSWV AMP'
             # freq_cmd = f'C{i}:BSWV FRQ'
             # offset_cmd = f'C{i}:VOLTage:LEVel:IMMediate:OFFS'
@@ -224,156 +234,244 @@ class BK4060_AWG(VisaInstrument):
             # filter_cmd = f'OUTPut{i}:FILTer:FREQuency'
             # add_input_cmd = f'SOURce{i}:COMBine:FEED'
             # dc_out_cmd = f'AWGControl:DC{i}:VOLTage:OFFSet'
-           
+
             # Set channel first to ensure sensible sorting of pars
-            self.add_parameter(f'ch{i}_state',
-                               label=f'Output state channel {i}',
-                               get_cmd=f'C{i}:OUTP?',
-                               set_cmd=f'C{i}:OUTP' + ' {:s}', 
-                               # val_mapping=create_on_off_val_mapping(on_val=f'C{i}:OUTP ON,LOAD,HZ,PLRT,NOR\n', off_val=f"C{i}:OUTP OFF,LOAD,HZ,PLRT,NOR\n"),
-                               )
-                       
-            self.add_parameter(f'ch{i}_amp',
-                               label=f'AWG Ch{i} Amplitude',
-                               unit='Vpp',                              
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['amplitude'] + ', {:.6f}'+'V',
-                               vals=vals.Numbers(0.001, 10),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['amplitude'])
-                               )
-            
-            self.add_parameter(f'ch{i}_freq',
-                               label=f'AWG Ch{i} Frequency',
-                               unit='Hz',                              
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['frequency'] + ', {:.6f}'+'HZ',
-                               vals=vals.Numbers(1e-6, 120e6),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['frequency'])
-                               )
-            
-            self.add_parameter(f'ch{i}_offset',
-                               label=f'AWG Ch{i} Offset',
-                               unit='V',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['offset'] + ', {:.6f}'+'V',
-                               vals=vals.Numbers(-10, 10),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['offset'])
-                               )
-            
-            self.add_parameter(f'ch{i}_high_level',
-                               label=f'AWG Ch{i} High Level',
-                               unit='V',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['high_level'] + ', {:.6f}'+'V',
-                               vals=vals.Numbers(-10, 10),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['high_level'])
-                               )
-            
-            self.add_parameter(f'ch{i}_low_level',
-                               label=f'AWG Ch{i} Low Level',
-                               unit='V',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['low_level'] + ', {:.6f}'+'V',
-                               vals=vals.Numbers(-10, 10),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['low_level'])
-                               )
-            
+            self.add_parameter(
+                f"ch{i}_state",
+                label=f"Output state channel {i}",
+                get_cmd=f"C{i}:OUTP?",
+                set_cmd=f"C{i}:OUTP" + " {:s}",
+                # val_mapping=create_on_off_val_mapping(on_val=f'C{i}:OUTP ON,LOAD,HZ,PLRT,NOR\n', off_val=f"C{i}:OUTP OFF,LOAD,HZ,PLRT,NOR\n"),
+            )
+
+            self.add_parameter(
+                f"ch{i}_amp",
+                label=f"AWG Ch{i} Amplitude",
+                unit="Vpp",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["amplitude"]
+                + ", {:.6f}"
+                + "V",
+                vals=vals.Numbers(0.001, 10),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["amplitude"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_freq",
+                label=f"AWG Ch{i} Frequency",
+                unit="Hz",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["frequency"]
+                + ", {:.6f}"
+                + "HZ",
+                vals=vals.Numbers(1e-6, 120e6),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["frequency"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_offset",
+                label=f"AWG Ch{i} Offset",
+                unit="V",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["offset"]
+                + ", {:.6f}"
+                + "V",
+                vals=vals.Numbers(-10, 10),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["offset"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_high_level",
+                label=f"AWG Ch{i} High Level",
+                unit="V",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["high_level"]
+                + ", {:.6f}"
+                + "V",
+                vals=vals.Numbers(-10, 10),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["high_level"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_low_level",
+                label=f"AWG Ch{i} Low Level",
+                unit="V",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["low_level"]
+                + ", {:.6f}"
+                + "V",
+                vals=vals.Numbers(-10, 10),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["low_level"],
+                ),
+            )
+
             # self.add_parameter(f'ch{i}_period',
             #                    label=f'AWG Ch{i} Period',
             #                    unit='s',
             #                    get_cmd=f'C{i}:BSWV?',
             #                    get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['period'])
             #                    )
-            
-            self.add_parameter(f'ch{i}_waveform',
-                               label=f'AWG Ch{i} Waveform',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=waveform_cmd + ', {}',
-                               vals=vals.Strings(),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = waveform_cmd)
-                               )
-            
-            self.add_parameter(f'ch{i}_phase',
-                               label=f'AWG Ch{i} Phase',
-                               unit='degree',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['phase'] + ', {:.3f}',
-                               vals=vals.Numbers(-360, 360),
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['phase'])
-                               )
-            
-            self.add_parameter(f'ch{i}_duty',
-                               label=f'AWG Ch{i} Duty',
-                               unit='percent',
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['duty_cycle'] + ', {:.3f}',
-                               vals=vals.Numbers(1, 99),        # waveform_SQUARE, duty is 20-80%
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['duty_cycle'])
-                               )
-            
-            self.add_parameter(f'ch{i}_symmetry',
-                               label=f'AWG Ch{i} Symmetry',     # waveform_RAMP
-                               unit=None,
-                               get_cmd=f'C{i}:BSWV?',
-                               set_cmd=f'C{i}:BSWV ' + self.parameter_name_command['symmetry'] + ', {:.3f}',
-                               get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['symmetry'])
-                               )
+
+            self.add_parameter(
+                f"ch{i}_waveform",
+                label=f"AWG Ch{i} Waveform",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=waveform_cmd + ", {}",
+                vals=vals.Strings(),
+                get_parser=partial(self._get_BSWV_parser, key_extract=waveform_cmd),
+            )
+
+            self.add_parameter(
+                f"ch{i}_phase",
+                label=f"AWG Ch{i} Phase",
+                unit="degree",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["phase"]
+                + ", {:.3f}",
+                vals=vals.Numbers(-360, 360),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["phase"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_duty",
+                label=f"AWG Ch{i} Duty",
+                unit="percent",
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["duty_cycle"]
+                + ", {:.3f}",
+                vals=vals.Numbers(1, 99),  # waveform_SQUARE, duty is 20-80%
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["duty_cycle"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_symmetry",
+                label=f"AWG Ch{i} Symmetry",  # waveform_RAMP
+                unit=None,
+                get_cmd=f"C{i}:BSWV?",
+                set_cmd=f"C{i}:BSWV "
+                + self.parameter_name_command["symmetry"]
+                + ", {:.3f}",
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["symmetry"],
+                ),
+            )
             # Burst Wave Command
-            self.add_parameter(f'ch{i}_burst',
-                                label=f'Ch{i} Burst State',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV '+ self.parameter_name_command['state'] + ', {:s}', 
-                                get_parser=partial(self._get_BSWV_parser, key_extract = f'C{i}:BTWV '+ self.parameter_name_command['state'])
-                                )
-            
-            self.add_parameter(f'ch{i}_burst_cycle',
-                                label=f'AWG Ch{i} Burst Cycle',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV ' + self.parameter_name_command['cycle'] + ', {:.3f}',
-                                vals=vals.Numbers(1, 1e6),
-                                get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['cycle'])
-                                )  
-            
-            self.add_parameter(f'ch{i}_burst_period',
-                                label=f'AWG Ch{i} Burst Period',
-                                unit='seconds',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV ' + self.parameter_name_command['bperiod'] + ', {:.3f}'+'S',
-                                vals=vals.Numbers(1e-9, 20),
-                                get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['bperiod'])
-                                )  
-            
-            self.add_parameter(f'ch{i}_trigger',
-                                label=f'Ch{i} Trigger',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV '+ self.parameter_name_command['trigger'] + ', {:s}', 
-                                get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['trigger'])
-                                )
-            
-            self.add_parameter(f'ch{i}_trigger_edge',
-                                label=f'Ch{i} Trigger EDGE',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV '+ self.parameter_name_command['edge'] + ', {:s}', 
-                                get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['edge'])
-                                )
-            
-            self.add_parameter(f'ch{i}_trigger_delay',
-                                label=f'AWG Ch{i} Trigger Delay',
-                                unit='seconds',
-                                get_cmd=f'C{i}:BTWV?',
-                                set_cmd=f'C{i}:BTWV ' + self.parameter_name_command['delay'] + ', {:.3f}'+'S',
-                                vals=vals.Numbers(0, 500),
-                                get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['delay'])
-                                )  
-        
+            self.add_parameter(
+                f"ch{i}_burst",
+                label=f"Ch{i} Burst State",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV " + self.parameter_name_command["state"] + ", {:s}",
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=f"C{i}:BTWV " + self.parameter_name_command["state"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_burst_cycle",
+                label=f"AWG Ch{i} Burst Cycle",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV "
+                + self.parameter_name_command["cycle"]
+                + ", {:.3f}",
+                vals=vals.Numbers(1, 1e6),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["cycle"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_burst_period",
+                label=f"AWG Ch{i} Burst Period",
+                unit="seconds",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV "
+                + self.parameter_name_command["bperiod"]
+                + ", {:.3f}"
+                + "S",
+                vals=vals.Numbers(1e-9, 20),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["bperiod"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_trigger",
+                label=f"Ch{i} Trigger",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV "
+                + self.parameter_name_command["trigger"]
+                + ", {:s}",
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["trigger"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_trigger_edge",
+                label=f"Ch{i} Trigger EDGE",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV " + self.parameter_name_command["edge"] + ", {:s}",
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["edge"],
+                ),
+            )
+
+            self.add_parameter(
+                f"ch{i}_trigger_delay",
+                label=f"AWG Ch{i} Trigger Delay",
+                unit="seconds",
+                get_cmd=f"C{i}:BTWV?",
+                set_cmd=f"C{i}:BTWV "
+                + self.parameter_name_command["delay"]
+                + ", {:.3f}"
+                + "S",
+                vals=vals.Numbers(0, 500),
+                get_parser=partial(
+                    self._get_BSWV_parser,
+                    key_extract=self.parameter_name_command["delay"],
+                ),
+            )
+
             # self.add_parameter(f'ch{i}_carrier_wave',
             #                     label=f'Ch{i} Carrier Wave',
             #                     get_cmd=f'C{i}:BTWV?',
-            #                     set_cmd=f'C{i}:BTWV '+ self.parameter_name_command['carrier_wave'] + ', {:s}', 
+            #                     set_cmd=f'C{i}:BTWV '+ self.parameter_name_command['carrier_wave'] + ', {:s}',
             #                     get_parser=partial(self._get_BSWV_parser, key_extract = self.parameter_name_command['carrier_wave'])
             #                     )
-            
-            
+
             # self.add_parameter(f'ch{i}_direct_output',
             #                    label=f'Direct output channel {i}',
             #                    get_cmd=directoutput_cmd + '?',
@@ -406,7 +504,7 @@ class BK4060_AWG(VisaInstrument):
 
     # Convenience parser
     def newlinestripper(self, string: str) -> str:
-        if string.endswith('\n'):
+        if string.endswith("\n"):
             return string[:-1]
         else:
             return string
@@ -416,17 +514,17 @@ class BK4060_AWG(VisaInstrument):
         # note that 9.9e37 is used as a generic out of range value
         # in tektronix instruments
         if val >= 9.9e37:
-            val = float('INF')
+            val = float("INF")
         return val
-    
+
     # def _get_BSWV_parser(self, response: str, **kwargs) -> str:
-    #     '''      
+    #     '''
     #     Parameters
     #     ----------
     #     response : str
     #         string to be read from instrument.
     #         typical response:
-    #     C1:BSWV WVTP,SINE,FRQ,1000HZ,PERI,0.001S,AMP,4V,AMPVRMS,1.414Vrms,MAX_OUTPUT_AMP,20V,OFST,0V,HLEV,2V,LLEV,-2V,PHSE,0       
+    #     C1:BSWV WVTP,SINE,FRQ,1000HZ,PERI,0.001S,AMP,4V,AMPVRMS,1.414Vrms,MAX_OUTPUT_AMP,20V,OFST,0V,HLEV,2V,LLEV,-2V,PHSE,0
     #     Returns
     #     -------
     #     str
@@ -442,13 +540,13 @@ class BK4060_AWG(VisaInstrument):
     #     # print(str_list[-1])
     #     temp=[]
     #     # print(len(str_list))
-        
+
     #     for i in range(len(str_list)):
     #         if (i%2)==0:
     #             temp+=[str_list[i]+'='+str_list[i+1]]
-                
+
     #     resp=dict(item.split('=') for item in temp)
-        
+
     #     if kwargs['key_extract']:
     #         key_use=kwargs['key_extract']
     #     return_value=[]
@@ -461,46 +559,44 @@ class BK4060_AWG(VisaInstrument):
     #         return_value='No Value'
     #         # print(key_use+' has no value because it is not associated with this waveform')
     #     return return_value
-    
-    
+
     def _get_BSWV_parser(self, response: str, **kwargs) -> str:
-        '''      
+        """
         Parameters
         ----------
         response : str
             string to be read from instrument.
             typical response:
-        C1:BSWV WVTP,SINE,FRQ,1000HZ,PERI,0.001S,AMP,4V,AMPVRMS,1.414Vrms,MAX_OUTPUT_AMP,20V,OFST,0V,HLEV,2V,LLEV,-2V,PHSE,0       
+        C1:BSWV WVTP,SINE,FRQ,1000HZ,PERI,0.001S,AMP,4V,AMPVRMS,1.414Vrms,MAX_OUTPUT_AMP,20V,OFST,0V,HLEV,2V,LLEV,-2V,PHSE,0
         Returns
         -------
         str
             DESCRIPTION.
 
-        '''
-        str_list=response.split(',')
-        temp=[]
+        """
+        str_list = response.split(",")
+        temp = []
         k1 = 0
         for i in range(0, len(str_list), 2):
-            if(str_list[i] == 'CARR'):
+            if str_list[i] == "CARR":
                 k1 = -1
             else:
-                str_list[i+k1] = str_list[i+k1].strip()
-                str_list[i+k1+1] = str_list[i+k1+1].strip()
-                temp+=[str_list[i+k1]+'='+str_list[i+k1+1]]
-  
-        resp=dict(item.split('=') for item in temp)
-        if kwargs['key_extract']:
-            key_use=kwargs['key_extract']
-        return_value=[]
+                str_list[i + k1] = str_list[i + k1].strip()
+                str_list[i + k1 + 1] = str_list[i + k1 + 1].strip()
+                temp += [str_list[i + k1] + "=" + str_list[i + k1 + 1]]
+
+        resp = dict(item.split("=") for item in temp)
+        if kwargs["key_extract"]:
+            key_use = kwargs["key_extract"]
+        return_value = []
 
         if key_use in resp.keys():
-            return_value=resp[key_use]
+            return_value = resp[key_use]
         else:
-            return_value='Not Set'
+            return_value = "Not Set"
             # print(key_use+' has no value because it is not associated with this waveform')
         return return_value
-    
-    
+
     # Functions
     def start(self) -> str:
         """Convenience function, identical to self.run()"""
@@ -516,12 +612,12 @@ class BK4060_AWG(VisaInstrument):
         Returns:
             The output of self.get_state()
         """
-        self.write('AWGControl:RUN')
+        self.write("AWGControl:RUN")
         # return self.get_state()
 
     def stop(self) -> None:
         """This command stops the output of a waveform or a sequence."""
-        self.write('AWGControl:STOP')
+        self.write("AWGControl:STOP")
 
     def get_folder_contents(self, print_contents: bool = True) -> str:
         """
@@ -535,12 +631,12 @@ class BK4060_AWG(VisaInstrument):
         Returns:
             str: A comma-seperated string of the folder contents.
         """
-        contents = self.ask('MMEMory:CATalog?')
+        contents = self.ask("MMEMory:CATalog?")
         if print_contents:
-            print('Current folder:', self.get_current_folder_name())
-            print(contents
-                  .replace(',"$', '\n$').replace('","', '\n')
-                  .replace(',', '\t'))
+            print("Current folder:", self.get_current_folder_name())
+            print(
+                contents.replace(',"$', "\n$").replace('","', "\n").replace(",", "\t")
+            )
         return contents
 
     def get_current_folder_name(self) -> str:
@@ -553,7 +649,7 @@ class BK4060_AWG(VisaInstrument):
         Returns:
             A string with the full path of the current folder.
         """
-        return self.ask('MMEMory:CDIRectory?')
+        return self.ask("MMEMory:CDIRectory?")
 
     def set_current_folder_name(self, file_path: str) -> int:
         """
@@ -597,17 +693,16 @@ class BK4060_AWG(VisaInstrument):
             A comma-seperated string of the folder contents.
         """
 
-        dircheck = '%s, DIR' % folder
+        dircheck = "%s, DIR" % folder
         if dircheck in self.get_folder_contents():
             self.change_folder(folder)
-            log.debug('Directory already exists')
-            log.warning(('Directory already exists, ' +
-                         'changed path to {}').format(folder))
-            log.info('Contents of folder is ' +
-                     '{}'.format(self.ask('MMEMory:cat?')))
+            log.debug("Directory already exists")
+            log.warning(
+                ("Directory already exists, " + "changed path to {}").format(folder)
+            )
+            log.info("Contents of folder is " + "{}".format(self.ask("MMEMory:cat?")))
         elif self.get_current_folder_name() == f'"\\{folder}"':
-            log.info('Directory already set to ' +
-                     f'{folder}')
+            log.info("Directory already set to " + f"{folder}")
         else:
             self.write('MMEMory:MDIRectory "%s"' % folder)
             self.write('MMEMory:CDIRectory "%s"' % folder)
@@ -619,13 +714,13 @@ class BK4060_AWG(VisaInstrument):
         Set the state of all channels to be ON. Note: only channels with
         defined waveforms can be ON.
         """
-        for i in range(1, self.num_channels+1):
-            self.set(f'ch{i}_state', 1)
+        for i in range(1, self.num_channels + 1):
+            self.set(f"ch{i}_state", 1)
 
     def all_channels_off(self) -> None:
         """Set the state of all channels to be OFF."""
-        for i in range(1, self.num_channels+1):
-            self.set(f'ch{i}_state', 0)
+        for i in range(1, self.num_channels + 1):
+            self.set(f"ch{i}_state", 0)
 
     #####################
     # Sequences section #
@@ -642,13 +737,10 @@ class BK4060_AWG(VisaInstrument):
             element_no: The sequence element number
             index: The index to set the target to
         """
-        self.write('SEQuence:' +
-                   f'ELEMent{element_no}:JTARGet:INDex {index}')
+        self.write("SEQuence:" + f"ELEMent{element_no}:JTARGet:INDex {index}")
 
     def set_sqel_goto_target_index(
-            self,
-            element_no: int,
-            goto_to_index_no: int
+        self, element_no: int, goto_to_index_no: int
     ) -> None:
         """
         This command sets the target index for the GOTO command of the
@@ -668,9 +760,9 @@ class BK4060_AWG(VisaInstrument):
             goto_to_index_no: The target index number
 
         """
-        self.write('SEQuence:' +
-                   'ELEMent{}:GOTO:INDex {}'.format(element_no,
-                                                    goto_to_index_no))
+        self.write(
+            "SEQuence:" + "ELEMent{}:GOTO:INDex {}".format(element_no, goto_to_index_no)
+        )
 
     def set_sqel_goto_state(self, element_no: int, goto_state: int) -> None:
         """
@@ -684,15 +776,17 @@ class BK4060_AWG(VisaInstrument):
         """
         allowed_states = [0, 1]
         if goto_state not in allowed_states:
-            log.warning(('{} not recognized as a valid goto' +
-                         ' state. Setting to 0 (OFF).').format(goto_state))
+            log.warning(
+                (
+                    "{} not recognized as a valid goto" + " state. Setting to 0 (OFF)."
+                ).format(goto_state)
+            )
             goto_state = 0
-        self.write('SEQuence:ELEMent{}:GOTO:STATe {}'.format(element_no,
-                                                             int(goto_state)))
+        self.write(
+            "SEQuence:ELEMent{}:GOTO:STATe {}".format(element_no, int(goto_state))
+        )
 
-    def set_sqel_loopcnt_to_inf(self,
-                                element_no: int,
-                                state: int = 1) -> None:
+    def set_sqel_loopcnt_to_inf(self, element_no: int, state: int = 1) -> None:
         """
         This command sets the infinite looping state for a sequence
         element. When an infinite loop is set on an element, the
@@ -706,12 +800,14 @@ class BK4060_AWG(VisaInstrument):
         """
         allowed_states = [0, 1]
         if state not in allowed_states:
-            log.warning(('{} not recognized as a valid loop' +
-                         '  state. Setting to 0 (OFF).').format(state))
+            log.warning(
+                (
+                    "{} not recognized as a valid loop" + "  state. Setting to 0 (OFF)."
+                ).format(state)
+            )
             state = 0
 
-        self.write('SEQuence:ELEMent{}:LOOP:INFinite {}'.format(element_no,
-                                                                int(state)))
+        self.write("SEQuence:ELEMent{}:LOOP:INFinite {}".format(element_no, int(state)))
 
     def get_sqel_loopcnt(self, element_no: int = 1) -> str:
         """
@@ -722,7 +818,7 @@ class BK4060_AWG(VisaInstrument):
         Args:
             element_no: The sequence element number. Default: 1.
         """
-        return self.ask(f'SEQuence:ELEMent{element_no}:LOOP:COUNt?')
+        return self.ask(f"SEQuence:ELEMent{element_no}:LOOP:COUNt?")
 
     def set_sqel_loopcnt(self, loopcount: int, element_no: int = 1) -> None:
         """
@@ -734,14 +830,10 @@ class BK4060_AWG(VisaInstrument):
                 The maximal possible number is 65536, beyond that: infinity.
             element_no: The sequence element number. Default: 1.
         """
-        self.write('SEQuence:ELEMent{}:LOOP:COUNt {}'.format(element_no,
-                                                             loopcount))
+        self.write("SEQuence:ELEMent{}:LOOP:COUNt {}".format(element_no, loopcount))
 
     def set_sqel_waveform(
-            self,
-            waveform_name: str,
-            channel: int,
-            element_no: int = 1
+        self, waveform_name: str, channel: int, element_no: int = 1
     ) -> None:
         """
         This command sets the waveform for a sequence element on the specified
@@ -753,15 +845,13 @@ class BK4060_AWG(VisaInstrument):
             channel: The output channel (1-4)
             element_no: The sequence element number. Default: 1.
         """
-        self.write('SEQuence:ELEMent{}:WAVeform{} "{}"'.format(element_no,
-                                                               channel,
-                                                               waveform_name))
+        self.write(
+            'SEQuence:ELEMent{}:WAVeform{} "{}"'.format(
+                element_no, channel, waveform_name
+            )
+        )
 
-    def get_sqel_waveform(
-            self,
-            channel: int,
-            element_no: int = 1
-    ) -> str:
+    def get_sqel_waveform(self, channel: int, element_no: int = 1) -> str:
         """
         This query returns the waveform for a sequence element on the
         specified channel.
@@ -773,20 +863,21 @@ class BK4060_AWG(VisaInstrument):
         Returns:
             The name of the waveform.
         """
-        return self.ask('SEQuence:ELEMent{}:WAVeform{}?'.format(element_no,))
+        return self.ask(
+            "SEQuence:ELEMent{}:WAVeform{}?".format(
+                element_no,
+            )
+        )
 
-    def set_sqel_event_jump_target_index(self,
-                                         element_no: int,
-                                         jtar_index_no: int) -> None:
-        """Duplicate of set_sqel_event_target_index"""
-        self.write('SEQuence:ELEMent{}:JTARget:INDex {}'.format(element_no,
-                                                                jtar_index_no))
-
-    def set_sqel_event_jump_type(
-            self,
-            element_no: int,
-            jtar_state: str
+    def set_sqel_event_jump_target_index(
+        self, element_no: int, jtar_index_no: int
     ) -> None:
+        """Duplicate of set_sqel_event_target_index"""
+        self.write(
+            "SEQuence:ELEMent{}:JTARget:INDex {}".format(element_no, jtar_index_no)
+        )
+
+    def set_sqel_event_jump_type(self, element_no: int, jtar_state: str) -> None:
         """
         This command sets the event jump target type for the jump for
         the specified sequence element.  Generate an event in one of
@@ -803,8 +894,7 @@ class BK4060_AWG(VisaInstrument):
             jtar_state: The jump target type. Must be either 'INDEX',
                 'NEXT', or 'OFF'.
         """
-        self.write('SEQuence:ELEMent{}:JTARget:TYPE {}'.format(element_no,
-                                                               jtar_state))
+        self.write("SEQuence:ELEMent{}:JTARget:TYPE {}".format(element_no, jtar_state))
 
     def get_sq_mode(self) -> str:
         """
@@ -816,17 +906,14 @@ class BK4060_AWG(VisaInstrument):
             str: Either 'HARD' or 'SOFT' indicating that the instrument is in\
               either hardware or software sequencer mode.
         """
-        return self.ask('AWGControl:SEQuence:TYPE?')
+        return self.ask("AWGControl:SEQuence:TYPE?")
 
     ######################
     # AWG file functions #
     ######################
 
     def _pack_record(
-            self,
-            name: str,
-            value: Union[float, str, Sequence[Any], np.ndarray],
-            dtype: str
+        self, name: str, value: Union[float, str, Sequence[Any], np.ndarray], dtype: str
     ) -> bytes:
         """
         packs awg_file record into a struct in the folowing way:
@@ -850,25 +937,25 @@ class BK4060_AWG(VisaInstrument):
                 Allowed values: 'h', 'd', 's'.
         """
         if len(dtype) == 1:
-            record_data = struct.pack('<' + dtype, value)
+            record_data = struct.pack("<" + dtype, value)
         else:
-            if dtype[-1] == 's':
+            if dtype[-1] == "s":
                 assert isinstance(value, str)
-                record_data = value.encode('ASCII')
+                record_data = value.encode("ASCII")
             else:
                 assert isinstance(value, (abc.Sequence, np.ndarray))
-                if dtype[-1] == 'H' and isinstance(value, np.ndarray):
+                if dtype[-1] == "H" and isinstance(value, np.ndarray):
                     # numpy conversion is fast
-                    record_data = value.astype('<u2').tobytes()
+                    record_data = value.astype("<u2").tobytes()
                 else:
                     # argument unpacking is slow
-                    record_data = struct.pack('<' + dtype, *value)
+                    record_data = struct.pack("<" + dtype, *value)
 
         # the zero byte at the end the record name is the "(Include NULL.)"
-        record_name = name.encode('ASCII') + b'\x00'
+        record_name = name.encode("ASCII") + b"\x00"
         record_name_size = len(record_name)
         record_data_size = len(record_data)
-        size_struct = struct.pack('<II', record_name_size, record_data_size)
+        size_struct = struct.pack("<II", record_name_size, record_data_size)
         packed_record = size_struct + record_name + record_data
 
         return packed_record
@@ -879,36 +966,38 @@ class BK4060_AWG(VisaInstrument):
         generating sequence files, from existing settings in the awg.
         Querying the AWG for these settings takes ~0.7 seconds
         """
-        log.info('Generating sequence_cfg')
+        log.info("Generating sequence_cfg")
 
         AWG_sequence_cfg = {
-            'SAMPLING_RATE': self.get('clock_freq'),
-            'CLOCK_SOURCE': (1 if self.clock_source().startswith('INT')
-                             else 2),  # Internal | External
-            'REFERENCE_SOURCE': (1 if self.ref_source().startswith('INT')
-                                 else 2),  # Internal | External
-            'EXTERNAL_REFERENCE_TYPE':   1,  # Fixed | Variable
-            'REFERENCE_CLOCK_FREQUENCY_SELECTION': 1,
+            "SAMPLING_RATE": self.get("clock_freq"),
+            "CLOCK_SOURCE": (
+                1 if self.clock_source().startswith("INT") else 2
+            ),  # Internal | External
+            "REFERENCE_SOURCE": (
+                1 if self.ref_source().startswith("INT") else 2
+            ),  # Internal | External
+            "EXTERNAL_REFERENCE_TYPE": 1,  # Fixed | Variable
+            "REFERENCE_CLOCK_FREQUENCY_SELECTION": 1,
             # 10 MHz | 20 MHz | 100 MHz
-            'TRIGGER_SOURCE':   1 if
-            self.get('trigger_source').startswith('EXT') else 2,
+            "TRIGGER_SOURCE": 1 if self.get("trigger_source").startswith("EXT") else 2,
             # External | Internal
-            'TRIGGER_INPUT_IMPEDANCE': (1 if self.get('trigger_impedance') ==
-                                        50. else 2),  # 50 ohm | 1 kohm
-            'TRIGGER_INPUT_SLOPE': (1 if self.get('trigger_slope').startswith(
-                                    'POS') else 2),  # Positive | Negative
-            'TRIGGER_INPUT_POLARITY': (1 if self.ask('TRIGger:' +
-                                                     'POLarity?').startswith(
-                                       'POS') else 2),  # Positive | Negative
-            'TRIGGER_INPUT_THRESHOLD':  self.get('trigger_level'),  # V
-            'JUMP_TIMING':   (1 if
-                              self.get('event_jump_timing').startswith('SYNC')
-                              else 2),  # Sync | Async
-            'RUN_MODE':   4,  # Continuous | Triggered | Gated | Sequence
-            'RUN_STATE':  0,  # On | Off
+            "TRIGGER_INPUT_IMPEDANCE": (
+                1 if self.get("trigger_impedance") == 50.0 else 2
+            ),  # 50 ohm | 1 kohm
+            "TRIGGER_INPUT_SLOPE": (
+                1 if self.get("trigger_slope").startswith("POS") else 2
+            ),  # Positive | Negative
+            "TRIGGER_INPUT_POLARITY": (
+                1 if self.ask("TRIGger:" + "POLarity?").startswith("POS") else 2
+            ),  # Positive | Negative
+            "TRIGGER_INPUT_THRESHOLD": self.get("trigger_level"),  # V
+            "JUMP_TIMING": (
+                1 if self.get("event_jump_timing").startswith("SYNC") else 2
+            ),  # Sync | Async
+            "RUN_MODE": 4,  # Continuous | Triggered | Gated | Sequence
+            "RUN_STATE": 0,  # On | Off
         }
         return AWG_sequence_cfg
-
 
     @staticmethod
     def parse_marker_channel_name(name: str) -> _MarkerDescriptor:
@@ -916,18 +1005,19 @@ class BK4060_AWG(VisaInstrument):
         returns from the channel index and marker index from a marker
         descriptor string e.g. '1M1'->(1,1)
         """
-        res = re.match(r'^(?P<channel>\d+)M(?P<marker>\d+)$',
-                       name)
+        res = re.match(r"^(?P<channel>\d+)M(?P<marker>\d+)$", name)
         assert res is not None
 
-        return _MarkerDescriptor(marker=int(res.group('marker')),
-                                 channel=int(res.group('channel')))
+        return _MarkerDescriptor(
+            marker=int(res.group("marker")), channel=int(res.group("channel"))
+        )
 
     def make_send_and_load_awg_file_from_forged_sequence(
-            self,
-            seq: Dict[Any, Any],
-            filename: str = 'customawgfile.awg',
-            preservechannelsettings: bool = True) -> None:
+        self,
+        seq: Dict[Any, Any],
+        filename: str = "customawgfile.awg",
+        preservechannelsettings: bool = True,
+    ) -> None:
         """
         Makes an awg file form a forged sequence as produced by
         broadbean.sequence.Sequence.forge. The forged sequence is a dictionary
@@ -944,15 +1034,18 @@ class BK4060_AWG(VisaInstrument):
         if not USE_LOMENTUM:
             raise RuntimeError(
                 'The method "make_send_and_load_awg_file_from_forged_sequence" is '
-                ' only available with the `lomentum` module installed')
+                " only available with the `lomentum` module installed"
+            )
         n_channels = 4
-        self.available_waveform_channels: List[Union[str, int]] = list(range(1, n_channels+1))
+        self.available_waveform_channels: List[Union[str, int]] = list(
+            range(1, n_channels + 1)
+        )
         self.available_marker_channels: List[Union[str, int]] = [
-            f'{c}M{m}'
-            for c in self.available_waveform_channels
-            for m in [1, 2]]
-        self.available_channels = (self.available_waveform_channels +
-                                   self.available_marker_channels)
+            f"{c}M{m}" for c in self.available_waveform_channels for m in [1, 2]
+        ]
+        self.available_channels = (
+            self.available_waveform_channels + self.available_marker_channels
+        )
 
         waveforms = []
         m1s = []
@@ -972,24 +1065,28 @@ class BK4060_AWG(VisaInstrument):
         # obtain list of channels defined in the first step
         if len(seq) < 1:
             # TODO: better error
-            raise RuntimeError('Sequences need to have at least one element')
+            raise RuntimeError("Sequences need to have at least one element")
 
         # assume that the channels are the same on every element
         provided_channels = get_element_channel_ids(seq[0])
-        used_waveform_channels = list(set(provided_channels).intersection(
-            set(self.available_waveform_channels)))
-        used_marker_channels = list(set(provided_channels).intersection(
-                set(self.available_marker_channels)))
+        used_waveform_channels = list(
+            set(provided_channels).intersection(set(self.available_waveform_channels))
+        )
+        used_marker_channels = list(
+            set(provided_channels).intersection(set(self.available_marker_channels))
+        )
         associated_marker_channels = [
             self.parse_marker_channel_name(name).channel
-            for name in used_marker_channels]
+            for name in used_marker_channels
+        ]
         used_channels = list(
-            set(used_waveform_channels).union(set(associated_marker_channels)))
+            set(used_waveform_channels).union(set(associated_marker_channels))
+        )
 
         for i_elem, elem in enumerate(seq):
             # TODO: add support for subsequences
             assert not is_subsequence(elem)
-            datadict = elem['data']
+            datadict = elem["data"]
 
             # Split up the dictionary into two, one for the markers the other
             # for the waveforms
@@ -999,17 +1096,18 @@ class BK4060_AWG(VisaInstrument):
             for channel, data in datadict.items():
                 if channel in self.available_marker_channels:
                     t = self.parse_marker_channel_name(channel)
-                    step_markers[t.marker-1][t.channel] = data
+                    step_markers[t.marker - 1][t.channel] = data
                 elif channel in self.available_waveform_channels:
                     step_waveforms[channel] = data
                 else:
                     raise RuntimeError(
-                        f'The channel with name {channel} as defined in '
-                        f'the element with no. {i_elem} is not an available '
-                        f'marker channel or waveform channel.\n'
-                        f'Available channels are: '
-                        f'{self.available_marker_channels} and '
-                        f'{self.available_waveform_channels}')
+                        f"The channel with name {channel} as defined in "
+                        f"the element with no. {i_elem} is not an available "
+                        f"marker channel or waveform channel.\n"
+                        f"Available channels are: "
+                        f"{self.available_marker_channels} and "
+                        f"{self.available_waveform_channels}"
+                    )
 
             # create empty trace as template for filling traces with markers
             # only and traces without markers
@@ -1024,49 +1122,61 @@ class BK4060_AWG(VisaInstrument):
                         n_samples = len(step_markers[i][marker_keys[i][0]])
                         break
             if n_samples is None:
-                raise RuntimeError('It is not allowed to upload an element '
-                                   'without markers nor waveforms')
+                raise RuntimeError(
+                    "It is not allowed to upload an element "
+                    "without markers nor waveforms"
+                )
             blank_trace = np.zeros(n_samples)
 
             # I think this does might add some traces dynamically if they are
             # not the same in all elements. Add check in the beginning
-            step_waveforms_list = [step_waveforms.get(key, blank_trace)
-                                   for key in used_channels]
-            step_markers_list = tuple([step_markers[i].get(key, blank_trace)
-                                       for key in used_channels]
-                                      for i in range(2))
+            step_waveforms_list = [
+                step_waveforms.get(key, blank_trace) for key in used_channels
+            ]
+            step_markers_list = tuple(
+                [step_markers[i].get(key, blank_trace) for key in used_channels]
+                for i in range(2)
+            )
 
             waveforms.append(step_waveforms_list)
             m1s.append(step_markers_list[0])
             m2s.append(step_markers_list[1])
             # sequencing
-            seq_opts = elem['sequencing']
-            nreps.append(seq_opts.get('nrep', 1))
-            trig_waits.append(seq_opts.get('trig_wait', 0))
-            goto_states.append(seq_opts.get('goto_state', 0))
-            jump_tos.append(seq_opts.get('jump_to', 0))
+            seq_opts = elem["sequencing"]
+            nreps.append(seq_opts.get("nrep", 1))
+            trig_waits.append(seq_opts.get("trig_wait", 0))
+            goto_states.append(seq_opts.get("goto_state", 0))
+            jump_tos.append(seq_opts.get("jump_to", 0))
         # transpose list of lists
         waveforms = [list(x) for x in zip(*waveforms)]
         m1s = [list(x) for x in zip(*m1s)]
         m2s = [list(x) for x in zip(*m2s)]
 
-        self.make_send_and_load_awg_file(waveforms, m1s, m2s,
-                                         nreps, trig_waits,
-                                         goto_states, jump_tos,
-                                         channels=used_channels,
-                                         filename=filename,
-                                         preservechannelsettings=preservechannelsettings)
+        self.make_send_and_load_awg_file(
+            waveforms,
+            m1s,
+            m2s,
+            nreps,
+            trig_waits,
+            goto_states,
+            jump_tos,
+            channels=used_channels,
+            filename=filename,
+            preservechannelsettings=preservechannelsettings,
+        )
 
-    def _generate_awg_file(self,
-                           packed_waveforms: Dict[str, np.ndarray],
-                           wfname_l: np.ndarray,
-                           nrep: Sequence[int],
-                           trig_wait: Sequence[int],
-                           goto_state: Sequence[int],
-                           jump_to: Sequence[int],
-                           channel_cfg: Dict[str, Any],
-                           sequence_cfg: Optional[Dict[str, float]] = None,
-                           preservechannelsettings: bool = False) -> bytes:
+    def _generate_awg_file(
+        self,
+        packed_waveforms: Dict[str, np.ndarray],
+        wfname_l: np.ndarray,
+        nrep: Sequence[int],
+        trig_wait: Sequence[int],
+        goto_state: Sequence[int],
+        jump_to: Sequence[int],
+        channel_cfg: Dict[str, Any],
+        sequence_cfg: Optional[Dict[str, float]] = None,
+        preservechannelsettings: bool = False,
+    ) -> bytes:
         """
         This function generates an .awg-file for uploading to the AWG.
         The .awg-file contains a waveform list, full sequencing information
@@ -1122,8 +1232,9 @@ class BK4060_AWG(VisaInstrument):
 
         # general settings
         head_str = BytesIO()
-        bytes_to_write = (self._pack_record('MAGIC', 5000, 'h') +
-                          self._pack_record('VERSION', 1, 'h'))
+        bytes_to_write = self._pack_record("MAGIC", 5000, "h") + self._pack_record(
+            "VERSION", 1, "h"
+        )
         head_str.write(bytes_to_write)
         # head_str.write(string(bytes_to_write))
 
@@ -1132,23 +1243,25 @@ class BK4060_AWG(VisaInstrument):
 
         for k in list(sequence_cfg.keys()):
             if k in self.AWG_FILE_FORMAT_HEAD:
-                head_str.write(self._pack_record(k, sequence_cfg[k],
-                                                 self.AWG_FILE_FORMAT_HEAD[k]))
+                head_str.write(
+                    self._pack_record(k, sequence_cfg[k], self.AWG_FILE_FORMAT_HEAD[k])
+                )
             else:
-                log.warning('AWG: ' + k +
-                            ' not recognized as valid AWG setting')
+                log.warning("AWG: " + k + " not recognized as valid AWG setting")
         # channel settings
         ch_record_str = BytesIO()
         for k in list(channel_cfg.keys()):
-            ch_k = k[:-1] + 'N'
+            ch_k = k[:-1] + "N"
             if ch_k in self.AWG_FILE_FORMAT_CHANNEL:
-                pack = self._pack_record(k, channel_cfg[k],
-                                         self.AWG_FILE_FORMAT_CHANNEL[ch_k])
+                pack = self._pack_record(
+                    k, channel_cfg[k], self.AWG_FILE_FORMAT_CHANNEL[ch_k]
+                )
                 ch_record_str.write(pack)
 
             else:
-                log.warning('AWG: ' + k +
-                            ' not recognized as valid AWG channel setting')
+                log.warning(
+                    "AWG: " + k + " not recognized as valid AWG channel setting"
+                )
 
         # waveforms
         ii = 21
@@ -1161,15 +1274,14 @@ class BK4060_AWG(VisaInstrument):
             lenwfdat = len(wfdat)
 
             wf_record_str.write(
-                self._pack_record(f'WAVEFORM_NAME_{ii}', wf + '\x00',
-                                  '{}s'.format(len(wf + '\x00'))) +
-                self._pack_record(f'WAVEFORM_TYPE_{ii}', 1, 'h') +
-                self._pack_record(f'WAVEFORM_LENGTH_{ii}',
-                                  lenwfdat, 'l') +
-                self._pack_record(f'WAVEFORM_TIMESTAMP_{ii}',
-                                  timetuple[:-1], '8H') +
-                self._pack_record(f'WAVEFORM_DATA_{ii}', wfdat,
-                                  f'{lenwfdat}H'))
+                self._pack_record(
+                    f"WAVEFORM_NAME_{ii}", wf + "\x00", "{}s".format(len(wf + "\x00"))
+                )
+                + self._pack_record(f"WAVEFORM_TYPE_{ii}", 1, "h")
+                + self._pack_record(f"WAVEFORM_LENGTH_{ii}", lenwfdat, "l")
+                + self._pack_record(f"WAVEFORM_TIMESTAMP_{ii}", timetuple[:-1], "8H")
+                + self._pack_record(f"WAVEFORM_DATA_{ii}", wfdat, f"{lenwfdat}H")
+            )
             ii += 1
 
         # sequence
@@ -1177,37 +1289,37 @@ class BK4060_AWG(VisaInstrument):
         seq_record_str = BytesIO()
 
         for segment in wfname_l.transpose():
-
             seq_record_str.write(
-                self._pack_record(f'SEQUENCE_WAIT_{kk}',
-                                  trig_wait[kk - 1], 'h') +
-                self._pack_record(f'SEQUENCE_LOOP_{kk}',
-                                  int(nrep[kk - 1]), 'l') +
-                self._pack_record(f'SEQUENCE_JUMP_{kk}',
-                                  jump_to[kk - 1], 'h') +
-                self._pack_record(f'SEQUENCE_GOTO_{kk}',
-                                  goto_state[kk - 1], 'h'))
+                self._pack_record(f"SEQUENCE_WAIT_{kk}", trig_wait[kk - 1], "h")
+                + self._pack_record(f"SEQUENCE_LOOP_{kk}", int(nrep[kk - 1]), "l")
+                + self._pack_record(f"SEQUENCE_JUMP_{kk}", jump_to[kk - 1], "h")
+                + self._pack_record(f"SEQUENCE_GOTO_{kk}", goto_state[kk - 1], "h")
+            )
             for wfname in segment:
                 if wfname is not None:
                     # TODO (WilliamHPNielsen): maybe infer ch automatically
                     # from the data size?
                     ch = wfname[-1]
                     seq_record_str.write(
-                        self._pack_record('SEQUENCE_WAVEFORM_NAME_CH_' + ch
-                                          + f'_{kk}', wfname + '\x00',
-                                          '{}s'.format(len(wfname + '\x00')))
+                        self._pack_record(
+                            "SEQUENCE_WAVEFORM_NAME_CH_" + ch + f"_{kk}",
+                            wfname + "\x00",
+                            "{}s".format(len(wfname + "\x00")),
+                        )
                     )
             kk += 1
 
-        awg_file = (head_str.getvalue() + ch_record_str.getvalue() +
-                    wf_record_str.getvalue() + seq_record_str.getvalue())
+        awg_file = (
+            head_str.getvalue()
+            + ch_record_str.getvalue()
+            + wf_record_str.getvalue()
+            + seq_record_str.getvalue()
+        )
         return awg_file
 
     def send_awg_file(
-            self,
-            filename: str,
-            awg_file: bytes,
-            verbose: bool = False) -> None:
+        self, filename: str, awg_file: bytes, verbose: bool = False
+    ) -> None:
         """
         Writes an .awg-file onto the disk of the AWG.
         Overwrites existing files.
@@ -1221,13 +1333,16 @@ class BK4060_AWG(VisaInstrument):
                 about the status of the filw writing. Default: False.
         """
         if verbose:
-            print('Writing to:',
-                  self.ask('MMEMory:CDIRectory?').replace('\n', '\\ '),
-                  filename)
+            print(
+                "Writing to:",
+                self.ask("MMEMory:CDIRectory?").replace("\n", "\\ "),
+                filename,
+            )
         # Header indicating the name and size of the file being send
-        name_str = f'MMEMory:DATA "{filename}",'.encode('ASCII')
-        size_str = ('#' + str(len(str(len(awg_file)))) +
-                    str(len(awg_file))).encode('ASCII')
+        name_str = f'MMEMory:DATA "{filename}",'.encode("ASCII")
+        size_str = ("#" + str(len(str(len(awg_file)))) + str(len(awg_file))).encode(
+            "ASCII"
+        )
         mes = name_str + size_str + awg_file
         self.visa_handle.write_raw(mes)
 
@@ -1242,22 +1357,23 @@ class BK4060_AWG(VisaInstrument):
         """
         s = f'AWGControl:SREStore "{filename}"'
         b = s.encode(encoding="ASCII")
-        log.debug(f'Loading awg file using {s}')
+        log.debug(f"Loading awg file using {s}")
         self.visa_handle.write_raw(b)
         # we must update the appropriate parameter(s) for the sequence
         self.sequence_length.set(self.sequence_length.get())
 
     def make_awg_file(
-            self,
-            waveforms: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
-            m1s: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
-            m2s: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
-            nreps: Sequence[int],
-            trig_waits: Sequence[int],
-            goto_states: Sequence[int],
-            jump_tos: Sequence[int],
-            channels: Optional[Sequence[int]] = None,
-            preservechannelsettings: bool = True) -> bytes:
+        self,
+        waveforms: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
+        m1s: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
+        m2s: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
+        nreps: Sequence[int],
+        trig_waits: Sequence[int],
+        goto_states: Sequence[int],
+        jump_tos: Sequence[int],
+        channels: Optional[Sequence[int]] = None,
+        preservechannelsettings: bool = True,
+    ) -> bytes:
         """
         Args:
             waveforms: A list of the waveforms to be packed. The list
@@ -1301,11 +1417,13 @@ class BK4060_AWG(VisaInstrument):
                 the .awg file. Else, channel settings are not written in the
                 file and will be reset to factory default when the file is
                 loaded. Default: True.
-            """
+        """
         packed_wfs = {}
         waveform_names = []
         if not isinstance(waveforms[0], abc.Sequence):
-            waveforms_int: Sequence[Sequence[np.ndarray]] = [cast(Sequence[np.ndarray], waveforms)]
+            waveforms_int: Sequence[Sequence[np.ndarray]] = [
+                cast(Sequence[np.ndarray], waveforms)
+            ]
             m1s_int: Sequence[Sequence[np.ndarray]] = [cast(Sequence[np.ndarray], m1s)]
             m2s_int: Sequence[Sequence[np.ndarray]] = [cast(Sequence[np.ndarray], m2s)]
         else:
@@ -1322,34 +1440,40 @@ class BK4060_AWG(VisaInstrument):
                     thisname = f"wfm{jj + 1:03d}ch{channels[ii]}"
                 namelist.append(thisname)
 
-                package = self._pack_waveform(waveforms_int[ii][jj],
-                                              m1s_int[ii][jj],
-                                              m2s_int[ii][jj])
+                package = self._pack_waveform(
+                    waveforms_int[ii][jj], m1s_int[ii][jj], m2s_int[ii][jj]
+                )
 
                 packed_wfs[thisname] = package
             waveform_names.append(namelist)
 
-        wavenamearray = np.array(waveform_names, dtype='str')
+        wavenamearray = np.array(waveform_names, dtype="str")
 
         channel_cfg: Dict[str, Any] = {}
 
         return self._generate_awg_file(
-            packed_wfs, wavenamearray, nreps, trig_waits, goto_states,
-            jump_tos, channel_cfg,
-            preservechannelsettings=preservechannelsettings)
+            packed_wfs,
+            wavenamearray,
+            nreps,
+            trig_waits,
+            goto_states,
+            jump_tos,
+            channel_cfg,
+            preservechannelsettings=preservechannelsettings,
+        )
 
     def make_send_and_load_awg_file(
-            self,
-            waveforms: Sequence[Sequence[np.ndarray]],
-            m1s: Sequence[Sequence[np.ndarray]],
-            m2s: Sequence[Sequence[np.ndarray]],
-            nreps: Sequence[int],
-            trig_waits: Sequence[int],
-            goto_states: Sequence[int],
-            jump_tos: Sequence[int],
-            channels: Optional[Sequence[int]] = None,
-            filename: str = 'customawgfile.awg',
-            preservechannelsettings: bool = True
+        self,
+        waveforms: Sequence[Sequence[np.ndarray]],
+        m1s: Sequence[Sequence[np.ndarray]],
+        m2s: Sequence[Sequence[np.ndarray]],
+        nreps: Sequence[int],
+        trig_waits: Sequence[int],
+        goto_states: Sequence[int],
+        jump_tos: Sequence[int],
+        channels: Optional[Sequence[int]] = None,
+        filename: str = "customawgfile.awg",
+        preservechannelsettings: bool = True,
     ) -> None:
         """
         Makes an .awg-file, sends it to the AWG and loads it. The .awg-file
@@ -1404,32 +1528,40 @@ class BK4060_AWG(VisaInstrument):
 
         # waveform names and the dictionary of packed waveforms
         awg_file = self.make_awg_file(
-            waveforms, m1s, m2s, nreps, trig_waits,
-            goto_states, jump_tos, channels=channels,
-            preservechannelsettings=preservechannelsettings)
+            waveforms,
+            m1s,
+            m2s,
+            nreps,
+            trig_waits,
+            goto_states,
+            jump_tos,
+            channels=channels,
+            preservechannelsettings=preservechannelsettings,
+        )
 
         # by default, an unusable directory is targeted on the AWG
-        self.visa_handle.write('MMEMory:CDIRectory ' +
-                               '"C:\\Users\\OEM\\Documents"')
+        self.visa_handle.write("MMEMory:CDIRectory " + '"C:\\Users\\OEM\\Documents"')
 
         self.send_awg_file(filename, awg_file)
-        currentdir = self.visa_handle.query('MMEMory:CDIRectory?')
-        currentdir = currentdir.replace('"', '')
-        currentdir = currentdir.replace('\n', '\\')
-        loadfrom = f'{currentdir}{filename}'
+        currentdir = self.visa_handle.query("MMEMory:CDIRectory?")
+        currentdir = currentdir.replace('"', "")
+        currentdir = currentdir.replace("\n", "\\")
+        loadfrom = f"{currentdir}{filename}"
         self.load_awg_file(loadfrom)
 
-    def make_and_save_awg_file(self,
-                               waveforms: Sequence[Sequence[np.ndarray]],
-                               m1s: Sequence[Sequence[np.ndarray]],
-                               m2s: Sequence[Sequence[np.ndarray]],
-                               nreps: Sequence[int],
-                               trig_waits: Sequence[int],
-                               goto_states: Sequence[int],
-                               jump_tos: Sequence[int],
-                               channels: Optional[Sequence[int]] = None,
-                               filename: str = 'customawgfile.awg',
-                               preservechannelsettings: bool = True) -> None:
+    def make_and_save_awg_file(
+        self,
+        waveforms: Sequence[Sequence[np.ndarray]],
+        m1s: Sequence[Sequence[np.ndarray]],
+        m2s: Sequence[Sequence[np.ndarray]],
+        nreps: Sequence[int],
+        trig_waits: Sequence[int],
+        goto_states: Sequence[int],
+        jump_tos: Sequence[int],
+        channels: Optional[Sequence[int]] = None,
+        filename: str = "customawgfile.awg",
+        preservechannelsettings: bool = True,
+    ) -> None:
         """
         Makes an .awg-file and saves it locally.
 
@@ -1480,10 +1612,17 @@ class BK4060_AWG(VisaInstrument):
                 .awg extension. Default: 'customawgfile.awg'
         """
         awg_file = self.make_awg_file(
-            waveforms, m1s, m2s, nreps, trig_waits,
-            goto_states, jump_tos, channels=channels,
-            preservechannelsettings=preservechannelsettings)
-        with open(filename, 'wb') as fid:
+            waveforms,
+            m1s,
+            m2s,
+            nreps,
+            trig_waits,
+            goto_states,
+            jump_tos,
+            channels=channels,
+            preservechannelsettings=preservechannelsettings,
+        )
+        with open(filename, "wb") as fid:
             fid.write(awg_file)
 
     def get_error(self) -> str:
@@ -1495,13 +1634,10 @@ class BK4060_AWG(VisaInstrument):
             String containing the error/event number, the error/event
             description.
         """
-        return self.ask('SYSTEM:ERRor:NEXT?')
+        return self.ask("SYSTEM:ERRor:NEXT?")
 
     def _pack_waveform(
-            self,
-            wf: np.ndarray,
-            m1: np.ndarray,
-            m2: np.ndarray
+        self, wf: np.ndarray, m1: np.ndarray, m2: np.ndarray
     ) -> np.ndarray:
         """
         Converts/packs a waveform and two markers into a 16-bit format
@@ -1528,22 +1664,26 @@ class BK4060_AWG(VisaInstrument):
         """
 
         # Input validation
-        if (not((len(wf) == len(m1)) and (len(m1) == len(m2)))):
-            raise Exception('error: sizes of the waveforms do not match')
+        if not ((len(wf) == len(m1)) and (len(m1) == len(m2))):
+            raise Exception("error: sizes of the waveforms do not match")
         if np.min(wf) < -1 or np.max(wf) > 1:
-            raise TypeError('Waveform values out of bonds.' +
-                            ' Allowed values: -1 to 1 (inclusive)')
+            raise TypeError(
+                "Waveform values out of bonds." + " Allowed values: -1 to 1 (inclusive)"
+            )
         if not np.all(np.in1d(m1, np.array([0, 1]))):
-            raise TypeError('Marker 1 contains invalid values.' +
-                            ' Only 0 and 1 are allowed')
+            raise TypeError(
+                "Marker 1 contains invalid values." + " Only 0 and 1 are allowed"
+            )
         if not np.all(np.in1d(m2, np.array([0, 1]))):
-            raise TypeError('Marker 2 contains invalid values.' +
-                            ' Only 0 and 1 are allowed')
+            raise TypeError(
+                "Marker 2 contains invalid values." + " Only 0 and 1 are allowed"
+            )
 
         # Note: we use np.trunc here rather than np.round
         # as it is an order of magnitude faster
-        packed_wf = np.trunc(16384 * m1 + 32768 * m2
-                             + wf * 8191 + 8191.5).astype(np.uint16)
+        packed_wf = np.trunc(16384 * m1 + 32768 * m2 + wf * 8191 + 8191.5).astype(
+            np.uint16
+        )
 
         if len(np.where(packed_wf == -1)[0]) > 0:
             print(np.where(packed_wf == -1))
@@ -1554,11 +1694,8 @@ class BK4060_AWG(VisaInstrument):
     ###########################
 
     def _file_dict(
-            self,
-            wf: np.ndarray,
-            m1: np.ndarray,
-            m2: np.ndarray,
-            clock: Optional[float]) -> Dict[str, Union[np.ndarray, float, None]]:
+        self, wf: np.ndarray, m1: np.ndarray, m2: np.ndarray, clock: Optional[float]
+    ) -> Dict[str, Union[np.ndarray, float, None]]:
         """
         Make a file dictionary as used by self.send_waveform_to_list
 
@@ -1575,11 +1712,11 @@ class BK4060_AWG(VisaInstrument):
         """
 
         outdict = {
-            'w': wf,
-            'm1': m1,
-            'm2': m2,
-            'clock_freq': clock,
-            'numpoints': len(wf)
+            "w": wf,
+            "m1": m1,
+            "m2": m2,
+            "clock_freq": clock,
+            "numpoints": len(wf),
         }
 
         return outdict
@@ -1595,16 +1732,15 @@ class BK4060_AWG(VisaInstrument):
         of the instrument is ON, the state is turned OFF. If the
         channel is on, it will be switched off.
         """
-        self.write('WLISt:WAVeform:DELete ALL')
+        self.write("WLISt:WAVeform:DELete ALL")
 
     def get_filenames(self) -> str:
         """Duplicate of self.get_folder_contents"""
-        return self.ask('MMEMory:CATalog?')
+        return self.ask("MMEMory:CATalog?")
 
-    def send_DC_pulse(self,
-                      DC_channel_number: int,
-                      set_level: float,
-                      length: float) -> None:
+    def send_DC_pulse(
+        self, DC_channel_number: int, set_level: float, length: float
+    ) -> None:
         """
         Sets the DC level on the specified channel, waits a while and then
         resets it to what it was before.
@@ -1617,8 +1753,7 @@ class BK4060_AWG(VisaInstrument):
             length (float): The time to wait before resetting (s).
         """
         DC_channel_number -= 1
-        chandcs = [self.ch1_DC_out, self.ch2_DC_out, self.ch3_DC_out,
-                   self.ch4_DC_out]
+        chandcs = [self.ch1_DC_out, self.ch2_DC_out, self.ch3_DC_out, self.ch4_DC_out]
 
         restore = chandcs[DC_channel_number].get()
         chandcs[DC_channel_number].set(set_level)
@@ -1633,20 +1768,17 @@ class BK4060_AWG(VisaInstrument):
             True, irrespective of anything.
         """
         try:
-            self.ask('*OPC?')
+            self.ask("*OPC?")
         # makes the awg read again if there is a timeout
         except Exception as e:
             log.warning(e)
-            log.warning('AWG is not ready')
+            log.warning("AWG is not ready")
             self.visa_handle.read()
         return True
 
     def send_waveform_to_list(
-            self,
-            w: np.ndarray,
-            m1: np.ndarray,
-            m2: np.ndarray,
-            wfmname: str) -> None:
+        self, w: np.ndarray, m1: np.ndarray, m2: np.ndarray, wfmname: str
+    ) -> None:
         """
         Send a single complete waveform directly to the "User defined"
         waveform list (prepend it). The data type of the input arrays
@@ -1664,24 +1796,27 @@ class BK4060_AWG(VisaInstrument):
             TypeError: if the waveform contains values outside (-1, 1)
             TypeError: if the markers contain values that are not 0 or 1
         """
-        log.debug(f'Sending waveform {wfmname} to instrument')
+        log.debug(f"Sending waveform {wfmname} to instrument")
         # Check for errors
         dim = len(w)
 
         # Input validation
-        if (not((len(w) == len(m1)) and (len(m1) == len(m2)))):
-            raise Exception('error: sizes of the waveforms do not match')
+        if not ((len(w) == len(m1)) and (len(m1) == len(m2))):
+            raise Exception("error: sizes of the waveforms do not match")
         if min(w) < -1 or max(w) > 1:
-            raise TypeError('Waveform values out of bonds.' +
-                            ' Allowed values: -1 to 1 (inclusive)')
+            raise TypeError(
+                "Waveform values out of bonds." + " Allowed values: -1 to 1 (inclusive)"
+            )
         if (list(m1).count(0) + list(m1).count(1)) != len(m1):
-            raise TypeError('Marker 1 contains invalid values.' +
-                            ' Only 0 and 1 are allowed')
+            raise TypeError(
+                "Marker 1 contains invalid values." + " Only 0 and 1 are allowed"
+            )
         if (list(m2).count(0) + list(m2).count(1)) != len(m2):
-            raise TypeError('Marker 2 contains invalid values.' +
-                            ' Only 0 and 1 are allowed')
+            raise TypeError(
+                "Marker 2 contains invalid values." + " Only 0 and 1 are allowed"
+            )
 
-        self._values['files'][wfmname] = self._file_dict(w, m1, m2, None)
+        self._values["files"][wfmname] = self._file_dict(w, m1, m2, None)
 
         # if we create a waveform with the same name but different size,
         # it will not get over written
@@ -1694,17 +1829,18 @@ class BK4060_AWG(VisaInstrument):
         s = f'WLISt:WAVeform:NEW "{wfmname}",{dim:d},INTEGER'
         self.write(s)
         # Prepare the data block
-        number = ((2**13 - 1) + (2**13 - 1) * w + 2**14 *
-                  np.array(m1) + 2**15 * np.array(m2))
-        number = number.astype('int')
-        ws_array = arr.array('H', number)
+        number = (
+            (2**13 - 1) + (2**13 - 1) * w + 2**14 * np.array(m1) + 2**15 * np.array(m2)
+        )
+        number = number.astype("int")
+        ws_array = arr.array("H", number)
 
         ws = ws_array.tobytes()
         s1_str = f'WLISt:WAVeform:DATA "{wfmname}",'
-        s1 = s1_str.encode('UTF-8')
+        s1 = s1_str.encode("UTF-8")
         s3 = ws
-        s2_str = '#' + str(len(str(len(s3)))) + str(len(s3))
-        s2 = s2_str.encode('UTF-8')
+        s2_str = "#" + str(len(str(len(s3)))) + str(len(s3))
+        s2 = s2_str.encode("UTF-8")
 
         mes = s1 + s2 + s3
         self.visa_handle.write_raw(mes)

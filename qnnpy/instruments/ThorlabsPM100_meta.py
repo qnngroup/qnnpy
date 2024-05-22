@@ -2,6 +2,7 @@ import visa
 from ThorlabsPM100 import ThorlabsPM100
 from time import sleep
 
+
 class ThorlabsPM100Meta(ThorlabsPM100):
     def __init__(self, USB_address, verbose=False):
         rm = visa.ResourceManager()
@@ -14,7 +15,8 @@ class ThorlabsPM100Meta(ThorlabsPM100):
 
     def set_wavelength(self, wavelength):
         self.sense.correction.wavelength = wavelength
-        #wavelength in nm
+        # wavelength in nm
+
     def read_value(self):
         # stable = False
         # while not stable:
@@ -23,7 +25,5 @@ class ThorlabsPM100Meta(ThorlabsPM100):
         #     value1 = self.read
         #     if (value1 - value)/value < 1e-2
         #         stable = True
-        self.sense.average.count=10
+        self.sense.average.count = 10
         return self.read
-            
-
