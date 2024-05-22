@@ -1,16 +1,14 @@
 # %%
+import sys
 from time import sleep
+
 import numpy as np
 from matplotlib import pyplot as plt
-import os, sys
 
 sys.path.append(r"Q:\qnnpy")
 
-from datetime import datetime
-import scipy.io as sio
-
-import qnnpy.functions.functions as qf
 import qnnypy.functions.resonators as Resonators
+import scipy.io as sio
 
 # import library
 from measurement.ic_sweep import *

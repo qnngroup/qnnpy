@@ -7,8 +7,9 @@ Consider deleting if not needed.
 # import time
 # from datetime import datetime
 
-import numpy as np
 import nidaqmx
+import numpy as np
+
 # from nidaqmx.constants import TaskMode
 # import yaml
 

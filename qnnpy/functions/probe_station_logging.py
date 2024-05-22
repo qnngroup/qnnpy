@@ -5,16 +5,12 @@ Created on Mon Jan 23 10:38:22 2023
 @author: omedeiro
 """
 
-from time import sleep
-import pyvisa
 import sys
+from time import sleep
 
 sys.path.append(r"Q:\qnnpy")
-import qnnpy
-import qnnpy.functions.snspd as snspd
 import qnnpy.functions.functions as qf
 from qnnpy.instruments.lakeshore336 import Lakeshore336
-
 
 while True:
     ls1 = Lakeshore336("GPIB0::12::INSTR")

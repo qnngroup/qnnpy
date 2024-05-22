@@ -1,7 +1,4 @@
 import pyvisa
-import numpy as np
-from time import sleep
-from matplotlib import pyplot as plt
 
 
 class SGS100A(object):

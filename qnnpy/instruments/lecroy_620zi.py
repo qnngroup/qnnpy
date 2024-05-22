@@ -1,10 +1,9 @@
-import pyvisa
-import numpy as np
-import time
-import scipy.io
-from time import sleep
 import datetime
-import os
+import time
+from time import sleep
+
+import numpy as np
+import pyvisa
 
 
 class LeCroy620Zi(object):

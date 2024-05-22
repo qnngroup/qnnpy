@@ -1,6 +1,7 @@
-import pyvisa
 from time import sleep
+
 import numpy as np
+import pyvisa
 
 
 class KeysightN5224a(object):

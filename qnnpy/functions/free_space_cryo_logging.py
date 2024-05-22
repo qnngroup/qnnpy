@@ -5,21 +5,19 @@ Created on Thu Feb  2 16:27:34 2023
 @author: emmabat
 """
 
-import csv
-import time
-from datetime import datetime, timedelta
-import mariadb
-from numpy import array
-from pathlib import Path
 import re
 import sys
 
+import mariadb
+
 sys.path.append(r"Q:\qnnpy")
-import qnnpy.functions.functions as qf
-import serial
-from qnnpy.instruments.cryocon34 import Cryocon34
-from time import sleep
 import logging
+from time import sleep
+
+import serial
+
+import qnnpy.functions.functions as qf
+from qnnpy.instruments.cryocon34 import Cryocon34
 
 """
 Python log levels:

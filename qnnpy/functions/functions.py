@@ -5,27 +5,26 @@ Created on Thu May  7 10:16:58 2020
 @author: omedeiro
 """
 
-from matplotlib import pyplot as plt
-import matplotlib.animation as animation
-import yaml
-import os
-import logging
-import datetime as dt
-from datetime import datetime
-import scipy.io
-import re
-import numpy as np
-import mariadb
-import sys
-from time import sleep
-import time
-
 import csv
+import datetime as dt
+import logging
+import os
+import re
+import sys
+import time
+from datetime import datetime
 from enum import Enum
+from time import sleep
 from typing import List
 
+import mariadb
+import numpy as np
+import scipy.io
+import yaml
+from matplotlib import pyplot as plt
+
 if sys.platform == "win32":
-    import winshell, win32com.client
+    import win32com.client
 
 ###############################################################################
 # Plotting
@@ -215,7 +214,7 @@ class LivePlotter:
             name: str = time.strftime(
                 f"plot_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
-        elif not "." in name:
+        elif "." not in name:
             name = f"{name}.{file_type}"
         self.fig.savefig(f"{path}{os.sep}{name}")
 
@@ -1076,8 +1075,6 @@ class Instruments:
         self.instrument_list.append("Attenuator" + appender)
 
         if properties[f"Attenuator{appender}"]["name"] == "JDSHA9":
-            from qnnpy.instruments.jds_ha9 import JDSHA9
-
             try:
                 exec(
                     f"self.attenuator{appender} = JDSHA9(properties['Attenuator{appender}']['port'])"
@@ -1090,8 +1087,6 @@ class Instruments:
             except:
                 print(f"ATTENUATOR{appender}: failed to connect")
         elif properties[f"Attenuator{appender}"]["name"] == "N7752A":
-            from qnnpy.instruments.keysight_n7752a import N7752A
-
             try:
                 exec(
                     f"self.attenuator{appender} = N7752A(properties['Attenuator{appender}']['port'])"
@@ -1117,8 +1112,6 @@ class Instruments:
             appender = ""
         self.instrument_list.append("Counter" + appender)
         if properties[f"Counter{appender}"]["name"] == "Agilent53131a":
-            from qnnpy.instruments.agilent_53131a import Agilent53131a
-
             try:
                 exec(
                     f"self.counter{appender} = Agilent53131a(properties['Counter{appender}']['port'])"
@@ -1136,8 +1129,6 @@ class Instruments:
             except:
                 print(f"COUNTER{appender}: failed to connect")
         elif properties[f"Counter{appender}"]["name"] == "Keysight53230a":
-            from qnnpy.instruments.keysight_53230a import Keysight53230a
-
             try:
                 exec(
                     f"self.counter{appender} = Keysight53230a(properties['Counter{appender}']['port'])"
@@ -1166,8 +1157,6 @@ class Instruments:
         self.instrument_list.append("Scope" + appender)
 
         if properties[f"Scope{appender}"]["name"] == "LeCroy620Zi":
-            from qnnpy.instruments.lecroy_620zi import LeCroy620Zi
-
             try:
                 if properties[f"Scope{appender}"]["port"][0:3] == "USB":
                     exec(
@@ -1185,8 +1174,6 @@ class Instruments:
                 print(f"SCOPE{appender}: failed to connect")
 
         elif properties[f"Scope{appender}"]["name"] == "KeysightDSOX":
-            from qnnpy.instruments.keysight_dsox import KeysightDSOX
-
             try:
                 exec(
                     f"self.scope{appender} = KeysightDSOX('%s' % properties['Scope{appender}']['port'])"
@@ -1208,8 +1195,6 @@ class Instruments:
         self.instrument_list.append("Meter" + appender)
 
         if properties[f"Meter{appender}"]["name"] == "Keithley2700":
-            from qnnpy.instruments.keithley_2700 import Keithley2700
-
             try:
                 exec(
                     f"self.meter{appender} = Keithley2700(properties['Meter{appender}']['port'])"
@@ -1223,7 +1208,6 @@ class Instruments:
 
         elif properties[f"Meter{appender}"]["name"] == "Keithley2400":
             # this is a source meter
-            from qnnpy.instruments.keithley_2400 import Keithley2400
 
             try:
                 exec(
@@ -1237,8 +1221,6 @@ class Instruments:
                 # exec(f"self.meter{appender} = mock_builder(YokogawaGS200)")
 
         elif properties[f"Meter{appender}"]["name"] == "Keithley2001":
-            from qnnpy.instruments.keithley_2001 import Keithley2001
-
             try:
                 exec(
                     f"self.meter{appender} = Keithley2001(properties['Meter{appender}']['port'])"
@@ -1264,8 +1246,6 @@ class Instruments:
         self.instrument_list.append("Source" + appender)
 
         if properties[f"Source{appender}"]["name"] == "SIM928":
-            from qnnpy.instruments.srs_sim928 import SIM928
-
             try:
                 exec(
                     f"self.source{appender} = SIM928(properties['Source{appender}']['port'], properties['Source{appender}']['port_alt'])"
@@ -1278,8 +1258,6 @@ class Instruments:
                 print(f"SOURCE{appender}: failed to connect")
                 # exec(f"self.source{appender} = mock_builder(SIM928)")
         elif properties[f"Source{appender}"]["name"] == "YokogawaGS200":
-            from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
-
             try:
                 exec(
                     f"self.source{appender} = YokogawaGS200(properties['Source{appender}']['port'])"
@@ -1293,8 +1271,6 @@ class Instruments:
                 print(f"SOURCE{appender}: failed to connect")
                 # exec(f"self.source{appender} = mock_builder(YokogawaGS200)")
         elif properties[f"Source{appender}"]["name"] == "Keithley2400":
-            from qnnpy.instruments.keithley_2400 import Keithley2400
-
             try:
                 exec(
                     f"self.source{appender} = Keithley2400(properties['Source{appender}']['port'])"
@@ -1320,8 +1296,6 @@ class Instruments:
         self.instrument_list.append("Sourcemeter" + appender)
 
         if properties[f"Sourcemeter{appender}"]["name"] == "KeysightB2912a":
-            from qnnpy.instruments.keysight_b2912a import KeysightB2912a
-
             try:
                 # exec(f"self.sourcemeter{appender} = KeysightB2912a(properties['Sourcemeter{appender}']['port'], properties['Sourcemeter{appender}']['port_alt'])")
                 exec(
@@ -1351,8 +1325,6 @@ class Instruments:
         self.instrument_list.append("AWG" + appender)
 
         if properties["AWG" + appender]["name"] == "Agilent33250a":
-            from qnnpy.instruments.agilent_33250a import Agilent33250a
-
             try:
                 exec(
                     f"self.awg{appender} = Agilent33250a(properties['AWG{appender}']['port'])"
@@ -1363,8 +1335,6 @@ class Instruments:
             except:
                 print(f"AWG{appender}: failed to connect")
         elif properties["AWG" + appender]["name"] == "Agilent33600a":
-            from qnnpy.instruments.agilent_33600a import Agilent33600a
-
             try:
                 exec(
                     f"self.awg{appender} = Agilent33600a(properties['AWG{appender}']['port'])"
@@ -1391,8 +1361,6 @@ class Instruments:
         self.instrument_list.append("VNA" + appender)
 
         if properties["VNA" + appender]["name"] == "KeysightN5224a":
-            from qnnpy.instruments.keysight_n5224a import KeysightN5224a
-
             try:
                 exec(
                     f"VNA{appender} = KeysightN5224a(properties['VNA{appender}']['port'])"
@@ -1418,8 +1386,6 @@ class Instruments:
         self.instrument_list.append("Temperature" + appender)
 
         if properties["Temperature"]["name"] == "Lakeshore336":
-            from qnnpy.instruments.lakeshore336 import Lakeshore336
-
             try:
                 exec(
                     f"self.temp{appender} = Lakeshore336(properties['Temperature{appender}']['port'])"
@@ -1443,8 +1409,6 @@ class Instruments:
                 print(e)
 
         elif properties["Temperature" + appender]["name"] == "Cryocon34":
-            from qnnpy.instruments.cryocon34 import Cryocon34
-
             try:
                 exec(
                     f"self.temp{appender} = Cryocon34(properties['Temperature{appender}']['port'])"
@@ -1580,7 +1544,7 @@ class Data:
             name: str = time.strftime(
                 f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
-        elif not "." in name:
+        elif "." not in name:
             name = f"{name}.{file_type}"
         if path == None:
             self.save_loc = name
@@ -1729,7 +1693,7 @@ class Data:
         """
         if path == None and name == None and file_type == "csv":
             path = self.save_loc
-        if path != None and not os.sep in path:
+        if path != None and os.sep not in path:
             name = path
             path = None
         if path != None:
@@ -1745,7 +1709,7 @@ class Data:
             name: str = time.strftime(
                 f"data_%Y-%m-%d_%H-%M-%S.{file_type}", time.gmtime()
             )
-        elif not "." in name:
+        elif "." not in name:
             name = f"{name}.{file_type}"
         if path == None:
             path = ""

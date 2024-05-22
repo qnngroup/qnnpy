@@ -1,6 +1,7 @@
-from matplotlib import pyplot as plt
-import scipy.io
 import datetime
+
+import scipy.io
+from matplotlib import pyplot as plt
 
 
 def save_plot(

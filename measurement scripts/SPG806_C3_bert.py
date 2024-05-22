@@ -16,18 +16,17 @@ import sys
 
 sys.path.append(r"Q:\qnnpy")
 import numpy as np
-import qnnpy.functions.snspd as snspd
-import qnnpy.functions.ntron as nt
-from qnnpy.instruments.lakeshore336 import Lakeshore336
+
 import qnnpy.functions.functions as qf
+import qnnpy.functions.ntron as nt
 
 config = r"S:\SC\Measurements\SPG806\SPG806_config.yml"
 
+import random
 import time
 from time import sleep
 
 from matplotlib import pyplot as plt
-import random
 
 # %% CREATE WAVEFORMS
 plt.close()

@@ -71,7 +71,7 @@ def look_for_max(axis = 2, starting_direction = 0, starting_steps = 10, voltage 
 #    if pm.get_power()<1e-7:
 #        print('signal too low')
 #        return 0,0,0
-    move_direction=[]; steps=[]; powers = []; 
+    move_direction=[]; steps=[]; powers = [] 
     move_direction.append(starting_direction)
     steps.append(starting_steps)
     direction_option = ['up', 'down'] #0 is up, 1 is down.

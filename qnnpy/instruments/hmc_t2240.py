@@ -6,8 +6,6 @@ Created on Fri Dec 27 12:16:08 2019
 """
 
 import pyvisa
-from time import sleep
-import numpy as np
 
 
 class TMC_T2240(object):

@@ -1,16 +1,14 @@
 # Written by Adam McCaughan Jan 17, 2014
 # Run add_path.py first
 
-import numpy as np
-import time
 import os
-import scipy.io
 from datetime import datetime
-from matplotlib import pyplot as plt
 
 # import cPickle as pickle
 import matplotlib.cm as cm
-import zipfile
+import numpy as np
+import scipy.io
+from matplotlib import pyplot as plt
 
 
 def save_xy_vs_param(

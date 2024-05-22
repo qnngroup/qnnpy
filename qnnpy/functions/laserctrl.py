@@ -6,15 +6,13 @@ Consider deleting if not needed.
 
 import os
 import time
-from datetime import datetime
 
-import numpy as np
 import nidaqmx
+import numpy as np
 from nidaqmx.constants import TaskMode
-import yaml
 
-import sys
 from ..santec_tsl import SantecTSL
+
 # import ..models.modeltools as modeltools
 
 

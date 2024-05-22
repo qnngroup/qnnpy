@@ -1,5 +1,5 @@
-import pyvisa
 import numpy as np
+import pyvisa
 
 
 # the commonds can be found in the following link
@@ -103,9 +103,9 @@ class Agilent33600a(object):
         self.write("SOUR%1.0d:PHAS %0.3e" % (channel, phase))
 
     def set_dc(self, ch="Ch1", voffset=0):
-        if ch is "Ch1":
+        if ch == "Ch1":
             channel = 1
-        elif ch is "Ch2":
+        elif ch == "Ch2":
             channel = 2
 
         self.write("SOUR%1.0d:APPL:DC" % (channel))

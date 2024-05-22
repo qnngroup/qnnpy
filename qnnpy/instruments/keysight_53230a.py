@@ -1,7 +1,7 @@
-import pyvisa
-import numpy as np
 from time import sleep
-from matplotlib import pyplot as plt
+
+import numpy as np
+import pyvisa
 
 
 class Keysight53230a(object):

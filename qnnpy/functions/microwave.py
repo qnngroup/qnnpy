@@ -5,10 +5,11 @@ Created on Tue Oct 27 16:40:17 2020
 @author: omedeiro
 """
 
-import qnnpy.functions.functions as qf
-import time
 from time import sleep
+
 import numpy as np
+
+import qnnpy.functions.functions as qf
 
 
 class Microwave:

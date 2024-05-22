@@ -1,6 +1,4 @@
 import pyvisa
-import numpy as np
-import time
 
 
 class HP8157A(object):

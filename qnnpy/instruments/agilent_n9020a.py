@@ -1,6 +1,7 @@
-import pyvisa
-import numpy as np
 from time import sleep
+
+import numpy as np
+import pyvisa
 
 
 class N9020A(object):

@@ -5,12 +5,14 @@ Created on Wed May  6 17:21:25 2020
 @author: omedeiro
 """
 
-import qnnpy.functions.functions as qf
-import time
-from time import sleep
-import numpy as np
 import signal
+import time
 from sys import exit
+from time import sleep
+
+import numpy as np
+
+import qnnpy.functions.functions as qf
 
 
 class Snspd:

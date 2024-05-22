@@ -152,10 +152,10 @@ sleep(1)
 DCR = count_rate_curve(currents, counting_time = counting_time)
 
 #photon rate calculation
-hbar = 1.05457e-34;
-lmd = 1550e-9;
-c = 299792458;
-Eph = hbar*2*np.pi*c/lmd;
+hbar = 1.05457e-34
+lmd = 1550e-9
+c = 299792458
+Eph = hbar*2*np.pi*c/lmd
 
 # Turn on laser, measure laser count curve (LCR)
 extra_attenuation = 0
@@ -262,7 +262,7 @@ file_path, file_name  = save_data_dict(data_dict, test_type = 'Linearity_check',
 plt.figure(1)
 plt.title('Linearity check\n' + test_name)
 #plt.subplot(311)
-plt.semilogy(db_attenuation, np.array(lcr_list)-dcr,'o');
+plt.semilogy(db_attenuation, np.array(lcr_list)-dcr,'o')
 #plt.legend(loc='upper left')
 plt.xlabel('attenuation (db)'); plt.ylabel('Counts (Hz)')
 #plt.subplot(312)
@@ -291,10 +291,10 @@ counting_time = 0.5
 extra_attenuation = 20
 
 
-hbar = 1.05457e-34;
-lmd = 1550e-9;
-c = 299792458;
-Eph = hbar*2*pi*c/lmd;
+hbar = 1.05457e-34
+lmd = 1550e-9
+c = 299792458
+Eph = hbar*2*pi*c/lmd
 
 attenuator.set_beam_block(True)
 sleep(10)

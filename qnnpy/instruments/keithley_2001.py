@@ -1,5 +1,6 @@
-import pyvisa
 from enum import Enum, auto
+
+import pyvisa
 
 
 class MeasType(Enum):

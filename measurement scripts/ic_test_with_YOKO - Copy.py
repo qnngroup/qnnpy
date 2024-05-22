@@ -1,22 +1,16 @@
 import sys
-import os
 
 sys.path.append("Q:\qnnpy")
 
 
-from qnnpy.instruments.keithley_2700 import Keithley2700
-from qnnpy.instruments.keithley_2001 import Keithley2001
-from qnnpy.instruments.srs_sim928 import SIM928
-from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
-
-from qnnpy.functions.save_data_vs_param import *
+from time import sleep
 
 # import visa
 import numpy as np
 from matplotlib import pyplot as plt
-from time import sleep
-import numpy as np
 
+from qnnpy.functions.save_data_vs_param import *
+from qnnpy.instruments.keithley_2700 import Keithley2700
 
 #########################################
 ### Connect to instruments

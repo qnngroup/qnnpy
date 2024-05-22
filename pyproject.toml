@@ -1,5 +1,6 @@
 [tool.ruff]
 lint.ignore = ["F841", "E731", "E501"]
+extend-select = ["I"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

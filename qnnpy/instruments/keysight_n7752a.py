@@ -5,10 +5,9 @@ Created on Wed Mar  9 16:12:41 2022
 @author: omedeiro
 """
 
-import pyvisa
-import numpy as np
-import time
 from enum import Enum
+
+import pyvisa
 
 
 class PowerUnit(Enum):

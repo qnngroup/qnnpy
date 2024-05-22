@@ -5,9 +5,10 @@ Created on Fri Dec 27 2019
 @author: dizhu
 """
 
-import pyvisa
 from time import sleep
+
 import numpy as np
+import pyvisa
 
 
 class AQ6370(object):

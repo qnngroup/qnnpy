@@ -4,9 +4,8 @@ Created on Feb 26, 2020
 @author: dizhu
 """
 
-import pyvisa
-from time import sleep
 import numpy as np
+import pyvisa
 
 
 class RSA5126A(object):

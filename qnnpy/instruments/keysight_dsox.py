@@ -5,8 +5,8 @@ Created on Tue Mar 28 09:40:21 2023
 @author: QNN
 """
 
-import pyvisa
 import numpy as np
+import pyvisa
 
 
 # the commonds can be found in the following link

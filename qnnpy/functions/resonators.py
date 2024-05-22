@@ -1,7 +1,8 @@
-import qnnpy.functions.functions as qf
-import numpy as np
 from time import sleep
 
+import numpy as np
+
+import qnnpy.functions.functions as qf
 
 # note: instrument libraries are imported within the class as needed from config file
 

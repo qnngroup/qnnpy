@@ -5,11 +5,9 @@ Created on Tue Jun 16 12:50:01 2020
 @author: omedeiro & emmabat
 """
 
-from typing_extensions import ParamSpecKwargs
-import qnnpy.functions.functions as qf
-import os
-import sys
 from time import sleep
+
+import qnnpy.functions.functions as qf
 
 
 class TcMeasurement:

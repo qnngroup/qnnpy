@@ -1,13 +1,13 @@
 import csv
+import sys
 
 # import schedule
 import time
-from datetime import datetime, timedelta
-import mariadb
-from numpy import array
+from datetime import datetime
 from pathlib import Path
 
-import sys
+import mariadb
+from numpy import array
 
 sys.path.append(r"Q:\qnnpy")
 import qnnpy.functions.functions as qf

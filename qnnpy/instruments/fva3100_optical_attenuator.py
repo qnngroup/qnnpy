@@ -1,6 +1,6 @@
-import pyvisa
-import numpy as np
 import time
+
+import pyvisa
 
 
 class FVA3100(object):

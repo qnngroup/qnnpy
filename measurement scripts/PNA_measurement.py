@@ -1,12 +1,10 @@
 # %%
 import sys
-import os
 
 sys.path.append("/Users/dizhu/Documents/github_repo/qnn-lab-instr-python")
 
 from qnnpy.functions.save_data_vs_param import *
 from qnnpy.instruments.keysight_n5224a import KeysightN5224a
-
 
 # %%
 # connect PNA

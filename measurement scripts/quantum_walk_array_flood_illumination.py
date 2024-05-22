@@ -95,10 +95,10 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
     """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
     0 if unused"""
     num_ch = len(channels)
-    x1list = []; y1list = [];
-    x2list = []; y2list = [];
-    x3list = []; y3list = [];
-    x4list = []; y4list = [];
+    x1list = []; y1list = []
+    x2list = []; y2list = []
+    x3list = []; y3list = []
+    x4list = []; y4list = []
     q = 0 #number of not useless points
     for i in range(num_traces):
         try:
@@ -140,7 +140,7 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
                     q = q+1
                     print('Not useful'),
                     x1list.pop();y1list.pop(); x2list.pop(); y2list.pop()
-                    x3list.pop(); y3list.pop();
+                    x3list.pop(); y3list.pop()
                     continue
             if i%100 == 0:
                 print(i),

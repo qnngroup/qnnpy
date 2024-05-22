@@ -1,6 +1,5 @@
 import visa
 from ThorlabsPM100 import ThorlabsPM100
-from time import sleep
 
 
 class ThorlabsPM100Meta(ThorlabsPM100):

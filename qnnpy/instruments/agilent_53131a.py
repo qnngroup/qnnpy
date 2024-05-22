@@ -1,6 +1,7 @@
-import pyvisa
-import numpy as np
 import time
+
+import numpy as np
+import pyvisa
 
 
 class Agilent53131a(object):

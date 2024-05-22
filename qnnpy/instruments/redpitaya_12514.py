@@ -6,12 +6,6 @@ Created on Thu Feb 10 15:02:29 2022
 """
 
 import visa
-import numpy as np
-import time
-import scipy.io
-from time import sleep
-import datetime
-import os
 
 
 class RedPitaya(object):

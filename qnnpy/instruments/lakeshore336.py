@@ -5,7 +5,6 @@ Created on Mon Jan 23 10:39:04 2023
 @author: QNN
 """
 
-from time import sleep
 import pyvisa
 
 LAKESHORE_MODE_MAP = {

@@ -1,6 +1,4 @@
 import pyvisa
-from time import sleep
-import numpy as np
 
 
 class AgilentE5061B(object):

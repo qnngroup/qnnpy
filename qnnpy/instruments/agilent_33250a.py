@@ -1,5 +1,5 @@
-import pyvisa
 import numpy as np
+import pyvisa
 
 
 class Agilent33250a(object):

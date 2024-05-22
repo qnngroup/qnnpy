@@ -4,18 +4,11 @@ import sys
 
 sys.path.append(r"Q:\qnnpy\qnnpy")
 
-from instruments.lecroy_620zi import LeCroy620Zi
-from instruments.agilent_33250a import Agilent33250a
-from instruments.keithley_2400 import Keithley2400
-from instruments.srs_sim928 import SIM928
-import visa
-import numpy as np
 import time
-import datetime
+
+import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import fmin
-import scipy.io
-import cPickle as pickle
 
 
 def setup_ic_measurement(

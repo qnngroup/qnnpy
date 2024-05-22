@@ -12,14 +12,13 @@ controller
 
 """
 
-import sys
-import os
-import numpy as np
 import datetime
-from time import sleep
-from matplotlib import pyplot as plt
-import scipy.io
+import os
+import sys
 
+import numpy as np
+import scipy.io
+from matplotlib import pyplot as plt
 
 path = r"S:\SC\InstrumentLogging\Cryogenics\Ice\_copy_of_ice_log\Results"
 

@@ -5,10 +5,12 @@ Created on Mon Aug 24 17:42:10 2020
 @author: omedeiro
 """
 
-import qnnpy.functions.functions as qf
 import time
 from time import sleep
+
 import numpy as np
+
+import qnnpy.functions.functions as qf
 
 
 class nTron:

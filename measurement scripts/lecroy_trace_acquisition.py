@@ -124,8 +124,8 @@ def my_get_single_trace_sequence(channel = 'C1',NumSegments= 1000):
             #SRS.set_output(True)
     x,y = lecroy.get_wf_data(channel=channel)
     interval=abs(x[0]-x[1])
-    xlist=[];
-    ylist=[];
+    xlist=[]
+    ylist=[]
     totdp=np.int(np.size(x)/NumSegments)
     for j in range(NumSegments):
         
@@ -137,10 +137,10 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
     """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
     0 if unused"""
     num_ch = len(channels)
-    x1list = []; y1list = [];
-    x2list = []; y2list = [];
-    x3list = []; y3list = [];
-    x4list = []; y4list = [];
+    x1list = []; y1list = []
+    x2list = []; y2list = []
+    x3list = []; y3list = []
+    x4list = []; y4list = []
     q = 0 #number of not useless points
     for i in range(num_traces):
         try:
@@ -214,10 +214,10 @@ def save_traces_multiple_sequence(channels = ['C1', 'C2'], num_traces = 20, NumS
     """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
     0 if unused"""
     num_ch = len(channels)
-    x1list = []; y1list = [];
-    x2list = []; y2list = [];
-    x3list = []; y3list = [];
-    x4list = []; y4list = [];
+    x1list = []; y1list = []
+    x2list = []; y2list = []
+    x3list = []; y3list = []
+    x4list = []; y4list = []
     q = 0 #number of not useless points
     for i in range(num_traces):
         print('Trace %d of %d' % (i, num_traces))

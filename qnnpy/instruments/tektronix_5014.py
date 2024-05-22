@@ -6,7 +6,6 @@ Created on Thu Mar 31 22:19:54 2022
 """
 
 import pyvisa
-import numpy as np
 
 
 class Tektronix5014(object):

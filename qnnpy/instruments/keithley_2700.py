@@ -1,5 +1,6 @@
-import pyvisa
 from enum import Enum
+
+import pyvisa
 
 
 class MeasFunction(Enum):

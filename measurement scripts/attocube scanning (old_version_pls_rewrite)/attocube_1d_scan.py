@@ -1,6 +1,6 @@
 # standard testing for SNSPD
-import sys
 import os
+import sys
 
 # on my Mac
 # snspd_measurement_code_dir = r'/Users/dizhu/Desktop/python code for SNSPD measurement/snspd-measurement-code'
@@ -17,17 +17,16 @@ if snspd_measurement_code_dir not in sys.path:
     sys.path.append(dir3)
 
 # import library
-from measurement.ic_sweep import *
-from useful_functions.save_data_vs_param import *
-from instruments.ThorlabsPM100_meta import *
-from keithley_2700 import *
-import visa
+from datetime import datetime
+
 import numpy as np
-from matplotlib import pyplot as plt
-from time import sleep
 import u6
 from attocube_anc150 import *
-from datetime import datetime
+from instruments.ThorlabsPM100_meta import *
+from keithley_2700 import *
+from matplotlib import pyplot as plt
+from measurement.ic_sweep import *
+from useful_functions.save_data_vs_param import *
 
 d = u6.U6()
 # d.streamStop()

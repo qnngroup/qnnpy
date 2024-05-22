@@ -6,16 +6,14 @@ Created on Fri Dec 27 12:21:00 2019
 """
 
 # %%
-import pyvisa
 import sys
-from time import sleep
-import numpy as np
+
 import matplotlib.pyplot as plt
+import pyvisa
 
 sys.path.append(r"C:\Users\dizhu\Desktop\GitHub\qnn-lab-instr-python")
 
 from qnnpy.instruments.yokogawa_aq6370 import AQ6370
-
 
 rm = pyvisa.ResourceManager()
 rm.list_resources()

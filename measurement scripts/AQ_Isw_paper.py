@@ -75,10 +75,10 @@ def save_traces_multiple(channels = ['C1', 'C2'], num_traces = 20, threshold = [
     """save multiple traces multiple times, threshold is set for each channel to eliminate false counts (set to )
     0 if unused"""
     num_ch = len(channels)
-    x1list = []; y1list = [];
-    x2list = []; y2list = [];
-    x3list = []; y3list = [];
-    x4list = []; y4list = [];
+    x1list = []; y1list = []
+    x2list = []; y2list = []
+    x3list = []; y3list = []
+    x4list = []; y4list = []
     q = 0 #number of not useless points
     for i in range(num_traces):
         try:
@@ -161,8 +161,8 @@ fpath = r'C:\Users\ICE\Desktop\Di Zhu ICE Oxford\data\20191222_isw_ramp_rate_AQ'
 
 
 #%%
-Isw = 27e-6;
-Rb = 100e3;
+Isw = 27e-6
+Rb = 100e3
 
 freq = 200
 #vpp = Isw*Rb*(1+2*.9)

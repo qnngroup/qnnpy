@@ -6,8 +6,6 @@ Created on Feb 26, 2020
 """
 
 import pyvisa
-from time import sleep
-import numpy as np
 
 
 class HP83711B(object):
