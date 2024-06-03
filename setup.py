@@ -10,7 +10,7 @@ setup(
     author_email="omedeiro@mit.edu",
     description="The QNN library for instrument control",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     url="https://github.com/qnngroup/qnnpy",
     packages=find_packages(),
     classifiers=[
