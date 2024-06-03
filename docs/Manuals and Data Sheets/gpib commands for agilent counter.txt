@@ -1,0 +1,36 @@
+GPIP Commands
+
+# This is all assuming channel 1
+*CAL? # Initiates self-calibration.  A value of zero indicates it completed without error
+*RST
+*CLS
+
+:EVEN:LEV:AUTO OFF # Turn off auto trigger level
+:SENS:EVEN:LEV 0.075V
+:EVEN:HYST:REL 0 
+:SLOP NEG # Or POS. Trigger on negative slope
+:INP:COUP AC # Or DC.  Input coupling
+:INP:IMP 50 # Set input impedance to 50ohms
+:INP:FILT OFF # Turn off 100kHz lowpass filter
+:FUNC:TOT 1
+:TOT:ARM:STAR:SOUR IMM # Set start source to immediate (run on command)
+:TOT:ARM:STOP:SOUR TIM # Set stop source to time (wait certain time)
+TIM 2
+
+:READ?
+
+# CONF:FREQ # Configure for frequency measurement
+# :START:EXT # Or AUTO. Start on external trigger
+# :TRIG:COUNT:AUTO 1 # Sets trigger to take a set number of measurements when :INIT:IMM is performed
+# :INP:ATT 1 # Or 10. Set attenuation factor
+
+# STAR:SOUR IMM
+# STOP:SOUR TIM
+
+:CALC3:AVERAGE ON
+:CALC3:AVERAGE:COUNT 50 # Base statistics on 50 measurements
+:INIT:IMM # Run measurement
+
+:CALC3:AVERAGE:ALL
+
+:READ?
