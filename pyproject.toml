@@ -6,8 +6,9 @@ lint.extend-select = ["I"]
 convention = "google"
 
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
 
 [project]
 name = "qnnpy"
