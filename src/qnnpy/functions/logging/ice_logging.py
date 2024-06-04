@@ -1,17 +1,15 @@
 import csv
 import sys
-import os
-import atexit 
-import logging
-import signal
 import time
 from datetime import datetime
 from pathlib import Path
 
 import mariadb
 from numpy import array
+
 sys.path.append(r"Q:\qnnpy")
 import qnnpy.functions.functions as qf
+
 
 def load_data_to_database(filename: str, table_name: str, connection=None):
     if connection is not None:

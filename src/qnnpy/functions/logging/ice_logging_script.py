@@ -1,14 +1,13 @@
-import csv
-import sys
-import os
-import atexit 
+import atexit
 import logging
+import os
 import signal
+import sys
 import time
+
 from ice_logging import read_ice_log
 
 sys.path.append(r"Q:\qnnpy")
-import qnnpy.functions.functions as qf
 
 PATH = "S:/SC/InstrumentLogging/Cryogenics/Ice/ice-log/Results/"
 
