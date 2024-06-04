@@ -1,4 +1,4 @@
-# QNNPY
+# QNNPY v0.1.1
 
 ## About
 QNNPY is an python-based instrument control toolbox for the Quantum Nanostructure and Nanofabrication Group (QNN) at MIT. The primary goal of this package is to simplify and standardize the measurement of superconducting nanowire single photon detectors (SNSPDs) and other superconducting nanoelectronics. This package is split into two main sections: functions, and instruments. 
