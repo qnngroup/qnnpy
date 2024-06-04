@@ -1,8 +1,0 @@
-LICENSE.txt
-README.md
-pyproject.toml
-setup.py
-qnnpy.egg-info/PKG-INFO
-qnnpy.egg-info/SOURCES.txt
-qnnpy.egg-info/dependency_links.txt
-qnnpy.egg-info/top_level.txt
