@@ -34,9 +34,7 @@ jobs:
     needs:
     - build
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/qnnpy
+    environment: release
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
@@ -48,9 +46,6 @@ jobs:
         path: dist/
     - name: Publish distribution to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
 
   github-release:
     name: >-
@@ -101,9 +96,7 @@ jobs:
     - build
     runs-on: ubuntu-latest
 
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/qnnpy
+    environment: release
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -117,6 +110,4 @@ jobs:
     - name: Publish distribution to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
-        password: ${{ secrets.TESTPYPI_API_TOKEN }}
         repository-url: https://test.pypi.org/legacy/
