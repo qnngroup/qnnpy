@@ -3,11 +3,11 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-
 import mariadb
 from numpy import array
+import nptdms
+import pandas as pd
 
-sys.path.append(r"Q:\qnnpy")
 import qnnpy.functions.functions as qf
 
 
@@ -150,3 +150,17 @@ def read_ice_log(path, date=False):
     file_to_rem = Path(path + "temp.log")
     file_to_rem.unlink()
     return
+
+
+def import_tdms(file_path):
+    tdms_file = nptdms.TdmsFile.read(file_path)
+    group = tdms_file["Data"]
+    columns = group.columns()
+
+    data = {}
+    for column in columns:
+        data[column] = group[column][:]
+
+    df = pd.DataFrame(data)
+
+    return df
