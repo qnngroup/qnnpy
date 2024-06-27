@@ -22,6 +22,7 @@ import mariadb
 import numpy as np
 import scipy.io
 import yaml
+from mariadb import Connection
 from matplotlib import pyplot as plt
 
 if sys.platform == "win32":
@@ -696,10 +697,10 @@ def output_log(parameters, path):
     file.close()
 
 
-def database_connection(**kwargs):
+def database_connection(**kwargs) -> Connection:
     if kwargs is None or len(kwargs) == 0:
         try:
-            conn = mariadb.connect(
+            conn: Connection = mariadb.connect(
                 host="18.25.16.44",
                 user="omedeiro",
                 port=3307,
@@ -711,7 +712,7 @@ def database_connection(**kwargs):
             raise ConnectionError
     else:
         try:
-            conn = mariadb.connect(kwargs)
+            conn: Connection = mariadb.connect(kwargs)
         except mariadb.Error as e:
             print(f"Error connecting to MariaDB Platform: {e}")
             raise ConnectionError
@@ -1192,7 +1193,6 @@ class Instruments:
             self.scope = self.scope1
 
     def meter_setup(self, properties: dict, instrument_num: int = 0):
-
         appender: str = str(instrument_num)
         if instrument_num == 0:
             appender = ""
