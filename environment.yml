@@ -1,6 +1,18 @@
-name: qnnpy_env
+name: qnnpy
 channels:
   - conda-forge
 dependencies:
   - python=3.8
+  - pip
   - numpy
+  - yaml
+  - pip:
+    - black
+    - ipykernel
+    - pre-commit
+    - pyvisa
+    - mariadb
+    - pandas
+    - nptdms
+    - scipy
+    - matplotlib
