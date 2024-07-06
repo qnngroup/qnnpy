@@ -601,18 +601,7 @@ def insert_measurement_event(
     user, meas_type, sample_name, device_type, device_id, port=1
 ):
     """ """
-    try:
-        conn = mariadb.connect(
-            host="18.25.16.44",
-            user="omedeiro",
-            port=3307,
-            password="vQ7-om(PKh",
-            database="qnndb",
-        )
-    except mariadb.Error as e:
-        print(f"Error connecting to MariaDB Platform: {e}")
-        raise ConnectionError
-
+    conn = database_connection()
     # Get Cursor
     cur = conn.cursor()
 
@@ -701,13 +690,9 @@ def output_log(parameters, path):
 def database_connection(**kwargs) -> Connection:
     if kwargs is None or len(kwargs) == 0:
         try:
-            conn: Connection = mariadb.connect(
-                host="18.25.16.44",
-                user="omedeiro",
-                port=3307,
-                password="vQ7-om(PKh",
-                database="qnndb",
-            )
+            with open(r"S:\SC\mariadb_conn.yml") as f:
+                conn_params = yaml.load(f, Loader=yaml.FullLoader)
+                conn = mariadb.connect(**conn_params)
         except mariadb.Error as e:
             print(f"Error connecting to MariaDB Platform: {e}")
             raise ConnectionError
@@ -721,9 +706,7 @@ def database_connection(**kwargs) -> Connection:
 
 
 def log_data_to_database(table_name: str, connection=None, **kwargs):
-    if connection is not None:
-        conn = connection
-    else:
+    if connection is None:
         conn = database_connection()
     cur = conn.cursor()
     column_names = "`" + "`, `".join(kwargs.keys()) + "`"
@@ -731,8 +714,7 @@ def log_data_to_database(table_name: str, connection=None, **kwargs):
     command = "INSERT INTO `%s` (%s) VALUES (%s)" % (table_name, column_names, values)
     cur.execute(command)
     conn.commit()
-    if connection is None:
-        conn.close()
+    conn.close()
 
 
 def update_table(
@@ -1125,7 +1107,7 @@ class Instruments:
             counter_class = Keysight53230a
         else:
             raise NameError(
-                f"Invalid counter. Counter name {properties[inst_name]["name"]} is not configured"
+                f"Invalid counter. Counter name {properties[inst_name]['name']} is not configured"
             )
 
         try:
