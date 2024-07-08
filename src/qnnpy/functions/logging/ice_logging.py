@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 from pathlib import Path
 
 import mariadb
@@ -21,7 +22,6 @@ def load_data_to_database(
     cur = conn.cursor()
     command = f"LOAD DATA LOCAL INFILE '{file_path}' IGNORE INTO TABLE `{table_name}` FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n';"
 
-    print(command)
     try:
         cur.execute(command)
     except mariadb.IntegrityError:
@@ -38,7 +38,7 @@ def connect_to_database(connection=None) -> Connection:
     return conn
 
 
-def import_tdms(file_path):
+def import_tdms(file_path) -> DataFrame:
     try:
         with nptdms.TdmsFile.open(file_path) as tdms_file:
             group = tdms_file["Data"]
@@ -58,7 +58,7 @@ def import_tdms(file_path):
                     channel = group[channel_name.name]
                     data_dict[channel_name.name] = channel[:]
 
-            return data_dict
+            return format_data(data_dict)
 
     except FileNotFoundError:
         print("Error: File not found!")
@@ -68,7 +68,7 @@ def format_data(data_dict: dict) -> DataFrame:
     df = pd.DataFrame(data_dict)
     df["date_time"] = pd.to_datetime(df["Unix Timestamp"], unit="s")
     df["date_time"] = df["date_time"].dt.strftime("%Y-%m-%d %H:%M:%S")
-    df = df.iloc[:, [0, 8, 3, 2, 1, 4, 5, 7, 6]]
+    df = df.iloc[:, [0, 8, 1, 2, 3, 4, 5, 7, 6]]
     df.columns = [
         "epochtime",
         "datetime",
@@ -97,10 +97,55 @@ def write_table_to_database(data_frame: DataFrame, table_name: str, connection=N
     return
 
 
-file_name = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs\2024_06_26_13_26_35_Ice_V4_Data.tdms"
-data_dict = import_tdms(file_name)
-df = format_data(data_dict)
-write_table_to_database(df, "ice_log")
+def files_in_directory(directory: str):
+    file_types = ["tdms"]
+    files = []
+    for file in os.listdir(directory):
+        if file.split(".")[-1] in file_types:
+            files.append(file)
+    return files
+
+
+def import_most_recent_tdms(directory: str) -> dict:
+    files = files_in_directory(directory)
+    files.sort()
+    most_recent_file = files[-1]
+    file_path = os.path.join(directory, most_recent_file)
+    return import_tdms(file_path)
+
+
+def get_uploaded_files(filename: str):
+    with open(filename, "r") as file:
+        files = file.read().splitlines()
+    return files
+
+
+def update_uploaded_files(logfile: str, file: str):
+    with open(logfile, "a") as log:
+        log.write(file + "\n")
+    return
+
+
+def check_and_import_tdms(directory: str, logfile: str, table_name: str):
+    uploaded_files = get_uploaded_files(logfile)
+    files = files_in_directory(directory)
+    files.sort()
+    print(files)
+    for file in files:
+        if file not in uploaded_files:
+            file_path = os.path.join(directory, file)
+            data_frame = import_tdms(file_path)
+            write_table_to_database(data_frame, table_name)
+            update_uploaded_files(logfile, file)
+            time.sleep(60)
+    return
+
+
+LOG_DIRECTORY = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs"
+LOG_FILE = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\uploaded_files.txt"
+TABLE_NAME = "ice_log"
+
+check_and_import_tdms(LOG_DIRECTORY, LOG_FILE, TABLE_NAME)
 
 
 # --------------------------------------------------------------------------------------------
