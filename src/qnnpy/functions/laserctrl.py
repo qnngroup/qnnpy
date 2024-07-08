@@ -59,7 +59,7 @@ class LaserCtrl:
         self.config = modeltools.load_config(
             fpath, defaultpath=self._default_config_path
         )
-        if fpath == None:
+        if fpath is None:
             self.loaded_config_path = self._default_config_path
         else:
             self.loaded_config_path = fpath

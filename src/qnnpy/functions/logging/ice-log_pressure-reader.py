@@ -68,7 +68,7 @@ def log_many_rows_to_database(table_name: str, connection=None, **kwargs):
             time.sleep(0.5)
         except mariadb.IntegrityError:
             pass
-    if connection == None:
+    if connection is None:
         conn.close()
 
 

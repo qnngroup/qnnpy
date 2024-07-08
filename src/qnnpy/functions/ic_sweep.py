@@ -136,16 +136,16 @@ def data_list_to_histogram_list(
     return hist_list, bin_centers
 
 
-def quick_ic_test(lecroy, num_sweeps=1000):
-    ic_data = measure_ic_values(lecroy, num_sweeps=num_sweeps) / R
+def quick_ic_test(lecroy, num_sweeps=1000, R=50):
+    ic_data = run_ic_sweeps(lecroy, num_sweeps=num_sweeps) / R
     print("Median Ic = %0.2f uA / Std. dev Ic = %0.2f uA") % (
         np.median(ic_data * 1e6),
         np.std(ic_data * 1e6),
     )
 
 
-def quick_retrap_test(lecroy, num_sweeps=1000):
-    ic_data = measure_ic_values(lecroy, num_sweeps=num_sweeps) / R
+def quick_retrap_test(lecroy, num_sweeps=1000, trigger_level=0.1, R=50):
+    ic_data = run_ic_sweeps(lecroy, num_sweeps=num_sweeps) / R
     print("Median Iretrap = %0.2f uA / Std. dev Iretrap = %0.2f uA") % (
         np.median(ic_data * 1e6),
         np.std(ic_data * 1e6),

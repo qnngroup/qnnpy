@@ -18,7 +18,7 @@ from qnnpy.instruments.lakeshore336 import Lakeshore336
 while True:
     try:
         ls1 = Lakeshore336("GPIB0::13::INSTR")
-    except:
+    except Exception:
         print("failed connection to Lakeshore336")
 
     try:
@@ -31,7 +31,7 @@ while True:
         stage_He3Pot = ls1.read_temp("D1")
         sleep(1)
         # print([stage_3K, stage_40K, stage_SORB, stage_He3Pot])
-    except:
+    except Exception:
         print("failed to read temp")
     # ls1.read_temp('D')
 
@@ -43,7 +43,7 @@ while True:
             stage_SORB=stage_SORB,
             stage_He3Pot=stage_He3Pot,
         )
-    except:
+    except Exception:
         print("failed to write to database")
 
     sleep(1)
