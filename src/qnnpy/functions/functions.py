@@ -1092,8 +1092,6 @@ class Instruments:
         appender: str = str(instrument_num)
         if instrument_num == 0:
             appender = ""
-        else:
-            appender = str(instrument_num)
         inst_name = f"Counter{appender}"
         self.instrument_list.append(inst_name)
 
@@ -1133,8 +1131,6 @@ class Instruments:
         appender: str = str(instrument_num)
         if instrument_num == 0:
             appender = ""
-        else:
-            appender = str(instrument_num)
         inst_name = f"Scope{appender}"
         self.instrument_list.append(inst_name)
 
@@ -1346,6 +1342,8 @@ class Instruments:
         """
 
         appender = str(instrument_num)
+        if instrument_num == 0:
+            appender = ""
         inst_name = f"AWG{appender}"
         self.instrument_list.append(inst_name)
 
