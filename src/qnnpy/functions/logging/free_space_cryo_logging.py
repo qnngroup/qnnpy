@@ -31,7 +31,7 @@ log_level = sys.argv[1]
 
 try:
     logging.basicConfig(format="%(asctime)s %(message)s", level=log_level)
-except:
+except Exception:
     logging.basicConfig(format="%(asctime)s %(message)s", level="ERROR")
 
 
@@ -62,7 +62,7 @@ def read_serial_pressure(ser):
     try:
         pressure = float(message.group(0)[4:14])
         success = True
-    except:
+    except Exception:
         pressure = "NaN"
         success = False
     return pressure, success
@@ -74,7 +74,7 @@ COM_PORT = "COM3"
 
 try:
     temp_reader = Cryocon34("GPIB0::5")
-except:
+except Exception:
     logging.error("Failed to make VISA connection to Cryocon")
     exit
 start_temp = 293
@@ -113,7 +113,7 @@ with serial.Serial(COM_PORT, timeout=1) as ser, conn.cursor() as cur:
             tempA = temp_reader.read_temp("A")
             tempB = temp_reader.read_temp("B")
             logging.info("read temperature success")
-        except:
+        except Exception:
             logging.error("failed to read temperature")
             tempA = 0
             tempB = 0
@@ -123,7 +123,7 @@ with serial.Serial(COM_PORT, timeout=1) as ser, conn.cursor() as cur:
                 logging.info("read pressure success")
             else:
                 pressure = 0
-        except:
+        except Exception:
             logging.error("failed to read pressure")
             pressure = 0
 

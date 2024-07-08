@@ -52,8 +52,8 @@ def date_plot(path, date_start, date_end=datetime.date.today().isoformat(), plot
         new_path = os.path.join(path, r, r + ".log")
         f = open(new_path)
         lines = f.readlines()
-        for l in lines:
-            cells = l.split(",")
+        for line in lines:
+            cells = line.split(",")
             date = datetime.datetime.strptime(cells[3], "%m/%d/%Y %I:%M:%S %p")
             data = [float(cells[4]), float(cells[5]), float(cells[6]), float(cells[7])]
 
