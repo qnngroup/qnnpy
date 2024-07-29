@@ -148,18 +148,18 @@ def check_and_import_tdms(directory: str, logfile: str, table_name: str):
             data_frame = import_tdms(file_path)
             write_table_to_database(data_frame, table_name)
 
-            if not is_today(file_date):
-                update_uploaded_files(logfile, file)
-            time.sleep(60)
+
+            update_uploaded_files(logfile, file)
+            time.sleep(10)
 
     return
 
+if __name__ == "__main__":
+    LOG_DIRECTORY = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs"
+    LOG_FILE = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\uploaded_files.txt"
+    TABLE_NAME = "ice_log"
 
-LOG_DIRECTORY = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs"
-LOG_FILE = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\uploaded_files.txt"
-TABLE_NAME = "ice_log"
-
-check_and_import_tdms(LOG_DIRECTORY, LOG_FILE, TABLE_NAME)
+    check_and_import_tdms(LOG_DIRECTORY, LOG_FILE, TABLE_NAME)
 
 
 # --------------------------------------------------------------------------------------------
