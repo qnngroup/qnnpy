@@ -1,6 +1,8 @@
 import os
+import sys
 import tempfile
 import time
+from datetime import datetime
 from pathlib import Path
 
 import mariadb
@@ -12,13 +14,11 @@ from pandas.core.frame import DataFrame
 import qnnpy.functions.functions as qf
 
 
-def load_data_to_database(
-    filename: str, table_name: str, connection: Connection = None
-):
-    conn = connect_to_database(connection)
+def load_data_to_database(filename: str, table_name: str, connection: Connection):
+    conn = connection
     file_path = os.path.join(filename)
     file_path = file_path.replace("\\", "/")
-    print(f"{file_path}")
+    print(f"Loading tempfile: {file_path}")
     cur = conn.cursor()
     command = f"LOAD DATA LOCAL INFILE '{file_path}' IGNORE INTO TABLE `{table_name}` FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n';"
 
@@ -27,15 +27,14 @@ def load_data_to_database(
     except mariadb.IntegrityError:
         pass
     conn.commit()
-    conn.close()
 
 
-def connect_to_database(connection=None) -> Connection:
-    if connection is not None:
-        conn = connection
+def is_today(file_date: str) -> bool:
+    today = datetime.now().strftime("%Y_%m_%d")
+    if file_date == today:
+        return True
     else:
-        conn = qf.database_connection()
-    return conn
+        return False
 
 
 def import_tdms(file_path) -> DataFrame:
@@ -97,7 +96,7 @@ def write_table_to_database(data_frame: DataFrame, table_name: str, connection=N
     return
 
 
-def files_in_directory(directory: str):
+def files_in_directory(directory: str) -> list:
     file_types = ["tdms"]
     files = []
     for file in os.listdir(directory):
@@ -114,7 +113,7 @@ def import_most_recent_tdms(directory: str) -> dict:
     return import_tdms(file_path)
 
 
-def get_uploaded_files(filename: str):
+def get_uploaded_files(filename: str) -> list:
     with open(filename, "r") as file:
         files = file.read().splitlines()
     return files
@@ -130,22 +129,36 @@ def check_and_import_tdms(directory: str, logfile: str, table_name: str):
     uploaded_files = get_uploaded_files(logfile)
     files = files_in_directory(directory)
     files.sort()
-    print(files)
+
+    try:
+        conn = qf.database_connection()
+        conn.auto_reconnect = True
+    except mariadb.Error as e:
+        print(f"Error connecting to the database: {e}")
+        sys.exit(1)
+
     for file in files:
         if file not in uploaded_files:
+            print(f"Importing: {file}")
             file_path = os.path.join(directory, file)
+            file_date = file[0:10]
+
             data_frame = import_tdms(file_path)
-            write_table_to_database(data_frame, table_name)
+            write_table_to_database(data_frame, table_name, conn)
+
             update_uploaded_files(logfile, file)
-            time.sleep(60)
+            time.sleep(5)
+
+    conn.close()
     return
 
 
-LOG_DIRECTORY = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs"
-LOG_FILE = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\uploaded_files.txt"
-TABLE_NAME = "ice_log"
+if __name__ == "__main__":
+    LOG_DIRECTORY = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\Logs"
+    LOG_FILE = r"S:\SC\InstrumentLogging\Cryogenics\Ice\ice-log\uploaded_files.txt"
+    TABLE_NAME = "ice_log"
 
-check_and_import_tdms(LOG_DIRECTORY, LOG_FILE, TABLE_NAME)
+    check_and_import_tdms(LOG_DIRECTORY, LOG_FILE, TABLE_NAME)
 
 
 # --------------------------------------------------------------------------------------------
