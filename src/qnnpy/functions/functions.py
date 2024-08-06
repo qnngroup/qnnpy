@@ -310,7 +310,9 @@ def save(
         port = 1
 
     if parameters["Save File"].get("cell"):
-        device_name_ext = "cell" + parameters["Save File"]["cell"]
+        cell_name = parameters["Save File"]["cell"] + "_"
+    else:
+        cell_name = None
 
     time_str = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 
@@ -340,6 +342,7 @@ def save(
             + "_"
             + device_name
             + "_"
+            + cell_name
             + time_str
         )
         if parameters["Save File"].get("cell"):
