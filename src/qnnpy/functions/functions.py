@@ -310,7 +310,7 @@ def save(
         port = 1
 
     if parameters["Save File"].get("cell"):
-        cell_name= parameters["Save File"]["cell"]+"_"
+        cell_name = parameters["Save File"]["cell"] + "_"
     else:
         cell_name = None
 
@@ -342,7 +342,7 @@ def save(
             + "_"
             + device_name
             + "_"
-            +cell_name
+            + cell_name
             + time_str
         )
         if parameters["Save File"].get("cell"):
