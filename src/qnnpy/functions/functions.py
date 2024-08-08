@@ -289,7 +289,10 @@ def save(
     if not isinstance(parameters, dict):
         raise ValueError("save accepts dict from configured .yml file")
 
-    file_path = "S:\SC\Measurements"
+    if "Save Root" in parameters:
+        file_path = parameters["Save Root"]
+    else:
+        file_path = "S:\SC\Measurements"
     # Setup variables from parameters for file path
     user = parameters["User"]["name"]
     sample_name = parameters["Save File"][

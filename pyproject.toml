@@ -12,12 +12,13 @@ build-backend = "pdm.backend"
 
 [project]
 name = "qnnpy"
-version = "0.1.13"
+version = "0.1.14"
 
 
 authors = [
   { name="O. Medeiros", email="omedeiro@mit.edu" },
   { name="E. Battson", email="emmabat@mit.edu" },
+  { name="A. Simon", email="alejansi@mit.edu" }
 ]
 maintainers = [
   { name="O. Medeiros", email="omedeiro@mit.edu" },
