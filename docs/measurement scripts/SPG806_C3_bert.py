@@ -16,7 +16,6 @@ import sys
 
 sys.path.append(r"Q:\qnnpy")
 import numpy as np
-
 import qnnpy.functions.functions as qf
 import qnnpy.functions.ntron as nt
 

@@ -332,7 +332,7 @@ class LeCroy620Zi(object):
 
     def get_num_sweeps(self, channel="F1"):  # For use with histograms, trends, etc
         return int(self.vbs_ask("app.Math.%s.Out.Result.Sweeps" % channel))
-    
+
     def set_num_sweeps(
         self,
         math_channel="F1",
@@ -341,7 +341,7 @@ class LeCroy620Zi(object):
         self.vbs_write(
             "app.Math.%s.Operator1Setup.Values = %s" % (math_channel, num_values)
         )
-        
+
     def get_num_data_points(self, channel="P1"):
         return int(self.vbs_ask("app.Measure.%s.num.Result.Value" % channel))
 
@@ -408,7 +408,7 @@ class LeCroy620Zi(object):
             "app.Math.%s.Operator1Setup.HorScale = %s" % (math_channel, width_per_div)
         )
         self.view_channel(channel=math_channel, view=True)
-        
+
     def set_math_trend_values(self, math_channel="F1", num_values=1e3):
         self.vbs_write(
             "app.Math.%s.Operator1Setup.Values = %s" % (math_channel, num_values)
@@ -419,10 +419,12 @@ class LeCroy620Zi(object):
 
     def histogram_find_center_width(self, math_channel="F1"):
         self.vbs_write("app.Math.%s.Operator1Setup.FindScale" % math_channel)
-    
+
     def histogram_set_horiz_scale(self, math_channel="F1", horiz_scale=2e-6):
-        self.vbs_write("app.Math.%s.Operator1Setup.HorScale = %s" % (math_channel, horiz_scale))
-        
+        self.vbs_write(
+            "app.Math.%s.Operator1Setup.HorScale = %s" % (math_channel, horiz_scale)
+        )
+
     def collect_sweeps(self, channel="F1", num_sweeps=1000):
         self.clear_sweeps()
         time.sleep(0.1)
