@@ -44,7 +44,19 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
+    "sphinx.ext.napoleon",
 ]
+
+autodoc_member_order = "bysource"
+
+napoleon_google_docstring = True
+napoleon_use_param = False
+napoleon_use_rtype = False
+napoleon_include_init_with_doc = False
+napoleon_attr_annotations = True
+
+pygments_style = "sphinx"
+todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
