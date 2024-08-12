@@ -24,8 +24,8 @@ PyVISA
 
 ``qnnpy`` uses ``pyvisa`` to communicate with a variety of instruments. ``pyvisa`` requires a VISA backend to be installed on the system.
 Most computers in our lab already have a VISA backend installed, but if you're setting up a new system, you will need to install the appropriate libraries.
-:doc:`pyvisa-py <https://pyvisa.readthedocs.io/projects/pyvisa-py/en/latest/>` implements a VISA backend purely in Python and is very easy to install, but comes with some limitations (*e.g.* connecting multiple GPIB adapters to the same PC).
-:doc:`NI-VISA https://pyvisa.readthedocs.io/en/latest/faq/getting_nivisa.html>` is another option, and is what is installed on the lab computers.
+- :doc:`pyvisa-py <https://pyvisa.readthedocs.io/projects/pyvisa-py/en/latest/>` implements a VISA backend purely in Python and is very easy to install, but comes with some limitations (*e.g.* connecting multiple GPIB adapters to the same PC).
+- :doc:`NI-VISA <https://pyvisa.readthedocs.io/en/latest/faq/getting_nivisa.html>` is another option, and is what is installed on the lab computers.
 
 USB/GPIB drivers
 ----------------
