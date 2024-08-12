@@ -6,12 +6,12 @@ This is necessary for the ``mariadb`` python library to interface with the datab
 
 If using a Conda environment (recommended), this can be installed `with <https://anaconda.org/conda-forge/mariadb-connector-c>`_:
 
-    .. code-block:: bash
-        conda install mariadb-connector-c
+.. code-block:: bash
+    conda install mariadb-connector-c
 
 If the system already has the connector software installed, then this step isn't necessary
 
 Now ``qnnpy`` can be downloaded and installed with ``pip``:
 
-    .. code-block:: bash
-        pip install qnnpy
+.. code-block:: bash
+    pip install qnnpy
