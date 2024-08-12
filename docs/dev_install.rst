@@ -1,7 +1,7 @@
 Installation for developers
 ===========================
 
-As with the `user install instructions <user_install>`, ensure that the MariaDB connection C librariees are installed.
+As with the :doc:`user install instructions <user_install>`, ensure that the MariaDB connection C librariees are installed.
 
 In order to allow testing of package code, it is recommended to install the package with ``pip`` as editable:
 
