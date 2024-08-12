@@ -45,7 +45,7 @@ dependencies = [
   "pandas",
   "nptdms",
   "scipy",
-  "matplotlib"
+  "matplotlib",
   "nidaqmx",
 ]
 
