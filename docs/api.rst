@@ -1,7 +1,8 @@
 API
 ===
 
-.. autosummary::
-   :toctree: generated
+.. automodule:: qnnpy
 
-   qnnpy
+.. automodule:: qnnpy.functions
+
+.. automodule:: qnnpy.instruments
