@@ -17,20 +17,9 @@ Its purpose is to organize, standardize, and improve the existing programming in
 .. note::
    This project is under active development and the API is subject to change.
 
-General description
--------------------
-
 .. toctree::
    :maxdepth: 2
+
    api
-   user_isntall
+   user_install
    dev_install
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
