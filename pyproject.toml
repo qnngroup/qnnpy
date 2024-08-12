@@ -11,7 +11,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "qnnpy"
-version = "0.1.14"
+version = "0.1.15"
 
 authors = [
   { name="O. Medeiros", email="omedeiro@mit.edu" },
