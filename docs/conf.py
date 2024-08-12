@@ -58,6 +58,9 @@ napoleon_attr_annotations = True
 pygments_style = "sphinx"
 todo_include_todos = True
 
+# https://stackoverflow.com/questions/2701998/automatically-document-all-modules-recursively-with-sphinx-autodoc
+autosummary_generate = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
