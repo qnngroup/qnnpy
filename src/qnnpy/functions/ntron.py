@@ -42,12 +42,16 @@ class nTron:
         # if there are any errors in setting up, compare older versions of
         # ntron on github with qf.Instruments
 
-    def voltage2current(self, voltage: float, attenuation: float, resistance: float = 50):
+    def voltage2current(
+        self, voltage: float, attenuation: float, resistance: float = 50
+    ):
         voltage = voltage * 10 ** (attenuation / 20)
         current = voltage / resistance
         return current
 
-    def current2voltage(self, current: float, attenuation: float, resistance: float = 50):
+    def current2voltage(
+        self, current: float, attenuation: float, resistance: float = 50
+    ):
         voltage = current * resistance
         voltage = voltage / 10 ** (attenuation / 20)
         return voltage
