@@ -46,6 +46,7 @@ dependencies = [
   "nptdms",
   "scipy",
   "matplotlib"
+  "nidaqmx",
 ]
 
 [project.urls]
