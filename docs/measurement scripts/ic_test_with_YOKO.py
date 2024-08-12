@@ -8,7 +8,6 @@ from time import sleep
 # import visa
 import numpy as np
 from matplotlib import pyplot as plt
-
 from qnnpy.functions.save_data_vs_param import *
 from qnnpy.instruments.keithley_2700 import Keithley2700
 from qnnpy.instruments.yokogawa_gs200 import YokogawaGS200
