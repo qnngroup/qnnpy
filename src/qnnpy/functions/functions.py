@@ -713,14 +713,14 @@ def database_connection(**kwargs) -> Connection:
 
 def log_data_to_database(table_name: str, connection=None, **kwargs):
     if connection is None:
-        conn = database_connection()
-    cur = conn.cursor()
+        connection = database_connection()
+    cur = connection.cursor()
     column_names = "`" + "`, `".join(kwargs.keys()) + "`"
     values = "'" + "', '".join([str(v) for v in kwargs.values()]) + "'"
     command = "INSERT INTO `%s` (%s) VALUES (%s)" % (table_name, column_names, values)
     cur.execute(command)
-    conn.commit()
-    conn.close()
+    connection.commit()
+    connection.close()
 
 
 def update_table(
