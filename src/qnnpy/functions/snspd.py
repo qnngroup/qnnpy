@@ -33,10 +33,10 @@ class Snspd:
         self.device_type = self.properties["Save File"]["device type"]
 
         if self.properties.get("iv_sweep"):
-            self.R_srs = self.properties["iv_sweep"]["series_resistance"]
+            self.R_srs = self.properties["iv_sweep"].get("series_resistance", 1)
 
         if self.properties.get("double_sweep"):
-            self.R_srs_g = self.properties["double_sweep"]["series_resistance_g"]
+            self.R_srs_g = self.properties["double_sweep"].get("series_resistance_g", 1)
 
         self.isw = 0
         self.instrument_list = []

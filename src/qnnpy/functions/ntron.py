@@ -33,8 +33,8 @@ class nTron:
         self.isw = 0
         self.instrument_list = []
 
-        self.R_srs = self.properties["iv_sweep"]["series_resistance"]
-        self.R_srs_g = self.properties["iv_sweep"]["series_resistance_g"]
+        self.R_srs = self.properties["iv_sweep"].get("series_resistance", 1)
+        self.R_srs_g = self.properties["iv_sweep"].get("series_resistance_g", 1)
 
         # set up and store instruments
         self.inst = qf.Instruments(self.properties)
