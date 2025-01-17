@@ -10,22 +10,14 @@ Inspired by amcc's Keithley2400 library
 """
 
 import pyvisa
+from instruments import Instrument, Source
 
 
-class YokogawaGS200(object):
-    def __init__(self, visa_name):
+class YokogawaGS200(Instrument, Source):
+    def __init__(self, visa_name, port_alt=None):
         rm = pyvisa.ResourceManager()
         self.pyvisa = rm.open_resource(visa_name)
         self.pyvisa.timeout = 5000  # Set response timeout (in milliseconds)
-
-    def read(self):
-        return self.pyvisa.read()
-
-    def write(self, string):
-        self.pyvisa.write(string)
-
-    def query(self, string):
-        return self.pyvisa.query(string)
 
     def reset(self):
         self.write("*RST")
