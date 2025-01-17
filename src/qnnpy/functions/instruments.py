@@ -1,3 +1,6 @@
+from functions import ice_get_temp
+from typing import List
+
 #######################################################################
 #       Instrument Setup
 #######################################################################
@@ -585,7 +588,19 @@ class Instrument(object):
     def query(self, string):
         return self.pyvisa.query(string)
     
-class Source(metaclass = ABCMeta):
+class AWG(metaclass=ABCMeta):
+    '''
+    This defines an interface of functions that must be implemented in
+    any Source subclasses. Failure to implement will result in a TypeError
+    on instatiation
+    '''
+    def __init__(self, port):
+        pass 
+    
+    def reset(self):
+        pass
+    
+class Source(metaclass=ABCMeta):
     '''
     This defines an interface of functions that must be implemented in
     any Source subclasses. Failure to implement will result in a TypeError
@@ -597,5 +612,20 @@ class Source(metaclass = ABCMeta):
     def reset(self):
         pass 
 
-    def set_voltage(self):
+    def set_voltage(self, voltage=0.0):
+        pass
+
+    def set_output(self, output=False):
+        pass
+
+class SourceMeter(metaclass=ABCMeta):
+    '''
+    This defines an interface of functions that must be implemented in
+    any Source subclasses. Failure to implement will result in a TypeError
+    on instatiation
+    '''
+    def __init__(self, port):
+        pass 
+
+    def reset(self):
         pass

@@ -19,8 +19,8 @@ class YokogawaGS200(Instrument, Source):
         self.pyvisa = rm.open_resource(visa_name)
         self.pyvisa.timeout = 5000  # Set response timeout (in milliseconds)
 
-    def reset(self):
-        self.write("*RST")
+    '''def reset(self):
+        self.write("*RST")'''
 
     def setup_source_current(self):
         self.write("*RST")
