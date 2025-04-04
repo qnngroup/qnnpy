@@ -1270,7 +1270,7 @@ class Instruments:
                 properties[inst_name]["port"],
                 properties[inst_name].get("port_alt", None),  # Handle optional port_alt
             )
-            source.reset()  # Assuming reset is a common function for all sources
+            #source.reset()  # Assuming reset is a common function for all sources \\EB: I think resetting the source here can be annoying
             source.set_output(False)  # Assuming this is a common configuration step
             self.instrument_dict[inst_name] = source
             print(f"SOURCE{appender}: connected")
