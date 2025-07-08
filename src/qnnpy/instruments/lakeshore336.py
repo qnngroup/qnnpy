@@ -78,6 +78,21 @@ class Lakeshore336(object):
         s = self.query("RAMP? " + str(output))
         return s
 
+    def set_pid(self, output=1, P=100, I=25, D=15):
+        """Set PID parameters for the specified output.
+        P: Proportional gain (0.1 to 1000)
+        I: Integral gain (0.1 to 1000) 
+        D: Derivative gain (0 to 200)
+        """
+        self.write("PID " + str(output) + "," + str(P) + "," + str(I) + "," + str(D))
+
+    def get_pid(self, output=1):
+        """Get PID parameters for the specified output.
+        Returns: P,I,D values as string
+        """
+        s = self.query("PID? " + str(output))
+        return s
+
     def get_output(self, output=1):
         s = self.query("OUTMODE? " + str(output))
         output = s.split(",")
