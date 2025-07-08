@@ -122,3 +122,27 @@ class Lakeshore336(object):
         self.set_range(2, 0)
         self.set_range(3, 0)
         self.set_range(4, 0)
+
+    def get_heater_output(self, output=1):
+        """Get heater output percentage for specified output.
+        output: Output number (1-4)
+        Returns: Heater output as float percentage (0-100%)
+        """
+        s = self.query("HTR? " + str(output))
+        return float(s)
+
+    def set_manual_output(self, output=1, value=0):
+        """Set manual heater output percentage.
+        Note: Output mode must be set to manual (mode=3) for this to take effect.
+        output: Output number (1-4)
+        value: Output percentage (0-100%)
+        """
+        self.write("MOUT " + str(output) + "," + str(value))
+
+    def get_manual_output(self, output=1):
+        """Get manual heater output percentage setting.
+        output: Output number (1-4)
+        Returns: Manual output percentage as float (0-100%)
+        """
+        s = self.query("MOUT? " + str(output))
+        return float(s)
