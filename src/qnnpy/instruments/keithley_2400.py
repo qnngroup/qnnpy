@@ -11,6 +11,7 @@ class Keithley2400(object):
         self.pyvisa.timeout = 5000  # Set response timeout (in milliseconds)
         # self.pyvisa.query_delay = 1 # Set extra delay time between write and read commands
         self.name = "Keithley2400"
+        self.isrc = True # if True, source is current, sense is voltage. if false, is the opposite
 
     def read(self):
         return self.pyvisa.read()
@@ -40,6 +41,7 @@ class Keithley2400(object):
         self.write(":SOUR:CURR:LEVEL 0E-6")
         self.write(":SYST:RSEN 1")  # Turn on remote sensing for 4w measurement
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
+        self.isrc = True
 
     def setup_2W_source_I_read_V(self):
         self.write("*RST")
@@ -47,6 +49,7 @@ class Keithley2400(object):
         self.write(":SOUR:CURR:LEVEL 0E-6")  # Set current level to 0 uA
         self.write(":SYST:RSEN 0")  # Turn off remote sense
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
+        self.isrc = True
 
     def setup_2W_source_V_read_I(self):
         self.write("*RST")
@@ -54,6 +57,7 @@ class Keithley2400(object):
         self.write(":SOUR:VOLT:LEVEL 0E-3")  # Set voltage level to 0 mV
         self.write(":SYST:RSEN 0")  # Turn off remote sense
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
+        self.isrc = False
 
     def set_output(self, output=False):
         if output is True:
@@ -102,6 +106,18 @@ class Keithley2400(object):
 
     def switch_rear(self):
         self.write(":ROUT:TERM REAR")
+    
+    def set_sense_range(self, upper):
+        self.write(f':SENS:{"VOLT" if self.isrc else "CURR"}:RANG {upper}')
+    
+    def set_source_range(self, upper):
+        self.write(f':SOUR:{"CURR" if self.isrc else "VOLT"}:RANG {upper}')
+
+    def get_sense_range(self):
+        return float(self.query(f':SENS:{"VOLT" if self.isrc else "CURR"}:RANG?'))
+
+    def get_source_range(self):
+        return float(self.query(f':SENS:{"CURR" if self.isrc else "VOLT"}:RANG?'))
     
     def iv_linsweep(self, i_list, delay):
         # runs a sweep

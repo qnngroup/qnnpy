@@ -97,7 +97,7 @@ class Keithley2450(object):
     def get_sense_range(self):
         return float(self.query(f':SENS:{"VOLT" if self.isrc else "CURR"}:RANG?'))
 
-    def get_source_range(self, upper):
+    def get_source_range(self):
         return float(self.query(f':SENS:{"CURR" if self.isrc else "VOLT"}:RANG?'))
 
     def read_voltage_and_current(self, delay=0):
