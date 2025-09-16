@@ -1,4 +1,5 @@
 import pyvisa
+import time
 
 
 class Keithley2400(object):
@@ -32,33 +33,26 @@ class Keithley2400(object):
         self.write(":SOUR:CURR:LEVEL 0E-6")
         self.write('SENS:FUNC "VOLT"')
 
-    def setup_4W_source_I_read_V(self, current="1000"):
+    def setup_4W_source_I_read_V(self):
         """current level in microamps"""
         self.write("*RST")
         self.write(":SOUR:FUNC CURR")  # Set operation mode to: source current
-        print(":SOUR:CURR:LEVEL " + current + "E-6")
-        self.write(":SOUR:CURR:LEVEL " + current + "E-6")
-        self.write(
-            ":SYST:RSEN 1"
-        )  # Turn on "Remote Sensing" aka 4-wire measurement mode
+        self.write(":SOUR:CURR:LEVEL 0E-6")
+        self.write(":SYST:RSEN 1")  # Turn on remote sensing for 4w measurement
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
 
     def setup_2W_source_I_read_V(self):
         self.write("*RST")
         self.write(":SOUR:FUNC CURR")  # Set operation mode to: source current
         self.write(":SOUR:CURR:LEVEL 0E-6")  # Set current level to 0 uA
-        self.write(
-            ":SYST:RSEN 0"
-        )  # Turn off "Remote Sensing" aka 4-wire measurement mode
+        self.write(":SYST:RSEN 0")  # Turn off remote sense
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
 
     def setup_2W_source_V_read_I(self):
         self.write("*RST")
         self.write(":SOUR:FUNC VOLT")  # Set operation mode to: source voltage
         self.write(":SOUR:VOLT:LEVEL 0E-3")  # Set voltage level to 0 mV
-        self.write(
-            ":SYST:RSEN 0"
-        )  # Turn off "Remote Sensing" aka 4-wire measurement mode
+        self.write(":SYST:RSEN 0")  # Turn off remote sense
         self.write('SENS:FUNC "VOLT", "CURR"')  # Have it output
 
     def set_output(self, output=False):
@@ -91,29 +85,16 @@ class Keithley2400(object):
         self.write(":SOUR:VOLT:LEVEL %0.4e" % voltage)  # Set current level
 
     def read_voltage_and_current(self):
-        read_str = self.query(":READ?")
         # See page 18-51 of manual, returns: voltage, current, resistance, timestamp, status info
         # Returns something like '5.275894E-05,-1.508318E-06,+9.910000E+37,+2.562604E+03,+3.994000E+04'
-        data = read_str.split(",")
-        # print(read_str[0])
-        voltage = float(data[0])
-        # voltage= float(data[0][:-4])
-        # voltage= data
-        # print(data)
-        # current = float(data[1])
-        current = 0
-        return voltage, current
+        return [float(d) for d in self.query(":READ?").split(",")[:2]]
 
     def read_current(self, current=0e-6):
-        voltage, current = self.read_voltage_and_current()
+        _, current = self.read_voltage_and_current()
         return current
 
     def read_voltage(self):
-        voltage, current = self.read_voltage_and_current()
-        return voltage
-
-    def read_resistance(self):
-        voltage, current = self.read_voltage_and_current()
+        voltage, _ = self.read_voltage_and_current()
         return voltage
 
     def switch_front(self):
@@ -121,3 +102,32 @@ class Keithley2400(object):
 
     def switch_rear(self):
         self.write(":ROUT:TERM REAR")
+    
+    def iv_linsweep(self, i_list, delay):
+        # runs a sweep
+        if len(i_list) > 2500:
+            raise ValueError("lists longer than 2500 are not supported")
+        num_points = len(i_list) 
+        # see pg 171 of manual
+        self.write(f'TRAC:CLE')
+        self.write(f'TRAC:FEED SENS')
+        self.write(f'TRAC:POIN {num_points}')
+        self.write(f'TRAC:FEED:CONT NEXT')
+        sublists = []
+        while len(i_list) > 10:
+            sublists.append([str(i) for i in i_list[:10]])
+            i_list = i_list[10:]
+        sublists.append([str(i) for i in i_list])
+        for n, sublist in enumerate(sublists):
+            self.write(f'SOUR:LIST:CURR{":APP" if n > 0 else ""} {", ".join(sublist)}')
+        self.write('SOUR:CURR:MODE LIST')
+        self.write(f'TRIG:COUN {num_points}')
+        self.write(f'SOUR:DEL {delay}')
+        self.write('INIT')
+        # wait for measurement to finish
+        time.sleep(num_points * (delay + 0.08))
+        while (int(self.query('STAT:OPER:COND?')) & 1024) == 0:
+            time.sleep(self.pyvisa.timeout)
+        raw_data = self.query('TRAC:DATA?')
+        data = [float(d) for d in raw_data.split(',')]
+        return data[1::5], data[::5]
