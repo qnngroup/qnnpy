@@ -315,7 +315,7 @@ def save(
     if parameters["Save File"].get("cell"):
         cell_name = parameters["Save File"]["cell"] + "_"
     else:
-        cell_name = None
+        cell_name = ""
 
     time_str = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 

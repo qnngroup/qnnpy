@@ -18,7 +18,6 @@ def load_data_to_database(filename: str, table_name: str, connection: Connection
     conn = connection
     file_path = os.path.join(filename)
     file_path = file_path.replace("\\", "/")
-    print(f"Loading tempfile: {file_path}")
     cur = conn.cursor()
     command = f"LOAD DATA LOCAL INFILE '{file_path}' IGNORE INTO TABLE `{table_name}` FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n';"
 
