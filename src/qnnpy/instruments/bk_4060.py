@@ -4,6 +4,20 @@ import pyvisa
 class BK4060(object):
     """
     Python class for BK4060 AWG, written by Emma Batson 
+
+    Not fully implemented. Missing functions:
+    sync_phase
+    set_usual_unit
+    set_dual_channel_coupling
+    set_vhighlow
+    set_trigger
+    trigger_now
+    set_burst_mode
+    set_arb_wf
+    select_arb_wf
+
+    Commented logic from agilent_33600a is included, but requires correct VISA strings
+    from BK4060 manual
     """
 
     def __init__(self, visa_name):
