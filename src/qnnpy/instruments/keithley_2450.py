@@ -121,7 +121,7 @@ class Keithley2450(object):
     def read_voltage(self):
         return float(self.query("READ?"))
     
-    def iv_linsweep(self, i_list, delay):
+    def iv_linsweep(self, i_list, delay, failabort=False):
         if len(i_list) > 2500:
             raise ValueError("lists longer than 2500 are not supported")
         sublists = []
@@ -132,7 +132,7 @@ class Keithley2450(object):
         for n, sublist in enumerate(sublists):
             self.write(f'SOUR:LIST:CURR{":APP" if n > 0 else ""} {", ".join(sublist)}')
             self.write('*WAI')
-        self.write(f'SOUR:SWE:CURR:LIST 1, {delay}')
+        self.write(f'SOUR:SWE:CURR:LIST 1, {delay}, 1, {"ON" if failabort else "OFF"}')
         num_points = int(self.query('SOUR:LIST:CURR:POIN?'))
         self.write('INIT')
         self.write('*WAI')
