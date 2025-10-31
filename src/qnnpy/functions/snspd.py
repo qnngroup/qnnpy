@@ -371,7 +371,7 @@ class IvSweep(Snspd):
 
     """
 
-    def run_sweep_fixed(self):
+    def run_sweep_fixed(self, double_ended=False):
         """Runs IV sweep with config paramters
         This constructs #steps between start and 75% of final current.
         Then, #steps between 75% and 100% of final current.
@@ -382,11 +382,16 @@ class IvSweep(Snspd):
         # self.inst.meter.reset()
 
         self.inst.source.set_output(False)
+        if double_ended:
+            self.inst.source1.set_output(False)
 
         start = self.properties["iv_sweep"]["start"]
         stop = self.properties["iv_sweep"]["stop"]
         steps = self.properties["iv_sweep"]["steps"]
         sweep = self.properties["iv_sweep"]["sweep"]
+        if double_ended:
+            start = start/2
+            stop = stop/2
         # To select full (positive and negative) trace or half trace
         full_sweep = self.properties["iv_sweep"]["full_sweep"]
         Isource1 = np.linspace(start, stop * 0.75, steps)  # Coarse
@@ -402,6 +407,8 @@ class IvSweep(Snspd):
         self.v_set = np.tile(Isource, sweep) * self.R_srs
 
         self.inst.source.set_output(True)
+        if double_ended:
+            self.inst.source1.set_output(True)
         sleep(1)
         voltage = []
         current = []
@@ -415,6 +422,8 @@ class IvSweep(Snspd):
 
         for n in self.v_set:
             self.inst.source.set_voltage(n)
+            if double_ended:
+                self.inst.source1.set_voltage(-n)
             sleep(0.1)  # CHANGE BACK TO 0.1
 
             vread = self.inst.meter.read_voltage()  # Voltage
@@ -427,6 +436,12 @@ class IvSweep(Snspd):
 
         self.v_read = voltage
         self.i_read = current
+
+        self.inst.source.set_voltage(0)
+        self.inst.source.set_output(False)
+        if double_ended:
+            self.inst.source1.set_voltage(0)
+            self.inst.source1.set_output(False)
 
     def run_sweep_sourceMeter(self):
         # self.inst.sourcemeter.reset()
@@ -715,13 +730,13 @@ class DoubleSweep(Snspd):
 
 
         """
+        self.inst.source.reset()
         self.inst.source1.reset()
-        self.inst.source2.reset()
 
         self.inst.meter.reset()
 
+        self.inst.source.set_output(False)
         self.inst.source1.set_output(False)
-        self.inst.source2.set_output(False)
 
         start = self.properties["double_sweep"]["start"]
         stop = self.properties["double_sweep"]["stop"]
@@ -747,7 +762,7 @@ class DoubleSweep(Snspd):
         self.v_set_g = np.tile(Isource_Ig, sweep) * self.R_srs_g
 
         self.inst.source.set_output(True)
-        self.inst.source2.set_output(True)
+        self.inst.source1.set_output(True)
         sleep(1)
         self.v_list = []
         self.i_list = []
@@ -756,7 +771,7 @@ class DoubleSweep(Snspd):
         for m in self.v_set_g:
             voltage = []
             current = []
-            self.inst.source2.set_voltage(m)
+            self.inst.source1.set_voltage(m)
             sleep(0.1)
             for n in self.v_set:
                 self.inst.source.set_voltage(n)
@@ -776,7 +791,7 @@ class DoubleSweep(Snspd):
             # ADDED by Andrew...
             # Turn off both voltage sources to provide reset time
             self.inst.source.set_voltage(0.0)
-            self.inst.source2.set_voltage(0.0)
+            self.inst.source1.set_voltage(0.0)
             sleep(2)
             #######
 

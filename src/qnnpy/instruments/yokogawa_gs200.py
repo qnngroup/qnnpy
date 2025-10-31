@@ -13,7 +13,7 @@ import pyvisa
 
 
 class YokogawaGS200(object):
-    def __init__(self, visa_name):
+    def __init__(self, visa_name, portalt=None):
         rm = pyvisa.ResourceManager()
         self.pyvisa = rm.open_resource(visa_name)
         self.pyvisa.timeout = 5000  # Set response timeout (in milliseconds)
