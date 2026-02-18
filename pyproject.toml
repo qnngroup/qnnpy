@@ -15,13 +15,14 @@ version = "0.1.18"
 
 authors = [
   { name="O. Medeiros", email="omedeiro@mit.edu" },
-  { name="E. Battson", email="emmabat@mit.edu" },
+  { name="E. Batson", email="emmabat@mit.edu" },
   { name="A. Simon", email="alejansi@mit.edu" },
   { name="R. Foster", email="reedf@mit.edu" },
 ]
 
 maintainers = [
-  { name="O. Medeiros", email="omedeiro@mit.edu" },
+  { name="E. Batson", email="emmabat@mit.edu" },
+  { name="R. Foster", email="reedf@mit.edu" },
 ]
 
 description = "The QNN library for instrument control"
