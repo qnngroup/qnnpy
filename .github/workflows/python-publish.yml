@@ -1,6 +1,6 @@
 name: Publish Python Package
 
-# only publishes to PyPI on a push to master
+# only publishes to PyPI on a push to main
 # only publishes to TestPyPI from a branch that begins with dev-pypi
 
 on: push
@@ -35,7 +35,7 @@ jobs:
   publish-to-pypi:
     name: >-
       Publish Python distribution to PyPI
-    if: github.ref == 'refs/heads/master' # only publish to PyPI on a push from master
+    if: github.ref == 'refs/heads/main' # only publish to PyPI on a push from main
     needs:
     - build
     runs-on: ubuntu-latest
