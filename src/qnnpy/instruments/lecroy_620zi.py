@@ -270,15 +270,17 @@ class LeCroy620Zi(object):
         # see P280, Appendix II Remote Control Manual for byte addresses
         self.write(channel + ":WAVEFORM? DESC")  # Contains waveform data
         desc = self.read_raw()
+        if desc == b'WARNING : CURRENT REMOTE CONTROL INTERFACE IS TCPIP\n':
+            raise Exception(f"Got VISA ERROR {desc}, change scope to LXI mode")
         desc = desc[16:]
-        vgain = float(np.frombuffer(desc[ADDR_VGAIN : ADDR_VGAIN + 4], np.float32))
+        vgain = float(np.frombuffer(desc[ADDR_VGAIN : ADDR_VGAIN + 4], np.float32).item())
         voffset = float(
-            np.frombuffer(desc[ADDR_VOFFSET : ADDR_VOFFSET + 4], np.float32)
+            np.frombuffer(desc[ADDR_VOFFSET : ADDR_VOFFSET + 4], np.float32).item()
         )
         hinterval = float(
-            np.frombuffer(desc[ADDR_HINTERVAL : ADDR_HINTERVAL + 4], np.float32)
+            np.frombuffer(desc[ADDR_HINTERVAL : ADDR_HINTERVAL + 4], np.float32).item()
         )
-        hoffset = float(np.frombuffer(desc[ADDR_HOFFSET : ADDR_HOFFSET + 8], np.double))
+        hoffset = float(np.frombuffer(desc[ADDR_HOFFSET : ADDR_HOFFSET + 8], np.double).item())
         num_samples = len(data)
         x = np.array(range(num_samples)) * hinterval + hoffset
         # yscale = float(2**16)/(vf_stop - vf_start)  # Scale the data, it's output as ints from -2^16 to 2^16
