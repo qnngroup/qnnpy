@@ -40,11 +40,11 @@ class Lakeshore121(object):
         if not(100e-9 <= abs(current) <= 100e-3):
             raise ValueError(f"invalid current {current}, must be between 100 nA and 100 mA")
         self.write(f"SETI {current:.2e}")
-        time.sleep(0.01)
+        time.sleep(0.1)
         actual_current = self.get_current()
         if actual_current != current:
             raise ValueError(f"requested current {current} and programmed current {actual_current} do not match")
-        time.sleep(0.01)
+        time.sleep(0.1)
         self.write("RANGE 13")
 
     def get_current(self):
