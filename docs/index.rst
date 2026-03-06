@@ -6,15 +6,20 @@
 Welcome to qnnpy's documentation!
 =================================
 
+``qnnpy`` is a python-based instrument control toolbox for the
+Quantum Nanostructure and Nanofabrication Group (QNN) at MIT.
+The primary goal of this package is to simplify and standardize the measurement of superconducting nanowire single photon detectors (SNSPDs) and other superconducting nanoelectronics.
+This package is split into two main submodules: ``functions``, and ``instruments``.
+
+This reposotory does not contain commands that will perform your measurements for you.
+Its purpose is to organize, standardize, and improve the existing programming infrastructure.
+
+.. note::
+   This project is under active development and the API is subject to change.
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api
+   user_install
+   dev_install
