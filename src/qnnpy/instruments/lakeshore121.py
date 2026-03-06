@@ -39,13 +39,16 @@ class Lakeshore121(object):
     def set_current(self, current):
         if not(100e-9 <= abs(current) <= 100e-3):
             raise ValueError(f"invalid current {current}, must be between 100 nA and 100 mA")
+        # round to 3 sigfigs
+        current = np.round(current, decimals=-int(np.floor(np.log10(abs(current)))) + 2)
         self.write(f"SETI {current:.2e}")
         time.sleep(0.1)
         actual_current = self.get_current()
-        if actual_current != current:
+        if abs(actual_current - current) > 0.001 * abs(current):
             raise ValueError(f"requested current {current} and programmed current {actual_current} do not match")
         time.sleep(0.1)
         self.write("RANGE 13")
+        return actual_current
 
     def get_current(self):
         current = self.query("SETI?").replace(";", "").replace("\r\n", "")
