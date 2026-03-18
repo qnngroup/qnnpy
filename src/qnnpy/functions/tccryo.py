@@ -353,6 +353,15 @@ class TcCryo:
         sample_indices = {pos: i for i, pos in enumerate(self.samples.keys())}
         min_temp = np.inf
         max_temp = -np.inf
+        # determine direction of sweep
+        cooldown = True
+        start_temp = self.temp.read_temp(channel=self.temp_channel)
+        if abs(start_temp - self.cool_warm_T_base) < abs(start_temp - self.cool_warm_T_max):
+            cooldown = False
+        print(
+            f"initial temperature is {eng_string(start_temp)} K, ",
+            f"detected direction is {'cooldown' if cooldown else 'warmup'}."
+        )
         # do measurement
         self.isrc.enable_current()
         time.sleep(0.1)
@@ -393,9 +402,9 @@ class TcCryo:
                     # pretty-print measured resistances and temperatures
                     time.sleep(self.cool_warm_sleep)
                     # check stopping condition
-                    if min_temp < self.cool_warm_T_base:
+                    if cooldown and (min_temp < self.cool_warm_T_base):
                         raise Exception
-                    if max_temp > self.cool_warm_T_max:
+                    if not(cooldown) and (max_temp > self.cool_warm_T_max):
                         raise Exception
                 data_dict = dict(
                     timestamps=timestamps,
@@ -406,7 +415,7 @@ class TcCryo:
                 )
                 self.save_data(
                     tstart,
-                    "cooldown_warmup",
+                    "cooldown" if cooldown else "warmup",
                     rows_written,
                     sample_indices,
                     data_dict,
