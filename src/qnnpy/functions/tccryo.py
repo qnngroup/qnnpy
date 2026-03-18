@@ -28,19 +28,21 @@ def eng_string(x, sig_figs=3):
     sign = "-" if x < 0 else " "
     x = abs(float(x))
     if x == 0:
-        return "0"
+        return " 0 "
     log10 = int(np.floor(np.log10(x)))
     log10_nearest_3 = 3 * ((log10) // 3)
     x_mantissa = x / (10**log10_nearest_3)
     x_mantissa = round(
         x_mantissa, -int(np.floor(np.log10(x_mantissa)) - (sig_figs - 1))
     )
-    if x_mantissa >= -24 and x_mantissa <= 24:
-        exp_text = "yzafpnum kMGTPEZY"[log10_nearest_3 // 3 + 8]
-    else:
-        exp_text = "e%s" % log10_nearest_3
     mantissa_text = str(x_mantissa)
     mantissa_text = mantissa_text[:-1] if mantissa_text[-2:] == ".0" else mantissa_text
+    if log10_nearest_3 >= -24 and log10_nearest_3 <= 24:
+        exp_text = "yzafpnum kMGTPEZY"[log10_nearest_3 // 3 + 8]
+        exp_text = ' ' + exp_text
+    else:
+        exp_text = "e%s" % log10_nearest_3
+        exp_text = exp_text + ' '
     return ("%s%s%s") % (sign, mantissa_text, exp_text)
 
 
@@ -52,25 +54,27 @@ class TcCryo:
     def __init__(self, configuration_file):
         self.properties = qf.load_config(configuration_file)
 
-        self.tc_T_min = self.properties["Tc measurement"]["T_min"]
-        self.tc_T_max = self.properties["Tc measurement"]["T_max"]
-        self.tc_T_step = self.properties["Tc measurement"]["T_step"]
-        self.tc_t_dwell = self.properties["Tc measurement"]["t_dwell"]
-        self.tc_current = self.properties["Tc measurement"]["current"]
-        self.tc_n_repeat = self.properties["Tc measurement"]["repeat"]
+        self.tc_T_min = float(self.properties["Tc measurement"]["T_min"])
+        self.tc_T_max = float(self.properties["Tc measurement"]["T_max"])
+        self.tc_T_step = float(self.properties["Tc measurement"]["T_step"])
+        self.tc_t_dwell = float(self.properties["Tc measurement"]["t_dwell"])
+        self.tc_current = float(self.properties["Tc measurement"]["current"])
+        self.tc_n_repeat = int(self.properties["Tc measurement"]["repeat"])
 
-        self.cool_warm_current = self.properties["Cooldown-Warmup measurement"][
-            "current"
-        ]
-        self.cool_warm_n_repeat = self.properties["Cooldown-Warmup measurement"][
-            "repeat"
-        ]
-        self.cool_warm_sleep = self.properties["Cooldown-Warmup measurement"]["sleep"]
-        self.cool_warm_save_interval = self.properties["Cooldown-Warmup measurement"][
-            "save interval"
-        ]
-        self.cool_warm_T_base = self.properties["Cooldown-Warmup measurement"]["T_base"]
-        self.cool_warm_T_max = self.properties["Cooldown-Warmup measurement"]["T_max"]
+        self.cool_warm_current = float(
+            self.properties["Cooldown-Warmup measurement"]["current"]
+        )
+        self.cool_warm_n_repeat = int(
+            self.properties["Cooldown-Warmup measurement"]["repeat"]
+        )
+        self.cool_warm_sleep = float(
+            self.properties["Cooldown-Warmup measurement"]["sleep"]
+        )
+        self.cool_warm_save_interval = int(
+            self.properties["Cooldown-Warmup measurement"]["save interval"]
+        )
+        self.cool_warm_T_base = float(self.properties["Cooldown-Warmup measurement"]["T_base"])
+        self.cool_warm_T_max = float(self.properties["Cooldown-Warmup measurement"]["T_max"])
 
         samples = self.properties["Sample Mapping"]
         # verify samples
@@ -160,7 +164,7 @@ class TcCryo:
             self.select_mux(pos)
             time.sleep(0.5)
             for i in range(len(voltages_4p)):
-                voltages_4p[i], ranges[i] = self.read_voltage(self.lj_device)
+                voltages_4p[i], ranges[i] = self.read_voltage()
                 time.sleep(0.01)
             if self.isrc.in_compliance():
                 print("WARNING: COMPLIANCE")
@@ -174,7 +178,7 @@ class TcCryo:
             )
         self.isrc.disable_current()
 
-    def pretty_print(self, sample_indices, temperatures, voltages, current, n_avg):
+    def pretty_print(self, sample_indices, temperatures, voltages, current):
         text = [["", ""], ["", ""], ["", ""]]
         positions = [[2, 3], [1, 4], [0, 5]]
         for row in range(3):
@@ -184,38 +188,38 @@ class TcCryo:
                     text[row][col] = ["---".center(15)] * 4
                     continue
                 sample_idx = sample_indices[pos]
-                t = temperatures[sample_idx][-n_avg:]
-                r = voltages[sample_idx][-n_avg:] / current
+                t = temperatures[sample_idx]
+                r = voltages[sample_idx] / current
                 r_mean = np.mean(r)
                 r_std = np.std(r)
-                t_str = eng_string(t)
+                t_str = eng_string(np.mean(t))
                 r_mean_str = eng_string(r_mean)
                 r_std_str = eng_string(r_std)
                 # width = 1(sign)+3 or 4(mantissa)+1(exponent)
                 # budget width of 8 for eng_str
                 text[row][col] = (
-                    self.samples[pos].center(15),
-                    "T  = %s K" % t_str.rjust(8),
-                    "Rμ = %s Ω" % r_mean_str.rjust(8),
-                    "Rσ = %s Ω" % r_std_str.rjust(8),
+                    self.samples[pos].center(14),
+                    "T  = %sK" % t_str.rjust(8),
+                    "Rμ = %sΩ" % r_mean_str.rjust(8),
+                    "Rσ = %sΩ" % r_std_str.rjust(8),
                 )
         # print rows
         for row in range(3):
-            print("+", "-" * 15, "+", "-" * 15, "|")
+            print("+" + "-" * 16 + "+" + "-" * 16 + "+")
             for i in range(4):
-                print("|", text[row][0][i], "|", text[row][1][i], "|")
-        print("+", "-" * 15, "+", "-" * 15, "|")
+                print("| " + text[row][0][i] + " | " + text[row][1][i] + " |")
+        print("+" + "-" * 16 + "+" + "-" * 16 + "+")
 
     def set_heater(self, temperature):
         """Sets heater to specified temperature"""
-        # lookup range, P/I for different ranges
-        if temperature > 15:
+        # lookup range, different power for different ranges
+        proportional = 1.0
+        integral = 1.0
+        if temperature > 4.5:
             power = "25W"
         else:
             power = "2.5W"
-        proportional = 2
-        integral = 1
-        self.temp.setup_heater(load=25, range=power, source_channel=self.temp_channel)
+        self.temp.set_power(range=power)
         time.sleep(0.1)
         self.temp.set_pid(proportional, integral, 0.0)
         self.temp.set_setpoint(temperature)  # Setpoint in Kelvin
@@ -262,7 +266,7 @@ class TcCryo:
         t_max = self.tc_T_max
         t_step = self.tc_T_step
         tlist = np.concatenate(
-            (np.linspace(t_min, t_max, t_step), np.linspace(t_max, t_min, -t_step))
+            (np.arange(t_min, t_max, t_step), np.arange(t_max, t_min, -t_step))
         )
         sample_indices = {pos: i for i, pos in enumerate(self.samples.keys())}
         n_samples = len(self.samples)
@@ -271,6 +275,7 @@ class TcCryo:
         vranges = np.zeros(temperatures.shape)
         compliance = np.zeros(temperatures.shape)
         timestamps = np.zeros(temperatures.shape)
+        self.temp.setup_heater(load=25, range="25W", source_channel=self.temp_channel)
         self.isrc.enable_current()
         time.sleep(0.1)
         self.isrc.set_current(self.tc_current)
@@ -281,7 +286,6 @@ class TcCryo:
             # loop
             for ti, t in enumerate(tlist):
                 self.set_heater(t)
-                print(f"set heater to T = {t} K")
                 time.sleep(self.tc_t_dwell)
                 # measure
                 for pos, sample_idx in sample_indices.items():
@@ -292,19 +296,19 @@ class TcCryo:
                         timestamps[sample_idx, w_idx] = time.time()
                         compliance[sample_idx, w_idx] = self.isrc.in_compliance()
                         T = self.temp.read_temp(channel=self.temp_channel)
-                        v, vr = self.read_voltage(self.lj_device)
+                        v, vr = self.read_voltage()
                         temperatures[sample_idx, w_idx] = T
                         voltages[sample_idx, w_idx] = v
                         vranges[sample_idx, w_idx] = vr
                         time.sleep(0.01)
-                    self.pretty_print(
-                        sample_indices,
-                        temperatures,
-                        voltages,
-                        self.tc_current,
-                        self.tc_n_repeat,
-                    )
-                    print("")
+                print_start = ti * self.tc_n_repeat
+                self.pretty_print(
+                    sample_indices,
+                    temperatures[:,print_start:print_start+self.tc_n_repeat],
+                    voltages[:,print_start:print_start+self.tc_n_repeat],
+                    self.tc_current,
+                )
+                print("")
             self.temp.stop_heater()
             self.isrc.disable_current()
             # save data
@@ -368,7 +372,7 @@ class TcCryo:
                             timestamps[sample_idx, w_idx] = time.time()
                             compliance[sample_idx, w_idx] = self.isrc.in_compliance()
                             T = self.temp.read_temp(channel=self.temp_channel)
-                            v, vr = self.read_voltage(self.lj_device)
+                            v, vr = self.read_voltage()
                             temperatures[sample_idx, w_idx] = T
                             voltages[sample_idx, w_idx] = v
                             vranges[sample_idx, w_idx] = vr
@@ -376,12 +380,12 @@ class TcCryo:
                             min_temp = min(min_temp, T)
                             max_temp = max(max_temp, T)
                             rows_written[pos] += 1
+                    print_start = save_iter * self.cool_warm_n_repeat
                     self.pretty_print(
                         sample_indices,
-                        temperatures,
-                        voltages,
-                        self.cool_warm_current,
-                        self.cool_warm_n_repeat,
+                        temperatures[:,print_start:print_start+self.cool_warm_n_repeat],
+                        voltages[:,print_start:print_start+self.cool_warm_n_repeat],
+                        self.tc_current,
                     )
                     print("")
                     # pretty-print measured resistances and temperatures
