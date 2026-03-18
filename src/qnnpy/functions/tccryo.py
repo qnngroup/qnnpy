@@ -231,6 +231,29 @@ class TcCryo:
             save_dirs[pos] = save_dir
         return save_dirs
 
+    def save_data(self, tstart, measurement_type, num_rows, sample_indices, data_dict):
+        # save data
+        fname = lambda file_type: time.strftime(
+            f"{measurement_type}_%Y-%m-%d_%H-%M-%S.{file_type}", tstart
+        )
+        save_dirs = self.get_save_dirs()
+        for pos in self.samples.keys():
+            # append to CSV
+            with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
+                writer = csv.writer(csvfile)
+                for i in range(num_rows[pos]):
+                    s_idx = sample_indices[pos]
+                    row = [
+                        data_dict['timestamps'][s_idx, i],
+                        data_dict['compliance'][s_idx, i],
+                        data_dict['temperatures'][s_idx, i],
+                        data_dict['voltages'][s_idx, i],
+                        data_dict['vranges'][s_idx, i],
+                    ]
+                    writer.writerow(row)
+            with open(save_dirs[pos] / fname("mat"), "w") as f:
+                yaml.dump(self.properties, f, default_flow_style=False)
+
     def measure_tc(
         self,
     ):
@@ -242,7 +265,6 @@ class TcCryo:
             (np.linspace(t_min, t_max, t_step), np.linspace(t_max, t_min, -t_step))
         )
         sample_indices = {pos: i for i, pos in enumerate(self.samples.keys())}
-        save_dirs = self.get_save_dirs()
         n_samples = len(self.samples)
         temperatures = np.zeros((n_samples, len(tlist) * self.tc_n_repeat))
         voltages = np.zeros(temperatures.shape)
@@ -286,27 +308,24 @@ class TcCryo:
             self.temp.stop_heater()
             self.isrc.disable_current()
             # save data
-            for pos in self.samples.keys():
-                # append to CSV
-                with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
-                    writer = csv.writer(csvfile)
-                    for i in range(timestamps.shape[1]):
-                        s_idx = sample_indices[pos]
-                        row = [
-                            timestamps[s_idx, i],
-                            compliance[s_idx, i],
-                            temperatures[s_idx, i],
-                            voltages[s_idx, i],
-                            vranges[s_idx, i],
-                        ]
-                        writer.writerow(row)
-                with open(save_dirs[pos] / fname("mat"), "w") as f:
-                    yaml.dump(self.properties, f, default_flow_style=False)
+            data_dict = dict(
+                timestamps=timestamps,
+                compliance=compliance,
+                temperatures=temperatures,
+                voltages=voltages,
+                vranges=vranges
+            )
+            self.save_data(
+                tstart,
+                "cooldown_warmup",
+                {pos: timestamps.shape[1] for pos in self.samples.keys()},
+                sample_indices,
+                data_dict
+            )
         except:
             self.temp.stop_heater()
             self.isrc.disable_current()
             raise
-        return [save_dirs[pos] for pos in self.samples.keys()]
 
     def measure_cooldown_warmup(
         self,
@@ -315,7 +334,6 @@ class TcCryo:
         Repeatedly measure multiple samples during warmup or cooldown.
         Saves meausrements at regular intervals to ensure data is saved.
         """
-        save_dirs = self.get_save_dirs()
         n_samples = len(self.samples)
         temperatures = np.zeros(
             (n_samples, self.cool_warm_save_interval * self.cool_warm_n_repeat)
@@ -373,24 +391,33 @@ class TcCryo:
                         raise Exception
                     if max_temp > self.cool_warm_T_max:
                         raise Exception
+                data_dict = dict(
+                    timestamps=timestamps,
+                    compliance=compliance,
+                    temperatures=temperatures,
+                    voltages=voltages,
+                    vranges=vranges
+                )
+                self.save_data(
+                    tstart,
+                    "cooldown_warmup",
+                    rows_written,
+                    sample_indices,
+                    data_dict
+                )
         except Exception:
             self.isrc.disable_current()
-            # save data
-            for pos in self.samples.keys():
-                # append to CSV
-                with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
-                    writer = csv.writer(csvfile)
-                    for i in range(rows_written[pos]):
-                        s_idx = sample_indices[pos]
-                        row = [
-                            timestamps[s_idx, i],
-                            compliance[s_idx, i],
-                            temperatures[s_idx, i],
-                            voltages[s_idx, i],
-                            vranges[s_idx, i],
-                        ]
-                        writer.writerow(row)
-                with open(save_dirs[pos] / fname("mat"), "w") as f:
-                    yaml.dump(self.properties, f, default_flow_style=False)
-
-        return [save_dirs[pos] for pos in self.samples.keys()]
+            data_dict = dict(
+                timestamps=timestamps,
+                compliance=compliance,
+                temperatures=temperatures,
+                voltages=voltages,
+                vranges=vranges
+            )
+            self.save_data(
+                tstart,
+                "cooldown_warmup",
+                rows_written,
+                sample_indices,
+                data_dict
+            )
