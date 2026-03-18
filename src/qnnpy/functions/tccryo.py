@@ -5,6 +5,7 @@ Author: Reed Foster
 import csv
 import re
 import time
+import datetime
 from pathlib import Path
 
 import LabJackPython as ljpy
@@ -223,7 +224,6 @@ class TcCryo:
         time.sleep(0.1)
         self.temp.set_pid(proportional, integral, 0.0)
         self.temp.set_setpoint(temperature)  # Setpoint in Kelvin
-        self.temp.set_control_type_pid()
         time.sleep(0.1)
         self.temp.start_heater()
 
@@ -235,16 +235,19 @@ class TcCryo:
             save_dirs[pos] = save_dir
         return save_dirs
 
-    def save_data(self, tstart, measurement_type, num_rows, sample_indices, data_dict):
+    def save_data(self, tstart, measurement_type, num_rows, sample_indices, data_dict, header):
         # save data
-        fname = lambda file_type: time.strftime(
-            f"{measurement_type}_%Y-%m-%d_%H-%M-%S.{file_type}", tstart
+        dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
+        fname = lambda file_type: dtime.strftime(
+            f"{measurement_type}_%Y-%m-%d_%H-%M-%S.{file_type}"
         )
         save_dirs = self.get_save_dirs()
         for pos in self.samples.keys():
             # append to CSV
             with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
                 writer = csv.writer(csvfile)
+                if header:
+                    writer.writerow(['timestamp', 'compliance', 'temperatures', 'voltages', 'vranges'])
                 for i in range(num_rows[pos]):
                     s_idx = sample_indices[pos]
                     row = [
@@ -255,7 +258,7 @@ class TcCryo:
                         data_dict['vranges'][s_idx, i],
                     ]
                     writer.writerow(row)
-            with open(save_dirs[pos] / fname("mat"), "w") as f:
+            with open(save_dirs[pos] / fname("yml"), "w") as f:
                 yaml.dump(self.properties, f, default_flow_style=False)
 
     def measure_tc(
@@ -276,12 +279,12 @@ class TcCryo:
         compliance = np.zeros(temperatures.shape)
         timestamps = np.zeros(temperatures.shape)
         self.temp.setup_heater(load=25, range="25W", source_channel=self.temp_channel)
+        self.temp.set_control_type_pid()
         self.isrc.enable_current()
         time.sleep(0.1)
         self.isrc.set_current(self.tc_current)
         time.sleep(0.1)
         tstart = time.time()
-        fname = lambda ftype: time.strftime(f"tc_%Y-%m-%d_%H-%M-%S.{ftype}", tstart)
         try:
             # loop
             for ti, t in enumerate(tlist):
@@ -321,10 +324,11 @@ class TcCryo:
             )
             self.save_data(
                 tstart,
-                "cooldown_warmup",
+                "tc",
                 {pos: timestamps.shape[1] for pos in self.samples.keys()},
                 sample_indices,
-                data_dict
+                data_dict,
+                header=True,
             )
         except:
             self.temp.stop_heater()
@@ -355,10 +359,8 @@ class TcCryo:
         self.isrc.set_current(self.cool_warm_current)
         time.sleep(0.1)
         tstart = time.time()
-        fname = lambda ftype: time.strftime(
-            f"cooldown_warmup_%Y-%m-%d_%H-%M-%S.{ftype}", tstart
-        )
         rows_written = {pos: 0 for pos in self.samples.keys()}
+        write_header = True
         try:
             while True:
                 for pos, sample_idx in sample_indices.items():
@@ -407,8 +409,10 @@ class TcCryo:
                     "cooldown_warmup",
                     rows_written,
                     sample_indices,
-                    data_dict
+                    data_dict,
+                    header=write_header,
                 )
+                write_header = False
         except Exception:
             self.isrc.disable_current()
             data_dict = dict(
@@ -423,5 +427,6 @@ class TcCryo:
                 "cooldown_warmup",
                 rows_written,
                 sample_indices,
-                data_dict
+                data_dict,
+                header=write_header,
             )
