@@ -2,18 +2,18 @@
 Author: Reed Foster
 """
 
+import copy
 import csv
+import datetime
 import re
 import time
-import datetime
 from pathlib import Path
 
 import LabJackPython as ljpy
+import matplotlib.pyplot as plt
 import numpy as np
 import u6
 import yaml
-
-import copy
 
 import qnnpy.functions.functions as qf
 from qnnpy.instruments.cryocon34 import Cryocon34
@@ -42,10 +42,10 @@ def eng_string(x, sig_figs=3):
     mantissa_text = mantissa_text[:-1] if mantissa_text[-2:] == ".0" else mantissa_text
     if log10_nearest_3 >= -24 and log10_nearest_3 <= 24:
         exp_text = "yzafpnum kMGTPEZY"[log10_nearest_3 // 3 + 8]
-        exp_text = ' ' + exp_text
+        exp_text = " " + exp_text
     else:
         exp_text = "e%s" % log10_nearest_3
-        exp_text = exp_text + ' '
+        exp_text = exp_text + " "
     return ("%s%s%s") % (sign, mantissa_text, exp_text)
 
 
@@ -76,8 +76,12 @@ class TcCryo:
         self.cool_warm_save_interval = int(
             self.properties["Cooldown-Warmup measurement"]["save interval"]
         )
-        self.cool_warm_T_base = float(self.properties["Cooldown-Warmup measurement"]["T_base"])
-        self.cool_warm_T_max = float(self.properties["Cooldown-Warmup measurement"]["T_max"])
+        self.cool_warm_T_base = float(
+            self.properties["Cooldown-Warmup measurement"]["T_base"]
+        )
+        self.cool_warm_T_max = float(
+            self.properties["Cooldown-Warmup measurement"]["T_max"]
+        )
 
         samples = self.properties["Sample Mapping"]
         # verify samples
@@ -112,6 +116,133 @@ class TcCryo:
             0.01: ljpy.LJ_rgBIPP01V,
         }
 
+    #################################
+    # plotting/outputs
+    #################################
+    def _mosaic(self):
+        sample_positions = self.get_sample_positions()
+        mosaic = [[".", "."], [".", "."], [".", "."]]
+        for row in range(3):
+            for col in range(2):
+                pos = sample_positions[row][col]
+                if pos in self.samples:
+                    mosaic[row][col] = self.samples[pos]
+        return mosaic
+
+    def _set_plot_labels(self, ax):
+        for _, sample in self.samples.items():
+            ax[sample].set_title(sample)
+            ax[sample].set_xlabel("T [K]")
+            ax[sample].set_ylabel("R [Ω]")
+
+    def _set_xlim(self, ax, xlim):
+        for _, sample in self.samples.items():
+            ax[sample].set_xlim(xlim)
+
+    def _set_ylim(self, ax, ylim):
+        for _, sample in self.samples.items():
+            ax[sample].set_ylim(ylim)
+
+    def setup_tc_plot(self, **fig_kw):
+        mosaic = self._mosaic()
+        self.fig_tc, self.ax_tc = plt.subplot_mosaic(mosaic, sharex="col", **fig_kw)
+        self._set_plot_labels(self.ax_tc)
+        self._set_xlim(self.ax_tc, (self.tc_T_min - 0.5, self.tc_T_max + 0.5))
+        self.fig_cd_wu.tight_layout()
+        plt.show()
+
+    def setup_cooldown_warmup_plot(self, **fig_kw):
+        mosaic = self._mosaic()
+        for row in range(3):
+            mosaic[row].insert(0, "temp")
+        self.fig_cd_wu, self.ax_cd_wu = plt.subplot_mosaic(
+            mosaic, sharex="col", **fig_kw
+        )
+        self._set_plot_labels(self.ax_cd_wu)
+        self.ax_cd_wu["temp"].set_title("temperature")
+        self.ax_cd_wu["temp"].set_xlabel("t [s]")
+        self.ax_cd_wu["temp"].set_ylabel("T [K]")
+        self._set_ylim(self.ax_cd_wu, (0, self.cool_warm_T_max))
+        self.fig_cd_wu.tight_layout()
+        plt.show()
+
+    def update_tc_plot(self, temperatures, voltages, current):
+        sample_positions = self.get_sample_positions()
+        for row in range(3):
+            for col in range(2):
+                pos = sample_positions[row][col]
+                sample_name = self.samples[pos]
+                self.ax_tc[sample_name].plot(
+                    temperatures[pos, :], voltages[pos, :] / current, ".", color="b"
+                )
+        self.fig_tc.canvas.draw_idle()
+        self.fig_tc.canvas.flush_events()
+
+    def update_cooldown_warmup_plot(self, timestamps, temperatures, voltages, current):
+        sample_positions = self.get_sample_positions()
+        for row in range(3):
+            for col in range(2):
+                pos = sample_positions[row][col]
+                sample_name = self.samples[pos]
+                self.ax_cd_wu[sample_name].plot(
+                    temperatures[pos, :], voltages[pos, :] / current, ".", color="b"
+                )
+                self.ax_cd_wu["temp"].plot(
+                    timestamps[pos, :], temperatures[pos, :], ".", color="b"
+                )
+        self.fig_cd_wu.canvas.draw_idle()
+        self.fig_cd_wu.canvas.flush_events()
+
+    def save_tc_plot(self, tstart):
+        measurement_type = "tc"
+        dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
+        fname = dtime.strftime(f"{measurement_type}_%Y-%m-%d_%H-%M-%S.png")
+        save_dirs = self.get_save_dirs()
+        for pos in self.samples.keys():
+            self.fig_tc.savefig(save_dirs[pos] / fname)
+
+    def save_cooldown_warmup_plot(self, tstart, cooldown_str):
+        dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
+        fname = dtime.strftime(f"{cooldown_str}_%Y-%m-%d_%H-%M-%S.png")
+        save_dirs = self.get_save_dirs()
+        for pos in self.samples.keys():
+            self.fig_wu_cd.savefig(save_dirs[pos] / fname)
+
+    def pretty_print(self, sample_indices, temperatures, voltages, current):
+        text = [["", ""], ["", ""], ["", ""]]
+        positions = self.get_sample_positions()
+        for row in range(3):
+            for col in range(2):
+                pos = positions[row][col]
+                if pos not in self.samples:
+                    text[row][col] = ["---".center(15)] * 4
+                    continue
+                sample_idx = sample_indices[pos]
+                t = temperatures[sample_idx]
+                r = voltages[sample_idx] / current
+                r_mean = np.mean(r)
+                r_std = np.std(r)
+                t_str = eng_string(np.mean(t))
+                r_mean_str = eng_string(r_mean)
+                r_std_str = eng_string(r_std)
+                # width = 1(sign)+3 or 4(mantissa)+1(exponent)
+                # budget width of 8 for eng_str
+                text[row][col] = (
+                    self.samples[pos].center(14),
+                    "T  = %sK" % t_str.rjust(8),
+                    "Rμ = %sΩ" % r_mean_str.rjust(8),
+                    "Rσ = %sΩ" % r_std_str.rjust(8),
+                )
+        # print rows
+        for row in range(3):
+            print("+" + "-" * 16 + "+" + "-" * 16 + "+")
+            for i in range(4):
+                print("| " + text[row][0][i] + " | " + text[row][1][i] + " |")
+        print("+" + "-" * 16 + "+" + "-" * 16 + "+")
+
+    #################################
+    # low-level utilities
+    #################################
     def select_mux(self, position):
         """Selects a position between 0 and 7"""
         for b in range(3):
@@ -154,6 +285,77 @@ class TcCryo:
                 return vdevice, lj_range
         return vdevice, lj_range
 
+    def set_heater(self, temperature):
+        """Sets heater to specified temperature"""
+        # lookup range, different power for different ranges
+        proportional = 1.0
+        integral = 1.0
+        if temperature > 4.5:
+            power = "25W"
+        else:
+            power = "2.5W"
+        self.temp.set_power(range=power)
+        time.sleep(0.1)
+        self.temp.set_pid(proportional, integral, 0.0)
+        self.temp.set_setpoint(temperature)  # Setpoint in Kelvin
+        time.sleep(0.1)
+        self.temp.start_heater()
+
+    def get_sample_positions(self):
+        return [[2, 3], [1, 4], [0, 5]]
+
+    def get_save_dirs(self):
+        save_dirs = {}
+        for pos in self.samples.keys():
+            save_dir = Path(f"S:/SC/Measurements/{self.samples[pos]}/tc")
+            save_dir.mkdir(parents=True, exist_ok=True)
+            save_dirs[pos] = save_dir
+        return save_dirs
+
+    def save_data(
+        self, tstart, measurement_type, num_rows, sample_indices, data_dict, header
+    ):
+        # save data
+        dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
+        fname = lambda file_type: dtime.strftime(
+            f"{measurement_type}_%Y-%m-%d_%H-%M-%S.{file_type}"
+        )
+        save_dirs = self.get_save_dirs()
+        for pos in self.samples.keys():
+            # append to CSV
+            with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
+                writer = csv.writer(csvfile)
+                if header:
+                    writer.writerow(
+                        [
+                            "timestamp",
+                            "compliance",
+                            "temperatures",
+                            "voltages",
+                            "vranges",
+                        ]
+                    )
+                for i in range(num_rows[pos]):
+                    s_idx = sample_indices[pos]
+                    row = [
+                        data_dict["timestamps"][s_idx, i],
+                        data_dict["compliance"][s_idx, i],
+                        data_dict["temperatures"][s_idx, i],
+                        data_dict["voltages"][s_idx, i],
+                        data_dict["vranges"][s_idx, i],
+                    ]
+                    writer.writerow(row)
+            new_properties = copy.deepcopy(self.properties)
+            new_properties["Save File"] = str(save_dirs[pos] / fname("yml"))
+            with open(save_dirs[pos] / fname("yml"), "w") as f:
+                yaml.dump(new_properties, f, default_flow_style=False)
+
+    def get_sample_indices(self):
+        return {pos: i for i, pos in enumerate(self.samples.keys())}
+
+    #################################
+    # measurements
+    #################################
     def check_resistances(self, current=100e-6, n_measurements=10):
         """
         Checks resistance for multiple positions, averaging over n_measurements
@@ -181,98 +383,9 @@ class TcCryo:
             )
         self.isrc.disable_current()
 
-    def get_sample_positions(self):
-        return [[2, 3], [1, 4], [0, 5]]
-
-    def pretty_print(self, sample_indices, temperatures, voltages, current):
-        text = [["", ""], ["", ""], ["", ""]]
-        positions = self.get_sample_positions()
-        for row in range(3):
-            for col in range(2):
-                pos = positions[row][col]
-                if pos not in self.samples:
-                    text[row][col] = ["---".center(15)] * 4
-                    continue
-                sample_idx = sample_indices[pos]
-                t = temperatures[sample_idx]
-                r = voltages[sample_idx] / current
-                r_mean = np.mean(r)
-                r_std = np.std(r)
-                t_str = eng_string(np.mean(t))
-                r_mean_str = eng_string(r_mean)
-                r_std_str = eng_string(r_std)
-                # width = 1(sign)+3 or 4(mantissa)+1(exponent)
-                # budget width of 8 for eng_str
-                text[row][col] = (
-                    self.samples[pos].center(14),
-                    "T  = %sK" % t_str.rjust(8),
-                    "Rμ = %sΩ" % r_mean_str.rjust(8),
-                    "Rσ = %sΩ" % r_std_str.rjust(8),
-                )
-        # print rows
-        for row in range(3):
-            print("+" + "-" * 16 + "+" + "-" * 16 + "+")
-            for i in range(4):
-                print("| " + text[row][0][i] + " | " + text[row][1][i] + " |")
-        print("+" + "-" * 16 + "+" + "-" * 16 + "+")
-
-    def set_heater(self, temperature):
-        """Sets heater to specified temperature"""
-        # lookup range, different power for different ranges
-        proportional = 1.0
-        integral = 1.0
-        if temperature > 4.5:
-            power = "25W"
-        else:
-            power = "2.5W"
-        self.temp.set_power(range=power)
-        time.sleep(0.1)
-        self.temp.set_pid(proportional, integral, 0.0)
-        self.temp.set_setpoint(temperature)  # Setpoint in Kelvin
-        time.sleep(0.1)
-        self.temp.start_heater()
-
-    def get_save_dirs(self):
-        save_dirs = {}
-        for pos in self.samples.keys():
-            save_dir = Path(f"S:/SC/Measurements/{self.samples[pos]}/tc")
-            save_dir.mkdir(parents=True, exist_ok=True)
-            save_dirs[pos] = save_dir
-        return save_dirs
-
-    def save_data(self, tstart, measurement_type, num_rows, sample_indices, data_dict, header):
-        # save data
-        dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
-        fname = lambda file_type: dtime.strftime(
-            f"{measurement_type}_%Y-%m-%d_%H-%M-%S.{file_type}"
-        )
-        save_dirs = self.get_save_dirs()
-        for pos in self.samples.keys():
-            # append to CSV
-            with open(save_dirs[pos] / fname("csv"), "a") as csvfile:
-                writer = csv.writer(csvfile)
-                if header:
-                    writer.writerow(['timestamp', 'compliance', 'temperatures', 'voltages', 'vranges'])
-                for i in range(num_rows[pos]):
-                    s_idx = sample_indices[pos]
-                    row = [
-                        data_dict['timestamps'][s_idx, i],
-                        data_dict['compliance'][s_idx, i],
-                        data_dict['temperatures'][s_idx, i],
-                        data_dict['voltages'][s_idx, i],
-                        data_dict['vranges'][s_idx, i],
-                    ]
-                    writer.writerow(row)
-            new_properties = copy.deepcopy(self.properties)
-            new_properties["Save File"] = str(save_dirs[pos] / fname("yml"))
-            with open(save_dirs[pos] / fname("yml"), "w") as f:
-                yaml.dump(new_properties, f, default_flow_style=False)
-
-    def get_sample_indices(self):
-        return {pos: i for i, pos in enumerate(self.samples.keys())}
-
     def measure_tc(
         self,
+        animate=False,
     ):
         """Ramp temperature up slowly and then back down slowly"""
         t_min = self.tc_T_min
@@ -283,6 +396,8 @@ class TcCryo:
         )
         sample_indices = self.get_sample_indices()
         n_samples = len(self.samples)
+        if animate:
+            self.setup_tc_plot(self, figsize=(8, 12))
         temperatures = np.zeros((n_samples, len(tlist) * self.tc_n_repeat))
         voltages = np.zeros(temperatures.shape)
         vranges = np.zeros(temperatures.shape)
@@ -317,11 +432,13 @@ class TcCryo:
                 print_start = ti * self.tc_n_repeat
                 self.pretty_print(
                     sample_indices,
-                    temperatures[:,print_start:print_start+self.tc_n_repeat],
-                    voltages[:,print_start:print_start+self.tc_n_repeat],
+                    temperatures[:, print_start : print_start + self.tc_n_repeat],
+                    voltages[:, print_start : print_start + self.tc_n_repeat],
                     self.tc_current,
                 )
                 print("")
+                if animate:
+                    self.update_tc_plot(temperatures, voltages, self.tc_current)
             self.temp.stop_heater()
             self.isrc.disable_current()
             # save data
@@ -330,7 +447,7 @@ class TcCryo:
                 compliance=compliance,
                 temperatures=temperatures,
                 voltages=voltages,
-                vranges=vranges
+                vranges=vranges,
             )
             self.save_data(
                 tstart,
@@ -340,6 +457,8 @@ class TcCryo:
                 data_dict,
                 header=True,
             )
+            # save plot
+            self.save_tc_plot(tstart)
         except:
             self.temp.stop_heater()
             self.isrc.disable_current()
@@ -347,12 +466,15 @@ class TcCryo:
 
     def measure_cooldown_warmup(
         self,
+        animate=False,
     ):
         """
         Repeatedly measure multiple samples during warmup or cooldown.
         Saves meausrements at regular intervals to ensure data is saved.
         """
         n_samples = len(self.samples)
+        if animate:
+            self.setup_cooldown_warmup_plot(self, figsize=(8, 12))
         temperatures = np.zeros(
             (n_samples, self.cool_warm_save_interval * self.cool_warm_n_repeat)
         )
@@ -366,12 +488,14 @@ class TcCryo:
         # determine direction of sweep
         cooldown = True
         start_temp = self.temp.read_temp(channel=self.temp_channel)
-        if abs(start_temp - self.cool_warm_T_base) < abs(start_temp - self.cool_warm_T_max):
+        if abs(start_temp - self.cool_warm_T_base) < abs(
+            start_temp - self.cool_warm_T_max
+        ):
             cooldown = False
         cooldown_str = "cooldown" if cooldown else "warmup"
         print(
             f"initial temperature is {eng_string(start_temp)} K, ",
-            f"detected direction is {cooldown_str}."
+            f"detected direction is {cooldown_str}.",
         )
         if not cooldown:
             self.set_heater(295)
@@ -405,26 +529,34 @@ class TcCryo:
                             max_temp = max(max_temp, T)
                             rows_written[pos] += 1
                     print_start = save_iter * self.cool_warm_n_repeat
+                    # pretty-print measured resistances and temperatures
                     self.pretty_print(
                         sample_indices,
-                        temperatures[:,print_start:print_start+self.cool_warm_n_repeat],
-                        voltages[:,print_start:print_start+self.cool_warm_n_repeat],
+                        temperatures[
+                            :, print_start : print_start + self.cool_warm_n_repeat
+                        ],
+                        voltages[
+                            :, print_start : print_start + self.cool_warm_n_repeat
+                        ],
                         self.tc_current,
                     )
                     print("")
-                    # pretty-print measured resistances and temperatures
+                    if animate:
+                        self.update_cooldown_warmup_plot(
+                            timestamps, temperatures, voltages, self.cool_warm_current
+                        )
                     time.sleep(self.cool_warm_sleep)
                     # check stopping condition
                     if cooldown and (min_temp < self.cool_warm_T_base):
                         raise Exception
-                    if not(cooldown) and (max_temp > self.cool_warm_T_max):
+                    if not (cooldown) and (max_temp > self.cool_warm_T_max):
                         raise Exception
                 data_dict = dict(
                     timestamps=timestamps,
                     compliance=compliance,
                     temperatures=temperatures,
                     voltages=voltages,
-                    vranges=vranges
+                    vranges=vranges,
                 )
                 self.save_data(
                     tstart,
@@ -437,12 +569,13 @@ class TcCryo:
                 write_header = False
         except Exception:
             self.isrc.disable_current()
+            self.temp.stop_heater()
             data_dict = dict(
                 timestamps=timestamps,
                 compliance=compliance,
                 temperatures=temperatures,
                 voltages=voltages,
-                vranges=vranges
+                vranges=vranges,
             )
             self.save_data(
                 tstart,
@@ -452,4 +585,5 @@ class TcCryo:
                 data_dict,
                 header=write_header,
             )
-            self.temp.stop_heater()
+            # save plot
+            self.save_cooldown_warmup_plot(tstart, cooldown_str)
