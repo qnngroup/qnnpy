@@ -373,6 +373,8 @@ class TcCryo:
             f"initial temperature is {eng_string(start_temp)} K, ",
             f"detected direction is {cooldown_str}."
         )
+        if not cooldown:
+            self.set_heater(295)
         # do measurement
         self.isrc.enable_current()
         time.sleep(0.1)
@@ -450,3 +452,4 @@ class TcCryo:
                 data_dict,
                 header=write_header,
             )
+            self.temp.stop_heater()
