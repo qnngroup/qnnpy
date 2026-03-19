@@ -217,7 +217,7 @@ class TcCryo:
         self._save_plot(tstart, self.fig_tc, "tc")
 
     def save_cooldown_warmup_plot(self, tstart, cooldown_str):
-        self._save_plot(tstart, self.fig_wu_cd, cooldown_str)
+        self._save_plot(tstart, self.fig_cd_wu, cooldown_str)
 
     def pretty_print(self, sample_indices, temperatures, voltages, current):
         text = [["", ""], ["", ""], ["", ""]]
