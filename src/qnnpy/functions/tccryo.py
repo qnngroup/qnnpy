@@ -13,6 +13,8 @@ import numpy as np
 import u6
 import yaml
 
+import copy
+
 import qnnpy.functions.functions as qf
 from qnnpy.instruments.cryocon34 import Cryocon34
 from qnnpy.instruments.lakeshore121 import Lakeshore121
@@ -179,9 +181,12 @@ class TcCryo:
             )
         self.isrc.disable_current()
 
+    def get_sample_positions(self):
+        return [[2, 3], [1, 4], [0, 5]]
+
     def pretty_print(self, sample_indices, temperatures, voltages, current):
         text = [["", ""], ["", ""], ["", ""]]
-        positions = [[2, 3], [1, 4], [0, 5]]
+        positions = self.get_sample_positions()
         for row in range(3):
             for col in range(2):
                 pos = positions[row][col]
@@ -258,8 +263,13 @@ class TcCryo:
                         data_dict['vranges'][s_idx, i],
                     ]
                     writer.writerow(row)
+            new_properties = copy.deepcopy(self.properties)
+            new_properties["Save File"] = str(save_dirs[pos] / fname("yml"))
             with open(save_dirs[pos] / fname("yml"), "w") as f:
-                yaml.dump(self.properties, f, default_flow_style=False)
+                yaml.dump(new_properties, f, default_flow_style=False)
+
+    def get_sample_indices(self):
+        return {pos: i for i, pos in enumerate(self.samples.keys())}
 
     def measure_tc(
         self,
@@ -271,7 +281,7 @@ class TcCryo:
         tlist = np.concatenate(
             (np.arange(t_min, t_max, t_step), np.arange(t_max, t_min, -t_step))
         )
-        sample_indices = {pos: i for i, pos in enumerate(self.samples.keys())}
+        sample_indices = self.get_sample_indices()
         n_samples = len(self.samples)
         temperatures = np.zeros((n_samples, len(tlist) * self.tc_n_repeat))
         voltages = np.zeros(temperatures.shape)
@@ -350,7 +360,7 @@ class TcCryo:
         vranges = np.zeros(temperatures.shape)
         compliance = np.zeros(temperatures.shape)
         timestamps = np.zeros(temperatures.shape)
-        sample_indices = {pos: i for i, pos in enumerate(self.samples.keys())}
+        sample_indices = self.get_sample_indices()
         min_temp = np.inf
         max_temp = -np.inf
         # determine direction of sweep
@@ -358,9 +368,10 @@ class TcCryo:
         start_temp = self.temp.read_temp(channel=self.temp_channel)
         if abs(start_temp - self.cool_warm_T_base) < abs(start_temp - self.cool_warm_T_max):
             cooldown = False
+        cooldown_str = "cooldown" if cooldown else "warmup"
         print(
             f"initial temperature is {eng_string(start_temp)} K, ",
-            f"detected direction is {'cooldown' if cooldown else 'warmup'}."
+            f"detected direction is {cooldown_str}."
         )
         # do measurement
         self.isrc.enable_current()
@@ -415,7 +426,7 @@ class TcCryo:
                 )
                 self.save_data(
                     tstart,
-                    "cooldown" if cooldown else "warmup",
+                    cooldown_str,
                     rows_written,
                     sample_indices,
                     data_dict,
@@ -433,7 +444,7 @@ class TcCryo:
             )
             self.save_data(
                 tstart,
-                "cooldown_warmup",
+                cooldown_str,
                 rows_written,
                 sample_indices,
                 data_dict,
