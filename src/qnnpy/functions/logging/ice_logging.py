@@ -59,7 +59,7 @@ def import_tdms(file_path, needlevalve_last) -> DataFrame:
             if needlevalve_last is None:
                 needlevalve_last = data_dict["Needle Valve 1"][0]
             data_dict["diff_needlevalve"] = np.diff(
-                np.concatenate([needlevalve_last], data_dict["Needle Valve 1"])
+                np.concatenate(([needlevalve_last], data_dict["Needle Valve 1"]))
             )
             return format_data(data_dict), data_dict["Needle Valve 1"][-1]
 
