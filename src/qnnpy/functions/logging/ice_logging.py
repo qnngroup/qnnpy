@@ -7,6 +7,7 @@ from pathlib import Path
 
 import mariadb
 import nptdms
+import numpy as np
 import pandas as pd
 from mariadb import Connection
 from pandas.core.frame import DataFrame
@@ -36,7 +37,7 @@ def is_today(file_date: str) -> bool:
         return False
 
 
-def import_tdms(file_path) -> DataFrame:
+def import_tdms(file_path, needlevalve_last) -> DataFrame:
     try:
         with nptdms.TdmsFile.open(file_path) as tdms_file:
             group = tdms_file["Data"]
@@ -55,8 +56,12 @@ def import_tdms(file_path) -> DataFrame:
                 ]:
                     channel = group[channel_name.name]
                     data_dict[channel_name.name] = channel[:]
-
-            return format_data(data_dict)
+            if needlevalve_last is None:
+                needlevalve_last = data_dict["Needle Valve 1"][0]
+            data_dict["diff_needlevalve"] = np.diff(
+                np.concatenate([needlevalve_last], data_dict["Needle Valve 1"])
+            )
+            return format_data(data_dict), data_dict["Needle Valve 1"][-1]
 
     except FileNotFoundError:
         print("Error: File not found!")
@@ -77,6 +82,7 @@ def format_data(data_dict: dict) -> DataFrame:
         "needlevalve",
         "pressure",
         "dump_pressure",
+        "diff_needlevalve",
     ]
     return df
 
