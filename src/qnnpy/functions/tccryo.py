@@ -44,7 +44,15 @@ def eng_string(x, sig_figs=3):
         x_mantissa, -int(np.floor(np.log10(x_mantissa)) - (sig_figs - 1))
     )
     mantissa_text = str(x_mantissa)
-    mantissa_text = mantissa_text[:-1] if mantissa_text[-2:] == ".0" else mantissa_text
+    # set number of trailing zeros
+    digits = int(np.floor(np.log10(x_mantissa)))
+    remove_zeros = (digits + 2) - sig_figs
+    add_zeros = sig_figs - (digits + 2)
+    if mantissa_text[-1] == "0":
+        if add_zeros > 0:
+            mantissa_text += "0" * add_zeros
+        elif remove_zeros > 0:
+            mantissa_text = mantissa_text[:-remove_zeros]
     if log10_nearest_3 >= -24 and log10_nearest_3 <= 24:
         exp_text = "yzafpnum kMGTPEZY"[log10_nearest_3 // 3 + 8]
         exp_text = " " + exp_text
@@ -385,11 +393,10 @@ class TcCryo:
             if self.isrc.in_compliance():
                 print("WARNING: COMPLIANCE")
             print(
-                "4P: ",
-                np.mean(voltages_4p) / current,
-                " +/- ",
-                np.std(voltages_4p) / current,
-                " range = ",
+                f"{self.samples[pos]}: {eng_string(np.mean(voltages_4p) / current)}Ω",
+                "+/-",
+                f"{eng_string(np.std(voltages_4p) / current)}Ω",
+                "range =",
                 ranges,
             )
         self.isrc.disable_current()
