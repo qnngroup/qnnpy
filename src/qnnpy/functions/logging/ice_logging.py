@@ -71,7 +71,7 @@ def format_data(data_dict: dict) -> DataFrame:
     df = pd.DataFrame(data_dict)
     df["date_time"] = pd.to_datetime(df["Unix Timestamp"], unit="s")
     df["date_time"] = df["date_time"].dt.strftime("%Y-%m-%d %H:%M:%S")
-    df = df.iloc[:, [0, 8, 1, 2, 3, 4, 5, 7, 6]]
+    df = df.iloc[:, [0, 9, 1, 2, 3, 4, 5, 7, 6, 8]]
     df.columns = [
         "epochtime",
         "datetime",
