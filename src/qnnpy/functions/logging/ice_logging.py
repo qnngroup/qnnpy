@@ -59,7 +59,7 @@ def import_tdms(file_path, needlevalve_last) -> DataFrame:
             if needlevalve_last is None:
                 needlevalve_last = data_dict["Needle Valve 1"][0]
             data_dict["diff_needlevalve"] = np.diff(
-                np.concatenate([needlevalve_last], data_dict["Needle Valve 1"])
+                np.concatenate(([needlevalve_last], data_dict["Needle Valve 1"]))
             )
             return format_data(data_dict), data_dict["Needle Valve 1"][-1]
 
@@ -71,7 +71,7 @@ def format_data(data_dict: dict) -> DataFrame:
     df = pd.DataFrame(data_dict)
     df["date_time"] = pd.to_datetime(df["Unix Timestamp"], unit="s")
     df["date_time"] = df["date_time"].dt.strftime("%Y-%m-%d %H:%M:%S")
-    df = df.iloc[:, [0, 8, 1, 2, 3, 4, 5, 7, 6]]
+    df = df.iloc[:, [0, 9, 1, 2, 3, 4, 5, 7, 6, 8]]
     df.columns = [
         "epochtime",
         "datetime",
