@@ -19,11 +19,13 @@ import qnnpy.functions.functions as qf
 from qnnpy.instruments.cryocon34 import Cryocon34
 from qnnpy.instruments.lakeshore121 import Lakeshore121
 
+
 def sleep(animate, duration):
     if animate:
         plt.pause(duration)
     else:
         time.sleep(duration)
+
 
 # pretty-printing utility
 def eng_string(x, sig_figs=3):
@@ -65,6 +67,59 @@ def eng_string(x, sig_figs=3):
 class TcCryo:
     """Class for measurements with TcCryo. This class handles setup of the instruments,
     measurement, plotting, and saving of data
+
+    example config:
+
+    ```yaml
+        User:
+          name: RF
+
+        Sample Mapping:
+          0: SPH262
+          1: SPH290
+          2: SPH291
+          3: SPH279
+          4: MGB306
+          5: SPH283
+
+        Resistance check:
+          current: 100e-6
+          repeat: 10
+
+        Tc measurement:
+          T_min: 4.2
+          T_max: 7
+          T_step: 0.02
+          t_dwell: 10
+          current: 100e-6
+          repeat: 5
+
+        Cooldown-Warmup measurement:
+          current: 100e-6
+          repeat: 4
+          sleep: 0.1
+          save interval: 100
+          T_base: 4.2
+          T_max: 295
+
+        Cryocon34:
+          port: "GPIB0::4::INSTR"
+          channel: "B"
+
+        Lakeshore121:
+          port: "ASRL3::INSTR"
+    ```
+
+    example usage:
+
+    from qnnpy.functions.tccryo import TcCryo
+
+    config = r'S:\SC\Personal\<...>'
+    tc = TcCryo(config)
+
+    # check resistances, then perform a cooldown (assuming fridge is currently warm)
+    tc.check_resistances()
+    tc.measure_cooldown_warmup(animate=True)
     """
 
     def __init__(self, configuration_file):
@@ -76,6 +131,9 @@ class TcCryo:
         self.tc_t_dwell = float(self.properties["Tc measurement"]["t_dwell"])
         self.tc_current = float(self.properties["Tc measurement"]["current"])
         self.tc_n_repeat = int(self.properties["Tc measurement"]["repeat"])
+
+        self.rcheck_current = float(self.properties["Resistance check"]["current"])
+        self.rcheck_n_repeat = float(self.properties["Resistance check"]["repeat"])
 
         self.cool_warm_current = float(
             self.properties["Cooldown-Warmup measurement"]["current"]
@@ -168,15 +226,13 @@ class TcCryo:
         mosaic = self._mosaic()
         for row in range(3):
             mosaic[row].insert(0, "temp")
-        self.fig_cd_wu, self.ax_cd_wu = plt.subplot_mosaic(
-            mosaic, **fig_kw
-        )
+        self.fig_cd_wu, self.ax_cd_wu = plt.subplot_mosaic(mosaic, **fig_kw)
         self._set_plot_labels(self.ax_cd_wu)
         self.ax_cd_wu["temp"].set_title("temperature")
         self.ax_cd_wu["temp"].set_xlabel("t [m]")
         self.ax_cd_wu["temp"].set_ylabel("T [K]")
-        self.ax_cd_wu["temp"].set_ylim((-10, self.cool_warm_T_max+10))
-        self._set_xlim(self.ax_cd_wu, (-10, self.cool_warm_T_max+10))
+        self.ax_cd_wu["temp"].set_ylim((-10, self.cool_warm_T_max + 10))
+        self._set_xlim(self.ax_cd_wu, (-10, self.cool_warm_T_max + 10))
         self.fig_cd_wu.tight_layout()
         plt.show(block=False)
 
@@ -191,7 +247,10 @@ class TcCryo:
                 sample_name = self.samples[pos]
                 sample_idx = sample_indices[pos]
                 self.ax_tc[sample_name].plot(
-                    temperatures[sample_idx, :], voltages[sample_idx, :] / current, ".", color=color
+                    temperatures[sample_idx, :],
+                    voltages[sample_idx, :] / current,
+                    ".",
+                    color=color,
                 )
         self.fig_tc.canvas.draw_idle()
         self.fig_tc.canvas.flush_events()
@@ -199,7 +258,9 @@ class TcCryo:
         plt.show(block=False)
         plt.pause(0.01)
 
-    def update_cooldown_warmup_plot(self, tstart, timestamps, temperatures, voltages, current):
+    def update_cooldown_warmup_plot(
+        self, tstart, timestamps, temperatures, voltages, current
+    ):
         sample_positions = self.get_sample_positions()
         sample_indices = self.get_sample_indices()
         for row in range(3):
@@ -210,10 +271,16 @@ class TcCryo:
                 sample_name = self.samples[pos]
                 sample_idx = sample_indices[pos]
                 self.ax_cd_wu[sample_name].plot(
-                    temperatures[sample_idx, :], voltages[sample_idx, :] / current, ".", color="b"
+                    temperatures[sample_idx, :],
+                    voltages[sample_idx, :] / current,
+                    ".",
+                    color="b",
                 )
                 self.ax_cd_wu["temp"].plot(
-                    (timestamps[sample_idx, :] - tstart)/60, temperatures[sample_idx, :], ".", color="b"
+                    (timestamps[sample_idx, :] - tstart) / 60,
+                    temperatures[sample_idx, :],
+                    ".",
+                    color="b",
                 )
         self.fig_cd_wu.canvas.draw_idle()
         self.fig_cd_wu.canvas.flush_events()
@@ -227,7 +294,6 @@ class TcCryo:
         save_dirs = self.get_save_dirs()
         for pos in self.samples.keys():
             fig.savefig(save_dirs[pos] / fname)
-
 
     def save_tc_plot(self, tstart):
         self._save_plot(tstart, self.fig_tc, "tc")
@@ -312,14 +378,14 @@ class TcCryo:
             if abs(vdevice) >= 0.099 * lj_range:
                 return vdevice, lj_range
         return vdevice, lj_range
-    
+
     def get_power(self, temperature):
         if temperature > 4.5:
             power = "25W"
         else:
             power = "2.5W"
         return power
-    
+
     def get_pid(self, temperature):
         proportional = 1.0
         integral = 1.0
@@ -338,9 +404,7 @@ class TcCryo:
             save_dirs[pos] = save_dir
         return save_dirs
 
-    def save_data(
-        self, tstart, measurement_type, num_rows, data_dict, header
-    ):
+    def save_data(self, tstart, measurement_type, num_rows, data_dict, header):
         # save data
         sample_indices = self.get_sample_indices()
         dtime = datetime.datetime.fromtimestamp(tstart, datetime.UTC)
@@ -383,31 +447,60 @@ class TcCryo:
     #################################
     # measurements
     #################################
-    def check_resistances(self, current=100e-6, n_measurements=10):
+    def check_resistances(self, print_vrange=False, save_data=True):
         """
-        Checks resistance for multiple positions, averaging over n_measurements
+        Checks resistance for multiple positions as specified by config file
         """
+        sample_indices = self.get_sample_indices()
+        n_samples = len(self.samples)
+        temperatures = np.zeros((n_samples, self.rcheck_n_repeat))
+        voltages = np.zeros(temperatures.shape)
+        vranges = np.zeros(temperatures.shape)
+        compliance = np.zeros(temperatures.shape)
+        timestamps = np.zeros(temperatures.shape)
         self.isrc.enable_current()
         time.sleep(0.1)
-        self.isrc.set_current(current)
-        voltages_4p = np.zeros(n_measurements)
-        ranges = np.zeros(n_measurements)
-        for pos in self.samples.keys():
+        self.isrc.set_current(self.rcheck_current)
+        tstart = time.time()
+        for pos, sample_idx in sample_indices.items():
             self.select_mux(pos)
             time.sleep(0.5)
-            for i in range(len(voltages_4p)):
-                voltages_4p[i], ranges[i] = self.read_voltage()
+            for i in range(self.rcheck_n_repeat):
+                timestamps[sample_idx, i] = time.time()
+                compliance[sample_idx, i] = self.isrc.in_compliance()
+                T = self.temp.read_temp(channel=self.temp_channel)
+                v, vr = self.read_voltage()
+                temperatures[sample_idx, i] = T
+                voltages[sample_idx, i] = v
+                vranges[sample_idx, i] = vr
                 time.sleep(0.01)
             if self.isrc.in_compliance():
                 print("WARNING: COMPLIANCE")
-            print(
-                f"{self.samples[pos]}: {eng_string(np.mean(voltages_4p) / current)}Ω",
+            print_str = (
+                f"{self.samples[pos]}: {eng_string(np.mean(voltages[sample_idx,:]) / self.rcheck_current)}Ω",
                 "+/-",
-                f"{eng_string(np.std(voltages_4p) / current)}Ω",
-                "range =",
-                ranges,
+                f"{eng_string(np.std(voltages[sample_idx,:]) / self.rcheck_current)}Ω",
             )
+            if print_vrange:
+                print_str += f" ranges = {vranges[sample_idx,:]}"
+            print(print_str)
         self.isrc.disable_current()
+        # save data
+        if save_data:
+            data_dict = dict(
+                timestamps=timestamps,
+                compliance=compliance,
+                temperatures=temperatures,
+                voltages=voltages,
+                vranges=vranges,
+            )
+            self.save_data(
+                tstart,
+                "rcheck",
+                {pos: timestamps.shape[1] for pos in self.samples.keys()},
+                data_dict,
+                header=True,
+            )
 
     def measure_tc_high_temp(
         self,
@@ -464,17 +557,17 @@ class TcCryo:
                         vranges[sample_idx] += [vr]
                         sleep(animate, 0.01)
                 self.pretty_print(
-                    np.array(temperatures)[:,-self.tc_n_repeat:],
-                    np.array(voltages)[:,-self.tc_n_repeat:],
+                    np.array(temperatures)[:, -self.tc_n_repeat :],
+                    np.array(voltages)[:, -self.tc_n_repeat :],
                     self.tc_current,
                 )
                 print("")
                 if animate:
                     self.update_tc_plot(
-                        np.array(temperatures)[:,-self.tc_n_repeat:],
-                        np.array(voltages)[:,-self.tc_n_repeat:],
+                        np.array(temperatures)[:, -self.tc_n_repeat :],
+                        np.array(voltages)[:, -self.tc_n_repeat :],
                         self.tc_current,
-                        color="b"
+                        color="b",
                     )
                 t_max = np.max(np.array(temperatures))
             self.temp.stop_heater()
@@ -491,7 +584,10 @@ class TcCryo:
                 self.save_data(
                     tstart,
                     "tc",
-                    {pos: len(timestamps[sample_indices[pos]]) for pos in self.samples.keys()},
+                    {
+                        pos: len(timestamps[sample_indices[pos]])
+                        for pos in self.samples.keys()
+                    },
                     data_dict,
                     header=True,
                 )
@@ -512,7 +608,9 @@ class TcCryo:
         t_min = self.tc_T_min
         t_max = self.tc_T_max
         if t_max > 25:
-            raise ValueError("cannot heat above 25 C with coldhead on; use measure_tc_high_temp instead")
+            raise ValueError(
+                "cannot heat above 25 C with coldhead on; use measure_tc_high_temp instead"
+            )
         t_step = self.tc_T_step
         tlist = np.concatenate(
             (np.arange(t_min, t_max, t_step), np.arange(t_max, t_min, -t_step))
@@ -582,7 +680,7 @@ class TcCryo:
                         temperatures[:, print_start : print_start + self.tc_n_repeat],
                         voltages[:, print_start : print_start + self.tc_n_repeat],
                         self.tc_current,
-                        color="b" if tprev <= t else "r"
+                        color="b" if tprev <= t else "r",
                     )
                 tprev = t
             self.temp.stop_heater()
@@ -646,7 +744,9 @@ class TcCryo:
             f"detected direction is {cooldown_str}.",
         )
         if not cooldown:
-            self.temp.setup_heater(load=25, range="25W", source_channel=self.temp_channel)
+            self.temp.setup_heater(
+                load=25, range="25W", source_channel=self.temp_channel
+            )
             time.sleep(0.1)
             self.temp.set_setpoint(295)
             time.sleep(0.1)
@@ -698,9 +798,15 @@ class TcCryo:
                     if animate:
                         self.update_cooldown_warmup_plot(
                             tstart,
-                            timestamps[:, print_start : print_start + self.cool_warm_n_repeat],
-                            temperatures[:, print_start : print_start + self.cool_warm_n_repeat],
-                            voltages[:, print_start : print_start + self.cool_warm_n_repeat],
+                            timestamps[
+                                :, print_start : print_start + self.cool_warm_n_repeat
+                            ],
+                            temperatures[
+                                :, print_start : print_start + self.cool_warm_n_repeat
+                            ],
+                            voltages[
+                                :, print_start : print_start + self.cool_warm_n_repeat
+                            ],
                             self.cool_warm_current,
                         )
                     sleep(animate, self.cool_warm_sleep)
