@@ -27,6 +27,9 @@ class Cryocon34(object):
             temperature = "no reading"
 
         return temperature
+    
+    def set_power(self, range="25W"):
+        self.write("LOOP 1:RANGE " + range)
 
     def setup_heater(self, load=25, range="25W", source_channel="A"):
         self.write("LOOP 1:SETPT 10")
