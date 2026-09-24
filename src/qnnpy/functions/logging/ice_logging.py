@@ -56,15 +56,17 @@ def import_tdms(file_path, needlevalve_last, decimate=True) -> DataFrame:
             needlevalve_last = data_dict["Needle Valve 1"][-1]
             data_dict = format_data(data_dict)
             if decimate:
-                # mean
-                for name in ["T1", "T2", "T3", "T4", "needlevalve", "pressure", "dump_pressure"]:
-                    data_dict[name] = data_dict[name].mean(axis=0)
+                data_dict_reduced = {}
                 # last
                 for name in ["epochtime", "datetime"]:
-                    data_dict[name] = data_dict[name].tail(1)
+                    data_dict_reduced[name] = data_dict[name].tail(1)
+                # mean
+                for name in ["T1", "T2", "T3", "T4", "needlevalve", "pressure", "dump_pressure"]:
+                    data_dict_reduced[name] = data_dict[name].mean(axis=0)
                 # mean(abs)
                 for name in ["diff_needlevalve"]:
-                    data_dict[name] = data_dict[name].abs().mean(axis=0)
+                    data_dict_reduced[name] = data_dict[name].abs().mean(axis=0)
+                data_dict = pd.DataFrame(data_dict_reduced)
             return data_dict, needlevalve_last
 
     except FileNotFoundError:
