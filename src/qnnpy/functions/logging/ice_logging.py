@@ -29,15 +29,7 @@ def load_data_to_database(filename: str, table_name: str, connection: Connection
     conn.commit()
 
 
-def is_today(file_date: str) -> bool:
-    today = datetime.now().strftime("%Y_%m_%d")
-    if file_date == today:
-        return True
-    else:
-        return False
-
-
-def import_tdms(file_path, needlevalve_last) -> DataFrame:
+def import_tdms(file_path, needlevalve_last, decimate=True) -> DataFrame:
     try:
         with nptdms.TdmsFile.open(file_path) as tdms_file:
             group = tdms_file["Data"]
@@ -61,7 +53,19 @@ def import_tdms(file_path, needlevalve_last) -> DataFrame:
             data_dict["diff_needlevalve"] = np.diff(
                 np.concatenate(([needlevalve_last], data_dict["Needle Valve 1"]))
             )
-            return format_data(data_dict), data_dict["Needle Valve 1"][-1]
+            needlevalve_last = data_dict["Needle Valve 1"][-1]
+            data_dict = format_data(data_dict)
+            if decimate:
+                # mean
+                for name in ["T1", "T2", "T3", "T4", "needlevalve", "pressure", "dump_pressure"]:
+                    data_dict[name] = data_dict[name].mean(axis=0)
+                # last
+                for name in ["epochtime", "datetime"]:
+                    data_dict[name] = data_dict[name][-1]
+                # mean(abs)
+                for name in ["diff_needlevalve"]:
+                    data_dict[name] = data_dict[name].abs().mean(axis=0)
+            return data_dict, needlevalve_last
 
     except FileNotFoundError:
         print("Error: File not found!")
@@ -100,59 +104,3 @@ def write_table_to_database(data_frame: DataFrame, table_name: str, connection=N
     os.remove(temp_file[:-4])
     return
 
-
-def files_in_directory(directory: str) -> list:
-    file_types = ["tdms"]
-    files = []
-    for file in os.listdir(directory):
-        if file.split(".")[-1] in file_types:
-            files.append(file)
-    return files
-
-
-def import_most_recent_tdms(directory: str) -> dict:
-    files = files_in_directory(directory)
-    files.sort()
-    most_recent_file = files[-1]
-    file_path = os.path.join(directory, most_recent_file)
-    return import_tdms(file_path)
-
-
-def get_uploaded_files(filename: str) -> list:
-    with open(filename, "r") as file:
-        files = file.read().splitlines()
-    return files
-
-
-def update_uploaded_files(logfile: str, file: str):
-    with open(logfile, "a") as log:
-        log.write(file + "\n")
-    return
-
-
-def check_and_import_tdms(directory: str, logfile: str, table_name: str):
-    uploaded_files = get_uploaded_files(logfile)
-    files = files_in_directory(directory)
-    files.sort()
-
-    try:
-        conn = qf.database_connection()
-        conn.auto_reconnect = True
-    except mariadb.Error as e:
-        print(f"Error connecting to the database: {e}")
-        sys.exit(1)
-
-    for file in files:
-        if file not in uploaded_files:
-            print(f"Importing: {file}")
-            file_path = os.path.join(directory, file)
-            file_date = file[0:10]
-
-            data_frame = import_tdms(file_path)
-            write_table_to_database(data_frame, table_name, conn)
-
-            update_uploaded_files(logfile, file)
-            time.sleep(5)
-
-    conn.close()
-    return
