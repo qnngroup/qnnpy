@@ -61,7 +61,7 @@ def import_tdms(file_path, needlevalve_last, decimate=True) -> DataFrame:
                     data_dict[name] = data_dict[name].mean(axis=0)
                 # last
                 for name in ["epochtime", "datetime"]:
-                    data_dict[name] = data_dict[name][-1]
+                    data_dict[name] = data_dict[name].tail(1)
                 # mean(abs)
                 for name in ["diff_needlevalve"]:
                     data_dict[name] = data_dict[name].abs().mean(axis=0)
